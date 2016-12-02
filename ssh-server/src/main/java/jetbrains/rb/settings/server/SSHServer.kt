@@ -23,10 +23,10 @@ class SSHServer(private val sshSettings: SSHSettings,
   private val log = LoggerFactory.getLogger(javaClass)
   private val sshd = SshServer.setUpDefaultServer()
 
-  private val nioChannelExecutor = Executors.newFixedThreadPool(sshSettings.nioWorkers, { r ->
-    val thread = Thread("sshd-nio")
+  private val nioChannelExecutor = Executors.newFixedThreadPool(sshSettings.nioWorkers, threadFactory@{ runnable ->
+    val thread = Thread(runnable, "sshd-nio")
     thread.isDaemon = true
-    thread
+    return@threadFactory thread
   })
 
 
