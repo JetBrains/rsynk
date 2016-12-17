@@ -1,4 +1,4 @@
-package jetbrains.rb.settings.server
+package jetbrains.rsynk.settings.server
 
 interface SSHSettings {
   val port: Int

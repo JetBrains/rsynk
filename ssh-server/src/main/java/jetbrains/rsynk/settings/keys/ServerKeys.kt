@@ -1,4 +1,4 @@
-package jetbrains.rb.settings.keys
+package jetbrains.rsynk.settings.keys
 
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 

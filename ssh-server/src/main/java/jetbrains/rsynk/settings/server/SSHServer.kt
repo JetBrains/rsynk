@@ -1,6 +1,6 @@
-package jetbrains.rb.settings.server
+package jetbrains.rsynk.settings.server
 
-import jetbrains.rb.settings.keys.ServerKeys
+import jetbrains.rsynk.settings.keys.ServerKeys
 import org.apache.sshd.common.compression.BuiltinCompressions
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory
 import org.apache.sshd.server.SshServer

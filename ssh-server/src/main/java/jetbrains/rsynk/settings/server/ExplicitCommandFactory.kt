@@ -1,4 +1,4 @@
-package jetbrains.rb.settings.server
+package jetbrains.rsynk.settings.server
 
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
