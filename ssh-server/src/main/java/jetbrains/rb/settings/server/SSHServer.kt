@@ -1,7 +1,5 @@
 package jetbrains.rb.settings.server
 
-import jetbrains.rb.settings.ApplicationSettings
-import jetbrains.rb.settings.SSHSettings
 import jetbrains.rb.settings.keys.ServerKeys
 import org.apache.sshd.common.compression.BuiltinCompressions
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory
@@ -13,8 +11,7 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 
 
-class SSHServer(private val sshSettings: SSHSettings,
-                private val appSettings: ApplicationSettings,
+class SSHServer(private val settings: SSHSettings,
                 private val serverKeys: ServerKeys,
                 private val shellCommand: ShellCommandFactory,
                 private val explicitCommands: ExplicitCommandFactory,
@@ -23,7 +20,7 @@ class SSHServer(private val sshSettings: SSHSettings,
   private val log = LoggerFactory.getLogger(javaClass)
   private val sshd = SshServer.setUpDefaultServer()
 
-  private val nioChannelExecutor = Executors.newFixedThreadPool(sshSettings.nioWorkers, threadFactory@{ runnable ->
+  private val nioChannelExecutor = Executors.newFixedThreadPool(settings.nioWorkers, threadFactory@{ runnable ->
     val thread = Thread(runnable, "sshd-nio")
     thread.isDaemon = true
     return@threadFactory thread
@@ -31,11 +28,11 @@ class SSHServer(private val sshSettings: SSHSettings,
 
 
   private fun configure() {
-    sshd.port = sshSettings.port
-    sshd.nioWorkers = sshSettings.nioWorkers
-    sshd.properties.put(SshServer.SERVER_IDENTIFICATION, appSettings.applicationNameNoSpaces)
-    sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, sshSettings.maxAuthRequests.toString())
-    sshd.properties.put(SshServer.IDLE_TIMEOUT, sshSettings.idleTimeout.toString())
+    sshd.port = settings.port
+    sshd.nioWorkers = settings.nioWorkers
+    sshd.properties.put(SshServer.SERVER_IDENTIFICATION, settings.applicationNameNoSpaces)
+    sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, settings.maxAuthRequests.toString())
+    sshd.properties.put(SshServer.IDLE_TIMEOUT, settings.idleTimeout.toString())
 
     sshd.shellFactory = shellCommand.createShellCommand()
     sshd.commandFactory = explicitCommands
@@ -54,8 +51,8 @@ class SSHServer(private val sshSettings: SSHSettings,
   fun start() {
     configure()
     log.info("Starting sshd server:" +
-            "   port=${sshSettings.port}," +
-            "   nio-workers=${sshSettings.nioWorkers}")
+            "   port=${settings.port}," +
+            "   nio-workers=${settings.nioWorkers}")
     sshd.start()
   }
 
