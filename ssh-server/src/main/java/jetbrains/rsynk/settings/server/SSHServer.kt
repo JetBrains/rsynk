@@ -13,7 +13,6 @@ import java.util.concurrent.Executors
 
 class SSHServer(private val settings: SSHSettings,
                 private val serverKeys: ServerKeys,
-                private val shellCommand: ShellCommandFactory,
                 private val explicitCommands: ExplicitCommandFactory,
                 private val sessionFactory: SSHSessionFactory) {
 
@@ -34,7 +33,6 @@ class SSHServer(private val settings: SSHSettings,
     sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, settings.maxAuthRequests.toString())
     sshd.properties.put(SshServer.IDLE_TIMEOUT, settings.idleTimeout.toString())
 
-    sshd.shellFactory = shellCommand.createShellCommand()
     sshd.commandFactory = explicitCommands
     sshd.sessionFactory = sessionFactory.createSessionFactory()
     sshd.addSessionListener(sessionFactory.createSessionListener())
