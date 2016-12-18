@@ -11,17 +11,17 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.TreeMap
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
 
   private val LOG = LoggerFactory.getLogger(javaClass)
   private val commands = TreeMap<String, SSHCommand>()
   private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
-      val thread = Thread(runnable, "ssh-command")
-      thread.isDaemon = true
-      return@threadFactory thread
-    })
-
+    val thread = Thread(runnable, "ssh-command")
+    thread.isDaemon = true
+    return@threadFactory thread
+  })
 
   init {
     commands["rsync"] = RsyncCommand()
@@ -32,19 +32,59 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
     var input: InputStream? = null
     var output: OutputStream? = null
     var error: OutputStream? = null
+    var runningCommand: Future<*>? = null
+
+    fun exit(code: Int, message: String) {
+      val callback = exitCallback
+      if (callback != null) {
+        callback.onExit(code, message)
+      } else {
+        LOG.error("exit callback for $command command is null")
+      }
+    }
+
+    fun exit(code: Int) {
+      exit(code, "")
+    }
 
     return object : Command {
-      override fun destroy() {
-        throw UnsupportedOperationException("not implemented")
-      }
-
-      override fun start(env: Environment?) {
+      override fun start(env: Environment) {
         val resolvedCommand = commands[command]
         if (resolvedCommand == null) {
-          exitCallback?.onExit(127, "Cannot find ssh command with name $command")
+          exit(127, "Cannot find ssh command: $command")
+          return
         }
-        threadPool.submit {
-          resolvedCommand.execute(input, output, error)
+        val stdin = input
+        if (stdin == null) {
+          exit(128, "Command input stream not set")
+          return
+        }
+        val stdout = output
+        if (stdout == null) {
+          exit(128, "Command output stream not set")
+          return
+        }
+        val stderr = error
+        if (stderr == null) {
+          exit(128, "Command error stream not set")
+          return
+        }
+        runningCommand = threadPool.submit {
+          try {
+            resolvedCommand.execute(stdin, stdout, stderr)
+          } catch(t: Throwable) {
+            LOG.error("executing ssh $command command failed: ${t.message}", t)
+          } finally {
+            exit(0)
+          }
+        }
+      }
+
+      override fun destroy() {
+        try {
+          runningCommand?.cancel(true)
+        } catch (t: Throwable) {
+          LOG.error("cannot cancel running command: ${t.message}", t)
         }
       }
 
@@ -63,7 +103,6 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
       override fun setOutputStream(out: OutputStream) {
         output = out
       }
-
     }
   }
 }
