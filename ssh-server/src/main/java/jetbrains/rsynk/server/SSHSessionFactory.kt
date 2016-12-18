@@ -1,4 +1,4 @@
-package jetbrains.rsynk.settings.server
+package jetbrains.rsynk.server
 
 import org.apache.sshd.common.session.SessionListener
 import org.apache.sshd.server.session.SessionFactory

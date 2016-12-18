@@ -1,4 +1,4 @@
-package jetbrains.rsynk.settings.server
+package jetbrains.rsynk.server
 
 interface SSHSettings {
   val port: Int

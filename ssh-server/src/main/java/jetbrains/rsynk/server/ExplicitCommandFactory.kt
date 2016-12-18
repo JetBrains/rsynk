@@ -1,7 +1,7 @@
-package jetbrains.rsynk.settings.server
+package jetbrains.rsynk.server
 
-import jetbrains.rsynk.settings.command.RsyncCommand
-import jetbrains.rsynk.settings.command.SSHCommand
+import jetbrains.rsynk.command.RsyncCommand
+import jetbrains.rsynk.command.SSHCommand
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment
