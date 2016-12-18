@@ -1,5 +1,3 @@
 rootProject.name = 'rsync-backup'
 
 include 'ssh-server'
-include 'public-api'
-
