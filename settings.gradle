@@ -1,3 +1,3 @@
-rootProject.name = 'rsync-backup'
+rootProject.name = 'rsync'
 
 include 'ssh-server'
