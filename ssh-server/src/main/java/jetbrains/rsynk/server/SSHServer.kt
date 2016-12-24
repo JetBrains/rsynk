@@ -34,7 +34,7 @@ class SSHServer(private val settings: SSHSettings,
     sshd.properties.put(SshServer.IDLE_TIMEOUT, settings.idleTimeout.toString())
 
     sshd.commandFactory = explicitCommands
-    sshd.sessionFactory = sessionFactory.createSessionFactory()
+    sshd.sessionFactory = sessionFactory.createSessionFactory(sshd)
     sshd.addSessionListener(sessionFactory.createSessionListener())
 
     sshd.keyPairProvider = serverKeys.loadKeys()
