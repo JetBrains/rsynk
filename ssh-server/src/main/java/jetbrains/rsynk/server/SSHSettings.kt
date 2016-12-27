@@ -9,4 +9,6 @@ interface SSHSettings {
   val maxAuthRequests: Int
 
   val applicationNameNoSpaces: String
+
+  val serverSSHKeyPath: String
 }

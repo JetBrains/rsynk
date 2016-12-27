@@ -1,6 +1,5 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.keys.ServerKeys
 import org.apache.sshd.common.compression.BuiltinCompressions
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory
 import org.apache.sshd.server.SshServer
@@ -12,7 +11,7 @@ import java.util.concurrent.Executors
 
 
 class SSHServer(private val settings: SSHSettings,
-                private val serverKeys: ServerKeys,
+                private val serverKeys: SSHServerKeys,
                 private val explicitCommands: ExplicitCommandFactory,
                 private val sessionFactory: SSHSessionFactory) {
 
@@ -37,7 +36,7 @@ class SSHServer(private val settings: SSHSettings,
     sshd.sessionFactory = sessionFactory.createSessionFactory(sshd)
     sshd.addSessionListener(sessionFactory.createSessionListener())
 
-    sshd.keyPairProvider = serverKeys.loadKeys()
+    sshd.keyPairProvider = serverKeys.loadKeys(settings)
     sshd.publickeyAuthenticator = PublickeyAuthenticator { username, publicKey, server -> true }
     sshd.passwordAuthenticator = PasswordAuthenticator { username, password, server -> false }
 
