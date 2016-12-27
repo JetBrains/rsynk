@@ -56,17 +56,17 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
         }
         val stdin = input
         if (stdin == null) {
-          exit(128, "Command input stream not set")
+          exit(128, "Input stream not set")
           return
         }
         val stdout = output
         if (stdout == null) {
-          exit(128, "Command output stream not set")
+          exit(128, "Output stream not set")
           return
         }
         val stderr = error
         if (stderr == null) {
-          exit(128, "Command error stream not set")
+          exit(128, "Error stream not set")
           return
         }
         runningCommand = threadPool.submit {
