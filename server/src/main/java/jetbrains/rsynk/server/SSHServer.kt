@@ -29,7 +29,7 @@ class SSHServer(private val settings: SSHSettings,
     sshd.port = settings.port
     sshd.nioWorkers = settings.nioWorkers
     sshd.properties.put(SshServer.SERVER_IDENTIFICATION, settings.applicationNameNoSpaces)
-    sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, settings.maxAuthRequests.toString())
+    sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, settings.maxAuthAttempts.toString())
     sshd.properties.put(SshServer.IDLE_TIMEOUT, settings.idleConnectionTimeout.toString())
 
     sshd.commandFactory = explicitCommands
@@ -52,7 +52,7 @@ class SSHServer(private val settings: SSHSettings,
             "   nio-workers=${settings.nioWorkers},\n" +
             "   command-workers=${settings.commandWorkers},\n" +
             "   idle-connection-timeout=${settings.idleConnectionTimeout},\n" +
-            "   max-auth-requests=${settings.maxAuthRequests}\n")
+            "   max-auth-requests=${settings.maxAuthAttempts}\n")
     sshd.start()
   }
 
