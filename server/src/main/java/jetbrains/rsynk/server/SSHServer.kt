@@ -18,7 +18,7 @@ class SSHServer(private val settings: SSHSettings,
   private val log = LoggerFactory.getLogger(javaClass)
   private val sshd = SshServer.setUpDefaultServer()
 
-  private val nioChannelExecutor = Executors.newFixedThreadPool(settings.nioWorkers, threadFactory@{ runnable ->
+  private val nioChannelExecutor = Executors.newFixedThreadPool(settings.nioWorkers, threadFactory@ { runnable ->
     val thread = Thread(runnable, "sshd-nio")
     thread.isDaemon = true
     return@threadFactory thread
@@ -47,9 +47,12 @@ class SSHServer(private val settings: SSHSettings,
 
   fun start() {
     configure()
-    log.info("Starting sshd server:" +
-            "   port=${settings.port}," +
-            "   nio-workers=${settings.nioWorkers}")
+    log.info("Starting sshd server:\n" +
+            "   port=${settings.port},\n" +
+            "   nio-workers=${settings.nioWorkers},\n" +
+            "   command-workers=${settings.commandWorkers},\n" +
+            "   idle-connection-timeout=${settings.idleConnectionTimeout},\n" +
+            "   max-auth-requests=${settings.maxAuthRequests}\n")
     sshd.start()
   }
 
