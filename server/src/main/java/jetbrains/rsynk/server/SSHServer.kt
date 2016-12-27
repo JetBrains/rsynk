@@ -30,7 +30,7 @@ class SSHServer(private val settings: SSHSettings,
     sshd.nioWorkers = settings.nioWorkers
     sshd.properties.put(SshServer.SERVER_IDENTIFICATION, settings.applicationNameNoSpaces)
     sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, settings.maxAuthRequests.toString())
-    sshd.properties.put(SshServer.IDLE_TIMEOUT, settings.idleTimeout.toString())
+    sshd.properties.put(SshServer.IDLE_TIMEOUT, settings.idleConnectionTimeout.toString())
 
     sshd.commandFactory = explicitCommands
     sshd.sessionFactory = sessionFactory.createSessionFactory(sshd)
