@@ -1,5 +1,5 @@
 rootProject.name = 'rsynk'
 
-include 'ssh-server'
+include 'server'
 include 'rsync'
 
