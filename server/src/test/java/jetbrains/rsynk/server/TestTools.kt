@@ -1,10 +1,13 @@
 package jetbrains.rsynk.server
 
 import org.apache.sshd.common.keyprovider.KeyPairProvider
+import org.junit.Assert
+import java.nio.file.Files
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
+import java.util.concurrent.TimeUnit
 
 object TestTools {
   fun getServerKey(): KeyPairProvider {
@@ -16,6 +19,38 @@ object TestTools {
     return KeyPairProvider { listOf(KeyPair(publicKey, privateKey)) }
   }
 
-  val loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+  val loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
+          "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+          "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+          "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
+          "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+}
+
+object Rsync {
+  fun syncFile(from: String, to: String, port: Int, password: String, timeoutSec: Long) {
+    val args = listOf("rsync", "-avz", "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
+    val pb = ProcessBuilder(args)
+            .directory(Files.createTempDirectory("rsync_dir").toFile())
+            .redirectError(ProcessBuilder.Redirect.PIPE)
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+    pb.environment()["RSYNC_PASSWORD"] = password
+    val process = pb.start()
+    process.outputStream.close()
+    try {
+      process.waitFor(timeoutSec, TimeUnit.SECONDS)
+    } catch(t: Throwable) {
+      throw AssertionError("rsync process is running longer than 10 sec", t)
+    }
+    Assert.assertEquals("Rsync exit code not equals to 0\n" +
+            "args=$args\n" +
+            "stdout=${String(process.inputStream.readBytes())}\n" +
+            "stderr=${String(process.errorStream.readBytes())}",
+            0, process.exitValue())
+  }
+
+  fun syncDirectory(from: String, to: String, port: Int, password: String, timeoutSec: Long) {
+
+  }
 }
 
