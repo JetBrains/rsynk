@@ -5,5 +5,5 @@ import java.io.OutputStream
 
 
 interface SSHCommand {
-  fun execute(input: InputStream, output: OutputStream, error: OutputStream)
+  fun execute(args: List<String>, input: InputStream, output: OutputStream, error: OutputStream)
 }

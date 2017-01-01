@@ -27,7 +27,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
     commands["rsync"] = RsyncCommand()
   }
 
-  override fun createCommand(command: String): Command {
+  override fun createCommand(_args: String): Command {
     var exitCallback: ExitCallback? = null
     var input: InputStream? = null
     var output: OutputStream? = null
@@ -39,7 +39,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
       if (callback != null) {
         callback.onExit(code, message)
       } else {
-        LOG.error("exit callback for $command command is null")
+        LOG.error("exit callback for $_args is null")
       }
     }
 
@@ -49,9 +49,10 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
 
     return object : Command {
       override fun start(env: Environment) {
-        val resolvedCommand = commands[command]
+        val args = _args.split(" ")
+        val resolvedCommand = commands[args[0]]
         if (resolvedCommand == null) {
-          exit(127, "Cannot find ssh command: $command")
+          exit(127, "Cannot find ssh command: ${args[0]}")
           return
         }
         val stdin = input
@@ -71,9 +72,9 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
         }
         runningCommand = threadPool.submit {
           try {
-            resolvedCommand.execute(stdin, stdout, stderr)
+            resolvedCommand.execute(args.drop(1), stdin, stdout, stderr)
           } catch(t: Throwable) {
-            LOG.error("executing ssh $command command failed: ${t.message}", t)
+            LOG.error("executing ssh '$args' command failed: ${t.message}", t)
           } finally {
             exit(0)
           }

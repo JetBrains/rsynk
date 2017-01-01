@@ -38,7 +38,7 @@ class SSHServer(private val settings: SSHSettings,
 
     sshd.keyPairProvider = settings.serverKeys
     sshd.publickeyAuthenticator = PublickeyAuthenticator { username, publicKey, server -> true }
-    sshd.passwordAuthenticator = PasswordAuthenticator { username, password, server -> false }
+    sshd.passwordAuthenticator = PasswordAuthenticator { username, password, server -> true }
 
     sshd.ioServiceFactoryFactory = Nio2ServiceFactoryFactory(nioChannelExecutor, false)
     sshd.tcpipForwardingFilter = RejectAllForwardingFilter()
