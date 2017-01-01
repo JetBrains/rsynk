@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class IntegrationTest {
   companion object {
     @JvmStatic
-    val rsynk = Rsynk(20333/*TODO: get available port*/, 1, 1, 100, TestTools.getServerKey())
+    val rsynk = Rsynk(TestTools.findFreePort(), 1, 1, 100, TestTools.getServerKey())
 
     val password = "letmein"
 

@@ -8,6 +8,9 @@ import java.security.KeyPair
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.concurrent.TimeUnit
+import java.net.ServerSocket
+import java.io.IOException
+
 
 object TestTools {
   fun getServerKey(): KeyPairProvider {
@@ -24,6 +27,21 @@ object TestTools {
           "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
           "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
           "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+
+  fun findFreePort(): Int {
+    (1..3).forEach {
+      (16384..65536).forEach { port ->
+        try {
+          ServerSocket(port).close()
+          return port
+        } catch (e: IOException) {
+          // Continue
+        }
+      }
+    }
+    throw RuntimeException("Cannot find free port in range [16384, 65536]")
+  }
+
 }
 
 object Rsync {
