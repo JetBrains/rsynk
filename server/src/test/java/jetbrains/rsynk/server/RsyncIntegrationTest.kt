@@ -27,11 +27,6 @@ class RsyncIntegrationTest {
   }
 
   @Test
-  fun sleepy_test() {
-    Thread.sleep(Long.MAX_VALUE)
-  }
-
-  @Test
   fun file_transfer_test() {
     val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val source = File(moduleRoot, "from.txt")
