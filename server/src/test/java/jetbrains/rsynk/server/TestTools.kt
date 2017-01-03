@@ -45,16 +45,8 @@ object TestTools {
 }
 
 object Rsync {
-  fun syncFile(from: String, to: String, port: Int, password: String, timeoutSec: Long, params: String = "") {
-    return sync(from, to, port, password, timeoutSec, "v$params")
-  }
-
-  fun syncDirectory(from: String, to: String, port: Int, password: String, timeoutSec: Long, params: String = "") {
-    return sync(from, to, port, password, timeoutSec, "rv$params")
-  }
-
   fun sync(from: String, to: String, port: Int, password: String, timeoutSec: Long, params: String) {
-    val args = listOf("rsync", "-$params", "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
+    val args = listOf("rsync", params, "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
     val pb = ProcessBuilder(args)
             .directory(Files.createTempDirectory("rsync_dir").toFile())
             .redirectError(ProcessBuilder.Redirect.PIPE)
