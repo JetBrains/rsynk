@@ -2,6 +2,7 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.RsyncCommand
 import jetbrains.rsynk.command.SSHCommand
+import jetbrains.rsynk.fs.Modules
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment
@@ -13,7 +14,7 @@ import java.util.TreeMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
+class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandFactory {
 
   private val LOG = LoggerFactory.getLogger(javaClass)
   private val commands = TreeMap<String, SSHCommand>()
@@ -24,7 +25,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
   })
 
   init {
-    commands["rsync"] = RsyncCommand()
+    commands["rsync"] = RsyncCommand(modules)
   }
 
   override fun createCommand(_args: String): Command {
@@ -72,7 +73,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
         }
         runningCommand = threadPool.submit {
           try {
-            resolvedCommand.execute(args.drop(1), stdin, stdout, stderr)
+            resolvedCommand.execute(args, env.env, stdin, stdout, stderr)
           } catch(t: Throwable) {
             LOG.error("executing ssh '$args' command failed: ${t.message}", t)
           } finally {
