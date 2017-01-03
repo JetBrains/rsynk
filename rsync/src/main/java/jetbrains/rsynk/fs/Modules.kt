@@ -8,7 +8,7 @@ class Modules {
   private val modules = HashMap<String, Module>()
 
   fun register(module: Module) {
-    log.info("New fs registered: $module")
+    log.info("New module registered: $module")
     modules[module.name] = module
   }
 
