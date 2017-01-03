@@ -20,6 +20,14 @@ class Rsynk(val port: Int,
     server = SSHServer(settings, ExplicitCommandFactory(settings, modules), SSHSessionFactory())
   }
 
+  fun start() = server.start()
+
+  fun stop() = server.stop()
+
+  fun addModule(name: String, root: File) {
+    modules.register(Module(name, root))
+  }
+
   private fun createSettings(): SSHSettings {
     val that: Rsynk = this
     return object : SSHSettings {
@@ -32,13 +40,5 @@ class Rsynk(val port: Int,
       override val applicationNameNoSpaces: String = "Rsynk"
     }
   }
-
-  fun start() = server.start()
-
-  fun addModule(name: String, root: File) {
-    modules.register(Module(name, root))
-  }
-
-  fun stop() = server.stop()
 }
 
