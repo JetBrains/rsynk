@@ -73,7 +73,7 @@ class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandF
         }
         runningCommand = threadPool.submit {
           try {
-            resolvedCommand.execute(args, env.env, stdin, stdout, stderr)
+            resolvedCommand.execute(args, stdin, stdout, stderr)
           } catch(t: Throwable) {
             LOG.error("executing ssh '$args' command failed: ${t.message}", t)
           } finally {
