@@ -4,5 +4,5 @@ fun String.dropNewLine(): String {
   if (!this.endsWith('\n')) {
     throw Error("Line $this not ends with new line")
   }
-  return this.drop(1)
+  return this.dropLast(1)
 }
