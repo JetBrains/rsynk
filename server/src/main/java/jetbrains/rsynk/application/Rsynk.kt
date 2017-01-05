@@ -24,8 +24,8 @@ class Rsynk(val port: Int,
 
   fun stop() = server.stop()
 
-  fun addModule(name: String, root: File) {
-    modules.register(Module(name, root))
+  fun addModule(name: String, root: File, comment: String) {
+    modules.register(Module(name, root, comment))
   }
 
   private fun createSettings(): SSHSettings {

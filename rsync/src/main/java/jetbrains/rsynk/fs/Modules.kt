@@ -14,6 +14,8 @@ class Modules {
 
   fun find(name: String): Module? = modules[name]
 
+  fun listModules(): List<Module> = modules.values.toList()
+
   fun remove(name: String): Boolean {
     return modules.remove(name) != null
   }
