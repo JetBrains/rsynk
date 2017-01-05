@@ -2,6 +2,7 @@ package jetbrains.rsynk.command
 
 import jetbrains.rsynk.errors.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
+import jetbrains.rsynk.extensions.dropNullTerminal
 import jetbrains.rsynk.fs.Modules
 import jetbrains.rsynk.protocol.ProtocolVersionParser
 import org.slf4j.LoggerFactory
@@ -13,14 +14,14 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
 
   override fun execute(args: List<String>, input: InputStream, output: OutputStream, error: OutputStream) {
     /* protocol negotiation */
-    val clientProtocolVersion = String(read(input)).dropNewLine()
+    val clientProtocolVersion = String(read(input)).dropNullTerminal().dropNewLine()
     log.debug("Client protocol version=$clientProtocolVersion")
     val protocolVersionParser = ProtocolVersionParser(clientProtocolVersion)
     log.debug("Protocol version ${protocolVersionParser.version} is set for the session")
     write(protocolVersionParser.response.toByteArray(), output)
 
     /* module negotiation */
-    val requestedModule = String(read(input)).dropNewLine()
+    val requestedModule = String(read(input)).dropNullTerminal().dropNewLine()
     val module = modules.find(requestedModule) ?: ModuleNotFoundException("Module $requestedModule is not registered")
     log.debug("Requested module=$module")
   }
