@@ -1,7 +1,6 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.errors.ModuleNotFoundException
-import jetbrains.rsynk.errors.RsynkException
+import jetbrains.rsynk.exit.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
 import jetbrains.rsynk.extensions.dropNullTerminal
 import jetbrains.rsynk.fs.Modules
@@ -18,13 +17,7 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     /* protocol negotiation */
     val clientProtocolVersion = String(read(input)).dropNullTerminal().dropNewLine()
     log.debug("Client protocol version=$clientProtocolVersion")
-    val protocolVersionParser = try {
-      ProtocolVersionParser(clientProtocolVersion)
-    } catch (e: RsynkException) {
-      log.debug(e.message, e)
-      error.write(e.message?.toByteArray())
-      return
-    }
+    val protocolVersionParser = ProtocolVersionParser(clientProtocolVersion)
     log.debug("Protocol version ${protocolVersionParser.version} is set for the session")
     write(protocolVersionParser.response.toByteArray(), output)
 

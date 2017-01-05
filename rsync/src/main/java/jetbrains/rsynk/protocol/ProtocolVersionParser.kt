@@ -1,7 +1,7 @@
 package jetbrains.rsynk.protocol
 
-import jetbrains.rsynk.errors.ProtocolException
-import jetbrains.rsynk.errors.UnsupportedProtocolException
+import jetbrains.rsynk.exit.ProtocolException
+import jetbrains.rsynk.exit.UnsupportedProtocolException
 
 class ProtocolVersionParser(protocol: String) {
 

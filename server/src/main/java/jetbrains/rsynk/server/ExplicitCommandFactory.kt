@@ -2,6 +2,7 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.RsyncCommand
 import jetbrains.rsynk.command.SSHCommand
+import jetbrains.rsynk.exit.RsynkException
 import jetbrains.rsynk.fs.Modules
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -74,10 +75,20 @@ class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandF
         runningCommand = threadPool.submit {
           try {
             resolvedCommand.execute(args, stdin, stdout, stderr)
-          } catch(t: Throwable) {
-            LOG.error("executing ssh '$args' command failed: ${t.message}", t)
-          } finally {
             exit(0)
+          } catch (e: RsynkException) {
+            val message = e.message
+            if (message != null) {
+              error?.write(message.toByteArray())
+            }
+            exit(e.exitCode)
+          } catch(t: Throwable) {
+            val message = t.message
+            if (message != null) {
+              error?.write(message.toByteArray())
+            }
+            LOG.error("executing ssh '$args' command failed: ${t.message}", t)
+            exit(1)
           }
         }
       }
