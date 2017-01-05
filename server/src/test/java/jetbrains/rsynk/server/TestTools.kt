@@ -45,7 +45,7 @@ object TestTools {
 }
 
 object Rsync {
-  fun sync(from: String, to: String, port: Int, password: String, timeoutSec: Long, params: String) {
+  fun sync(from: String, to: String, port: Int, password: String, timeoutSec: Long, params: String): String {
     val args = listOf("rsync", params, "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
     val pb = ProcessBuilder(args)
             .directory(Files.createTempDirectory("rsync_dir").toFile())
@@ -65,6 +65,9 @@ object Rsync {
             "stdout=${String(process.inputStream.readBytes())}\n" +
             "stderr=${String(process.errorStream.readBytes())}",
             0, process.exitValue())
+    val buffer = ByteArray(process.inputStream.available())
+    process.inputStream.read(buffer)
+    return String(buffer)
   }
 }
 
