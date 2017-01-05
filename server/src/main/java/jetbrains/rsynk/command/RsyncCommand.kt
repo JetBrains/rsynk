@@ -1,5 +1,6 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.exit.ActionNotSupportedException
 import jetbrains.rsynk.exit.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
 import jetbrains.rsynk.extensions.dropNullTerminal
@@ -14,6 +15,9 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
   private val log = LoggerFactory.getLogger(javaClass)
 
   override fun execute(args: List<String>, input: InputStream, output: OutputStream, error: OutputStream) {
+
+    assertCommandSupported(args)
+
     /* protocol negotiation */
     val clientProtocolVersion = String(read(input)).dropNullTerminal().dropNewLine()
     log.debug("Client protocol version=$clientProtocolVersion")
@@ -31,6 +35,14 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     val module = modules.find(requestedModule) ?: ModuleNotFoundException("Module $requestedModule is not registered")
     log.debug("Requested module=$module")
   }
+
+  private fun assertCommandSupported(args: List<String>) {
+    if (args[0] == "rsync" && args[1] == "--server" && args[2] == "--daemon" && args[3] == ".") {
+      return
+    }
+    throw ActionNotSupportedException("Command $args is not supported")
+  }
+
 
   private fun read(stream: InputStream): ByteArray {
     val available = stream.available()

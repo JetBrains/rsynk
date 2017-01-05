@@ -54,7 +54,7 @@ fun main(args: Array<String>) {
     list.add(String(version))
 
     // > write desired module
-    socket.outputStream.write("sanbox\n".toByteArray())
+    socket.outputStream.write("\n".toByteArray())
 
     // < authentication request
     val authRequest = read(socket.inputStream)

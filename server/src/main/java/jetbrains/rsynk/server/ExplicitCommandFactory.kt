@@ -17,7 +17,7 @@ import java.util.concurrent.Future
 
 class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandFactory {
 
-  private val LOG = LoggerFactory.getLogger(javaClass)
+  private val log = LoggerFactory.getLogger(javaClass)
   private val commands = TreeMap<String, SSHCommand>()
   private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
     val thread = Thread(runnable, "ssh-command")
@@ -41,7 +41,7 @@ class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandF
       if (callback != null) {
         callback.onExit(code, message)
       } else {
-        LOG.error("exit callback for $_args is null")
+        log.error("exit callback for $_args is null")
       }
     }
 
@@ -77,17 +77,18 @@ class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandF
             resolvedCommand.execute(args, stdin, stdout, stderr)
             exit(0)
           } catch (e: RsynkException) {
+            log.debug("Command $args failed: ${e.message}", e)
             val message = e.message
             if (message != null) {
               error?.write(message.toByteArray())
             }
             exit(e.exitCode)
           } catch(t: Throwable) {
+            log.error("Command $args failed: ${t.message}", t)
             val message = t.message
             if (message != null) {
               error?.write(message.toByteArray())
             }
-            LOG.error("executing ssh '$args' command failed: ${t.message}", t)
             exit(1)
           }
         }
@@ -97,7 +98,7 @@ class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandF
         try {
           runningCommand?.cancel(true)
         } catch (t: Throwable) {
-          LOG.error("cannot cancel running command: ${t.message}", t)
+          log.error("cannot cancel running command: ${t.message}", t)
         }
       }
 
