@@ -1,6 +1,7 @@
 package jetbrains.rsynk.protocol
 
 import jetbrains.rsynk.errors.ProtocolException
+import jetbrains.rsynk.errors.UnsupportedProtocolException
 
 class ProtocolVersionParser(protocol: String) {
 
@@ -31,6 +32,9 @@ class ProtocolVersionParser(protocol: String) {
       response = Constants.RSYNCD + "29" + "\n"
     } else {
       response = Constants.RSYNCD + "30.0" + "\n"
+    }
+    if (version < 26) {
+      throw UnsupportedProtocolException("Protocols older than 26 (client has $version) is not supported")
     }
   }
 }
