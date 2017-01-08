@@ -57,7 +57,7 @@ class RsyncIntegrationTest {
   }
 
   @Test
-  fun directory_transfer_test() {
+  fun module_transfer_test() {
     val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val firstSource = File(moduleRoot, "first.txt")
     val secondSource = File(moduleRoot, "second.txt")
@@ -66,7 +66,7 @@ class RsyncIntegrationTest {
     val module = "module-${id.incrementAndGet()}"
     rsynk.addModule(module, moduleRoot, "$module module")
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-    Rsync.sync("rsync://localhost:$module", destinationDir.absolutePath + "/", rsynk.port, password, 10, "-rv")
+    Rsync.sync("rsync://localhost:$module/", destinationDir.absolutePath + "/", rsynk.port, password, 10, "-rv")
     Assert.assertTrue(destinationDir.listFiles().any { it.name == firstSource.name })
     Assert.assertTrue(destinationDir.listFiles().any { it.name == secondSource.name })
     destinationDir.listFiles().forEach { file ->
@@ -75,7 +75,7 @@ class RsyncIntegrationTest {
   }
 
   @Test
-  fun directory_file_deletion_test() {
+  fun file_deletion_test() {
     val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val firstSource = File(moduleRoot, "first.txt")
     firstSource.writeText(TestTools.loremIpsum)
@@ -95,7 +95,7 @@ class RsyncIntegrationTest {
     val modules = listOf(Files.createTempDirectory("mod-${id.incrementAndGet()}"),
             Files.createTempDirectory("mod-${id.incrementAndGet()}")).map(Path::toFile)
     modules.forEach { rsynk.addModule(it.name, it, "${it.name} module") }
-    val commandOutput = Rsync.sync("rsync://localhost:", "", rsynk.port, password, 100500, "-rv")
+    val commandOutput = Rsync.sync("rsync://localhost", "", rsynk.port, password, 100, "-rv")
     modules.forEach {
       Assert.assertTrue(commandOutput.contains(it.name))
     }
