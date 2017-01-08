@@ -1,7 +1,7 @@
 package jetbrains.rsynk.application
 
-import jetbrains.rsynk.fs.Module
-import jetbrains.rsynk.fs.Modules
+import jetbrains.rsynk.files.Module
+import jetbrains.rsynk.files.Modules
 import jetbrains.rsynk.server.*
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 import java.io.File

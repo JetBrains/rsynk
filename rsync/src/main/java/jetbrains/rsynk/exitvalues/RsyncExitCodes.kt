@@ -1,4 +1,4 @@
-package jetbrains.rsynk.exit
+package jetbrains.rsynk.exitvalues
 
 object RsyncExitCodes {
   val SUCCESS = 0

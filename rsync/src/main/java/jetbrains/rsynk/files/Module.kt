@@ -1,4 +1,4 @@
-package jetbrains.rsynk.fs
+package jetbrains.rsynk.files
 
 import java.io.File
 

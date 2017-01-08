@@ -1,11 +1,11 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.exit.ActionNotSupportedException
-import jetbrains.rsynk.exit.ModuleNotFoundException
+import jetbrains.rsynk.exitvalues.ActionNotSupportedException
+import jetbrains.rsynk.exitvalues.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
 import jetbrains.rsynk.extensions.dropNullTerminal
-import jetbrains.rsynk.fs.Module
-import jetbrains.rsynk.fs.Modules
+import jetbrains.rsynk.files.Module
+import jetbrains.rsynk.files.Modules
 import jetbrains.rsynk.protocol.Constants
 import jetbrains.rsynk.protocol.ListAllModules
 import jetbrains.rsynk.protocol.ProtocolVersionParser

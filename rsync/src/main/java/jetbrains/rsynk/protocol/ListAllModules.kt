@@ -1,6 +1,6 @@
 package jetbrains.rsynk.protocol
 
-import jetbrains.rsynk.fs.Modules
+import jetbrains.rsynk.files.Modules
 
 class ListAllModules(private val modules: Modules) {
   val response: String

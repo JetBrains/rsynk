@@ -2,8 +2,8 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.RsyncCommand
 import jetbrains.rsynk.command.SSHCommand
-import jetbrains.rsynk.exit.RsynkException
-import jetbrains.rsynk.fs.Modules
+import jetbrains.rsynk.exitvalues.RsynkException
+import jetbrains.rsynk.files.Modules
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment

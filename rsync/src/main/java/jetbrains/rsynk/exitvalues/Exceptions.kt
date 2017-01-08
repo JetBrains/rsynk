@@ -1,9 +1,9 @@
-package jetbrains.rsynk.exit
+package jetbrains.rsynk.exitvalues
 
-import jetbrains.rsynk.exit.RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM
-import jetbrains.rsynk.exit.RsyncExitCodes.ERROR_SELECTING_INPUT_FILES
-import jetbrains.rsynk.exit.RsyncExitCodes.PROTOCOL_INCOMPATIBILITY
-import jetbrains.rsynk.exit.RsyncExitCodes.REQUESTED_ACTION_NOT_SUPPORTED
+import jetbrains.rsynk.exitvalues.RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM
+import jetbrains.rsynk.exitvalues.RsyncExitCodes.ERROR_SELECTING_INPUT_FILES
+import jetbrains.rsynk.exitvalues.RsyncExitCodes.PROTOCOL_INCOMPATIBILITY
+import jetbrains.rsynk.exitvalues.RsyncExitCodes.REQUESTED_ACTION_NOT_SUPPORTED
 
 open class RsynkException(message: String, val exitCode: Int) : RuntimeException(message)
 
