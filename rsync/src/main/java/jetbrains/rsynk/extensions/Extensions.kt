@@ -1,16 +1,19 @@
 package jetbrains.rsynk.extensions
 
 fun String.dropNewLine(): String {
-  if (!this.endsWith('\n')) {
+  if (!endsWith('\n')) {
     throw Error("String not ends with new line symbol: $this")
   }
-  return this.dropLast(1)
+  return dropLast(1)
 }
 
+
+fun String.endsWithNullTerminal(): Boolean = endsWith('\u0000')
+
 fun String.dropNullTerminal(): String {
-  if (!this.endsWith('\u0000')) {
+  if (!endsWithNullTerminal()) {
     throw Error("String not ends with null terminal symbol: $this")
   }
-  return this.dropLast(1)
+  return dropLast(1)
 }
 
