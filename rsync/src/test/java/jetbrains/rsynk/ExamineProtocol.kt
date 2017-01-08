@@ -24,26 +24,31 @@ fun read(stream: InputStream): ByteArray {
 
 /*
  rsync cmd
-    /usr/local/bin/rsync --server --daemon --port=10023
- rsyncd.conf=
+    sudo rsync --daemon --port=11112
+
+ rsyncd.conf
     lock file = /usr/local/var/rsync.lock
     log file = /usr/local/var/log/rsyncd.log
     pid file = /usr/local/var/run/rsyncd.pid
 
-    [sanbox]
+    [sandbox]
         path = /Users/jetbrains/Desktop/sandbox
         comment = The documents folder of Juan
         uid = jetbrains
-        gid = jetbrains
         read only = no
         list = yes
-        auth users = rsyncclient
-        secrets file = /usr/local/etc/rsyncd.secrets
+
+    [papers]
+        path = /Users/jetbrains/Desktop/Papers
+        comment = phd thesises
+        uid = jetbrains
+        read only = no
+        list = yes
 */
 
 fun main(args: Array<String>) {
   val list = ArrayList<String>()
-  Socket("localhost", 10023).use { socket ->
+  Socket("localhost", 11112).use { socket ->
 
     // > write version
     socket.outputStream.write("@RSYNCD: 31.0\n".toByteArray())
@@ -54,19 +59,16 @@ fun main(args: Array<String>) {
     list.add(String(version))
 
     // > write desired module
-    socket.outputStream.write("\n".toByteArray())
-
-    // < authentication request
-    val authRequest = read(socket.inputStream)
-    list.add(String(authRequest))
-
-    // > authentication response
-    socket.outputStream.write("haha\n".toByteArray())
+    socket.outputStream.write("sandbox\n".toByteArray())
     socket.outputStream.flush()
 
-    // < ?
-    val next = read(socket.inputStream)
-    list.add(String(next))
+    // < authentication
+    val authChallenge = String(read(socket.inputStream))
+    list.add(authChallenge)
+
+    // > write options
+    val whatIsNext = String(read(socket.inputStream))
+    list.add(whatIsNext)
   }
 
   println(list)
