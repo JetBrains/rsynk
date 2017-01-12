@@ -3,12 +3,11 @@ package jetbrains.rsynk.command
 import jetbrains.rsynk.exitvalues.ActionNotSupportedException
 import jetbrains.rsynk.exitvalues.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
-import jetbrains.rsynk.extensions.dropNullTerminal
-import jetbrains.rsynk.files.Module
 import jetbrains.rsynk.files.Modules
 import jetbrains.rsynk.protocol.Constants
 import jetbrains.rsynk.protocol.ListAllModules
 import jetbrains.rsynk.protocol.ProtocolVersionParser
+import jetbrains.rsynk.protocol.RequestArgsParser
 import org.slf4j.LoggerFactory
 import java.io.*
 
@@ -21,14 +20,14 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     assertCommandSupported(args)
 
     /* protocol negotiation phase */
-    val clientProtocolVersion = String(read(input)).dropNullTerminal().dropNewLine()
+    val clientProtocolVersion = String(read(input)).dropNewLine()
     log.debug("Client protocol version=$clientProtocolVersion")
     val protocolVersionParser = ProtocolVersionParser(clientProtocolVersion)
     log.debug("Protocol version ${protocolVersionParser.version} is set for the session")
     write(protocolVersionParser.response.toByteArray(), output)
 
     /* module negotiation phase */
-    val requestedModule = String(read(input)).dropNullTerminal().dropNewLine()
+    val requestedModule = String(read(input)).dropNewLine()
     if (requestedModule == "") {
       log.debug("Request: list all modules")
       write(ListAllModules(modules).response.toByteArray(), output)
@@ -44,12 +43,8 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     /* authentication phase */
     write("${Constants.RSYNCD_OK}\n".toByteArray(), output)
 
-    /* sending files phase */
-    sendFiles(module, input, output)
-  }
-
-  private fun sendFiles(module: Module, input: InputStream, output: OutputStream) {
-
+    /* reading args phase */
+    val commandArguments = RequestArgsParser(String(read(input)), protocolVersionParser.version)
   }
 
   private fun assertCommandSupported(args: List<String>) {
@@ -67,7 +62,7 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     }
     val bytes = ByteArray(available)
     val read = stream.read(bytes)
-    if (read <= available) {
+    if (read < available) {
       return bytes.sliceArray(0..read)
     }
     return bytes
