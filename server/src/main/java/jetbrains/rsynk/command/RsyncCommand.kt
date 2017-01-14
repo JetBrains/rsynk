@@ -41,7 +41,7 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     write("${Constants.RSYNCD_OK}\n".toByteArray(), output)
 
     /* reading args phase */
-    val request = RequestParser(String(read(input)), protocolVersionParser.protocolVersion)
+    val request = RequestParser(String(read(input)))
 
     /*  protocol setup phase */
     write(SetupProtocolProcedure(request.options).response.toByteArray(), output)
