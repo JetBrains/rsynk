@@ -4,10 +4,7 @@ import jetbrains.rsynk.exitvalues.ActionNotSupportedException
 import jetbrains.rsynk.exitvalues.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
 import jetbrains.rsynk.files.Modules
-import jetbrains.rsynk.protocol.Constants
-import jetbrains.rsynk.protocol.ListAllModules
-import jetbrains.rsynk.protocol.ProtocolVersionParser
-import jetbrains.rsynk.protocol.RequestArgsParser
+import jetbrains.rsynk.protocol.*
 import org.slf4j.LoggerFactory
 import java.io.*
 
@@ -23,14 +20,14 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     val clientProtocolVersion = String(read(input)).dropNewLine()
     log.debug("Client protocol version=$clientProtocolVersion")
     val protocolVersionParser = ProtocolVersionParser(clientProtocolVersion)
-    log.debug("Protocol version ${protocolVersionParser.version} is set for the session")
-    write(protocolVersionParser.response.toByteArray(), output)
+    log.debug("Protocol version ${protocolVersionParser.protocolVersion} is set for the session")
+    write(protocolVersionParser.rsyncFormattedProtocolVersion.toByteArray(), output)
 
     /* module negotiation phase */
     val requestedModule = String(read(input)).dropNewLine()
     if (requestedModule == "") {
       log.debug("Request: list all modules")
-      write(ListAllModules(modules).response.toByteArray(), output)
+      write(ListAllModulesProcedure(modules).response.toByteArray(), output)
       return
     }
     val module = modules.find(requestedModule)
@@ -44,7 +41,10 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     write("${Constants.RSYNCD_OK}\n".toByteArray(), output)
 
     /* reading args phase */
-    val commandArguments = RequestArgsParser(String(read(input)), protocolVersionParser.version)
+    val request = RequestParser(String(read(input)), protocolVersionParser.protocolVersion)
+
+    /*  protocol setup phase */
+    write(SetupProtocolProcedure(request.options).response.toByteArray(), output)
   }
 
   private fun assertCommandSupported(args: List<String>) {
