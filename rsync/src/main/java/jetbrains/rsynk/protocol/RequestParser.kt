@@ -4,9 +4,8 @@ import jetbrains.rsynk.exitvalues.ProtocolException
 import java.util.*
 
 
-class RequestParser(line: String, version: Int) {
+class RequestParser(line: String) {
 
-  val args: List<String>
   val options: Set<Option>
   val files: List<String>
 
@@ -15,21 +14,21 @@ class RequestParser(line: String, version: Int) {
     val dot = "."
     val lineElements: Queue<String> = LinkedList(line.split(separator))
 
-    /* geting cmd args */
-    val args = ArrayList<String>()
+    /* getting long-named request options */
+    val longNamedOptions = HashSet<Option>()
     while (lineElements.peek()?.startsWith("--") ?: false) {
-      val e = lineElements.poll() ?: break
-      args.add(e)
+      val e = lineElements.poll()?.replace("--", "") ?: throw Error("Sequential queue.peek() and queue.poll() returned different values")
+      val option = Option.find(e) ?: throw ProtocolException("Got unknown option '$e'")
+      longNamedOptions.add(option)
     }
-    this.args = args
 
-    /* getting request options */
+    /* getting short-named request options */
     val optionsPack = lineElements.poll()
     if (optionsPack == null || !optionsPack.startsWith("-e.")) {
       throw ProtocolException("Expected options starting with '-e' after args, but got $optionsPack. Full line: $line")
     }
     val bareOptions = optionsPack.drop(3)
-    options = parseOptions(bareOptions)
+    options = longNamedOptions + parseShortNamedOptions(bareOptions)
 
     /* skipping a dot */
     val dotWithUnknownPurpose = lineElements.poll()
@@ -52,14 +51,10 @@ class RequestParser(line: String, version: Int) {
     }
   }
 
-  fun parseOptions(options: String): Set<Option> {
+  fun parseShortNamedOptions(options: String): Set<Option> {
     val result = LinkedHashSet<Option>()
     for (option in options) {
-      val parsedOption = Option.values().firstOrNull { it.textValue == option.toString() }
-      @Suppress("FoldInitializerAndIfToElvis") // avoid long line
-      if (parsedOption == null) {
-        throw ProtocolException("Got unknown option '$option'")
-      }
+      val parsedOption = Option.find(option.toString()) ?: throw ProtocolException("Got unknown option '$option'")
       result.add(parsedOption)
     }
     return result
