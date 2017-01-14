@@ -12,7 +12,12 @@ class RequestParser(line: String) {
   init {
     val separator = '\u0000'
     val dot = "."
-    val lineElements: Queue<String> = LinkedList(line.split(separator))
+    val lineElements: Queue<String> = LinkedList(
+            if (line.endsWith(separator)) {
+              line.dropLast(1).split(separator)
+            } else {
+              line.split(separator)
+            })
 
     /* getting long-named request options */
     val longNamedOptions = HashSet<Option>()
@@ -37,7 +42,7 @@ class RequestParser(line: String) {
     }
 
     val files = ArrayList<String>()
-    /* getting files list*/
+    /* getting file list*/
     while (lineElements.isNotEmpty()) {
       val file = lineElements.poll()
       if (file != null) {
