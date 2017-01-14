@@ -31,7 +31,7 @@ class RequestParser(line: String, version: Int) {
     val bareOptions = optionsPack.drop(3)
     options = parseOptions(bareOptions)
 
-    /* skip a dot */
+    /* skipping a dot */
     val dotWithUnknownPurpose = lineElements.poll()
     if (dot != dotWithUnknownPurpose) {
       throw ProtocolException("Expected '.' after options list but got $dotWithUnknownPurpose. Full line $line")
