@@ -2,7 +2,7 @@ package jetbrains.rsynk.protocol
 
 import jetbrains.rsynk.files.Modules
 
-class ListAllModules(private val modules: Modules) {
+class ListAllModulesProcedure(private val modules: Modules) {
   val response: String
     get() {
       val response = StringBuilder()
