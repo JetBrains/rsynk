@@ -7,7 +7,7 @@ import java.security.SecureRandom
 class FinishProtocolSetupProcedure(options: Set<Option>, protocolVersion: Int) {
 
   val flags: Byte?
-  val checksumSeed: Int = SecureRandom().nextInt()
+  val checksumSeed: Int = Math.abs(SecureRandom().nextInt())
   val response: ByteArray
 
 
