@@ -45,10 +45,7 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
 
     /* finishing protocol setup phase */
     val protocolSetup = FinishProtocolSetupProcedure(request.options, protocolVersionParser.protocolVersion)
-    if (protocolSetup.flags != null) {
-      write(protocolSetup.flags, output)
-    }
-    write(protocolSetup.checksumSeed, output)
+    write(protocolSetup.response, output)
   }
 
   private fun assertCommandSupported(args: List<String>) {
