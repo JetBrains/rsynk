@@ -12,13 +12,8 @@ class RequestParser(line: String) {
   init {
     val separator = '\u0000'
     val dot = "."
-    val lineElements: Queue<String> = LinkedList(
-            if (line.endsWith(separator)) {
-              line.dropLast(1).split(separator)
-            } else {
-              line.split(separator)
-            })
 
+    val lineElements: Queue<String> = LinkedList(line.dropLastWhile { it == separator }.split(separator))
     /* getting long-named request options */
     val longNamedOptions = HashSet<Option>()
     while (lineElements.peek()?.startsWith("--") ?: false) {
