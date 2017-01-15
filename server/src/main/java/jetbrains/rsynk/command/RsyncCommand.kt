@@ -40,11 +40,15 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     /* authentication phase */
     write("${Constants.RSYNCD_OK}\n".toByteArray(), output)
 
-    /* reading args phase */
+    /* request reading phase */
     val request = RequestParser(String(read(input)))
 
-    /*  protocol setup phase */
-    write(SetupProtocolProcedure(request.options).response.toByteArray(), output)
+    /* finishing protocol setup phase */
+    val protocolSetup = FinishProtocolSetupProcedure(request.options, protocolVersionParser.protocolVersion)
+    if (protocolSetup.flags != null) {
+      write(protocolSetup.flags, output)
+    }
+    write(protocolSetup.checksumSeed, output)
   }
 
   private fun assertCommandSupported(args: List<String>) {
