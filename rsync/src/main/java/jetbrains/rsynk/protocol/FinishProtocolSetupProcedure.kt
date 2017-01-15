@@ -15,7 +15,7 @@ class FinishProtocolSetupProcedure(options: Set<Option>, protocolVersion: Int) {
     checkOptionsSupporting(options, protocolVersion)
     val checksumSeedBytes = ByteBuffer.allocate(4).putInt(checksumSeed).array()
 
-    /* compat_flags required by 30 and newer */
+    /* compat_flags required by protocol 30 and newer */
     if (protocolVersion >= 30) {
       flags = encodeCompatFlags(options)
       response = byteArrayOf(flags) + checksumSeedBytes
