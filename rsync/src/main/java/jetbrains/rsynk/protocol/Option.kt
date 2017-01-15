@@ -6,6 +6,7 @@ enum class Option(val textValue: String) {
   COMPARE_DEST("compare_dest"),
   COPY_LINKS("L"),
   CVS_EXCLUDE("C"),
+  ICONV("iconv"),
   ITEMSIZE_CHANGES("i"),
   INC_RECURSIVE("inc-recursive"),
   INPLACE("inplace"),

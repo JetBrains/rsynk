@@ -59,23 +59,23 @@ class FinishProtocolSetupProcedure(options: Set<Option>, protocolVersion: Int) {
     if (options.contains(Option.INC_RECURSIVE)) {
       flags = 1
     }
-    //TODO("Skipped some conditions depends on #ifdef which are defined in configure.sh")
-    /*
-      #ifdef CAN_SET_SYMLINK_TIMES
-			compat_flags |= CF_SYMLINK_TIMES;
-      #endif
-      #ifdef ICONV_OPTION
-			compat_flags |= CF_SYMLINK_ICONV;
-      #endif
-     */
+    if (false) {
+      // TODO: this is CAN_SET_SYMLINKS option
+      // TODO: which is determined by rsync compilation flags
+      // TODO: perhaps it should to be always set
+      flags = flags.or(2)   // 1<<1
+    }
+    if (options.contains(Option.ICONV)) {
+      flags = flags.or(4)   // 1<<2
+    }
     if (options.contains(Option.FILTER)) {
-      flags = flags.or(8) // 1<<3
+      flags = flags.or(8)   // 1<<3
     }
     if (options.contains(Option.ONE_FILE_SYSTEM)) {
-      flags = flags.or(16) // 1<<4
+      flags = flags.or(16)  // 1<<4
     }
     if (options.contains(Option.CVS_EXCLUDE)) {
-      flags = flags.or(32) //1<<5
+      flags = flags.or(32)  // 1<<5
     }
     return flags.toByte()
   }
