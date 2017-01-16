@@ -8,6 +8,7 @@ object Checksum {
    **/
   fun rollingChecksum(data: CharArray, begin: Int, end: Int): Long {
     var s1 = 0L
+    @Suppress("LoopToCallChain")
     for (i in begin..end) {
       s1 += data[i].toLong()
     }
@@ -27,15 +28,13 @@ object Checksum {
    *  @return md4 data[begin, end] (including bounds)
    */
   fun md4(data: CharArray, begin: Int, end: Int): Long {
-    throw Exception("not implemented")
+    TODO()
   }
 
   /**
    *  @return md5 data[begin, end] (including bounds)
    */
   fun md5(data: CharArray, begin: Int, end: Int): Long {
-    throw Exception("not implemented")
+    TODO()
   }
-
-
 }
