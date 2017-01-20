@@ -32,7 +32,7 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
       write(ListAllModulesProcedure(modules).response.toByteArray(), output)
       return
     }
-    val module = Module("sandbox", File("/Users/jetbrains/desktop/sandbox"),"dasdas")//modules.find(requestedModule)
+    val module = modules.find(requestedModule)
     if (module == null) {
       write("${Constants.ERROR}Unknown module $requestedModule".toByteArray(), output)
       throw ModuleNotFoundException("Unknown module $requestedModule")
@@ -76,7 +76,7 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     val bytes = ByteArray(available)
     val read = stream.read(bytes)
     if (read < available) {
-      return bytes.sliceArray(0..read)
+      return bytes.sliceArray(0..read - 1)
     }
     return bytes
   }
