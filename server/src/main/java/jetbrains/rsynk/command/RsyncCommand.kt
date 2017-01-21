@@ -3,12 +3,11 @@ package jetbrains.rsynk.command
 import jetbrains.rsynk.exitvalues.ActionNotSupportedException
 import jetbrains.rsynk.exitvalues.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
-import jetbrains.rsynk.files.Module
 import jetbrains.rsynk.files.Modules
+import jetbrains.rsynk.io.IOSession
 import jetbrains.rsynk.protocol.*
 import org.slf4j.LoggerFactory
 import java.io.*
-import java.nio.ByteBuffer
 
 class RsyncCommand(private val modules: Modules) : SSHCommand {
 
@@ -18,46 +17,44 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
 
     assertCommandSupported(args)
 
+    val io = IOSession(input, output)
+
   /* protocol negotiation phase */
-    val clientProtocolVersion = String(read(input)).dropNewLine()
+    val clientProtocolVersion = io.readString().dropNewLine()
     log.debug("Client protocol version=$clientProtocolVersion")
     val protocolVersionParser = ProtocolVersionParser(clientProtocolVersion)
     log.debug("Protocol version ${protocolVersionParser.protocolVersion} is set for the session")
-    write(protocolVersionParser.rsyncFormattedProtocolVersion.toByteArray(), output)
+    io.writeString(protocolVersionParser.rsyncFormattedProtocolVersion)
 
   /* module negotiation phase */
-    val requestedModule = String(read(input)).dropNewLine()
+    val requestedModule = io.readString().dropNewLine()
     if (requestedModule == "") {
       log.debug("Request: list all modules")
-      write(ListAllModulesProcedure(modules).response.toByteArray(), output)
+      io.writeString(ListAllModulesProcedure(modules).response)
       return
     }
     val module = modules.find(requestedModule)
     if (module == null) {
-      write("${Constants.ERROR}Unknown module $requestedModule".toByteArray(), output)
+      io.writeString("${Constants.ERROR}Unknown module $requestedModule")
       throw ModuleNotFoundException("Unknown module $requestedModule")
     }
     log.debug("Requested module=$module")
 
   /* authentication phase */
-    write("${Constants.RSYNCD_OK}\n".toByteArray(), output)
+    io.writeString("${Constants.RSYNCD_OK}\n")
 
   /* request reading phase */
-    val request = RequestParser(String(read(input)))
+    val requestStr = io.readString()
+    val request = RequestParser(requestStr)
 
   /* finishing protocol setup phase */
     val protocolSetup = FinishProtocolSetupProcedure(request.options, protocolVersionParser.protocolVersion)
-    write(protocolSetup.response, output)
+    protocolSetup.flags?.let { io.writeByte(it) }
+    io.writeInt(protocolSetup.checksumSeed)
 
   /* receiving filter list phase */
-    // not true: this is not len!
-    val len = ByteBuffer.wrap(read(input)).int
-    val values =  ByteArray(len)
-    val read = input.read(values)
-    print("read $read bytes!")
 
-
-    /* sending files phase */
+  /* sending files phase */
   }
 
   private fun assertCommandSupported(args: List<String>) {
@@ -65,24 +62,5 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
       return
     }
     throw ActionNotSupportedException("Command $args is not supported")
-  }
-
-
-  private fun read(stream: InputStream): ByteArray {
-    val available = stream.available()
-    if (available == 0) {
-      return byteArrayOf()
-    }
-    val bytes = ByteArray(available)
-    val read = stream.read(bytes)
-    if (read < available) {
-      return bytes.sliceArray(0..read - 1)
-    }
-    return bytes
-  }
-
-  private fun write(data: ByteArray, s: OutputStream) {
-    s.write(data)
-    s.flush()
   }
 }

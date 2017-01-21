@@ -1,27 +1,20 @@
 package jetbrains.rsynk.protocol
 
 import jetbrains.rsynk.exitvalues.ProtocolException
-import java.nio.ByteBuffer
 import java.security.SecureRandom
 
 class FinishProtocolSetupProcedure(options: Set<Option>, protocolVersion: Int) {
 
   val flags: Byte?
   val checksumSeed: Int = Math.abs(SecureRandom().nextInt())
-  val response: ByteArray
-
 
   init {
     checkOptionsSupporting(options, protocolVersion)
-    val checksumSeedBytes = ByteBuffer.allocate(4).putInt(checksumSeed).array()
-
     /* compat_flags required by protocol 30 and newer */
     if (protocolVersion >= 30) {
       flags = encodeCompatFlags(options)
-      response = byteArrayOf(flags) + checksumSeedBytes
     } else {
       flags = null
-      response = checksumSeedBytes
     }
   }
 
