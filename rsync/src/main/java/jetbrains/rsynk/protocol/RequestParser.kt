@@ -24,8 +24,8 @@ class RequestParser(line: String) {
 
     /* getting short-named request options */
     val optionsPack = lineElements.poll()
-    if (optionsPack == null || !optionsPack.startsWith("-e.")) {
-      throw ProtocolException("Expected options starting with '-e' after args, but got $optionsPack. Full line: $line")
+    if (optionsPack == null || !optionsPack.startsWith("-")) {
+      throw ProtocolException("Expected options starting with '-' after args, but got $optionsPack. Full line: $line")
     }
     val bareOptions = optionsPack.drop(3)
     options = longNamedOptions + parseShortNamedOptions(bareOptions)
