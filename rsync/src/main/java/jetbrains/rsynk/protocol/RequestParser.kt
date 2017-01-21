@@ -27,7 +27,7 @@ class RequestParser(line: String) {
     if (optionsPack == null || !optionsPack.startsWith("-")) {
       throw ProtocolException("Expected options starting with '-' after args, but got $optionsPack. Full line: $line")
     }
-    val bareOptions = optionsPack.drop(3)
+    val bareOptions = optionsPack.drop(1)
     options = longNamedOptions + parseShortNamedOptions(bareOptions)
 
     /* skipping a dot */
@@ -54,6 +54,9 @@ class RequestParser(line: String) {
   fun parseShortNamedOptions(options: String): Set<Option> {
     val result = LinkedHashSet<Option>()
     for (option in options) {
+      if (option == '.') {
+        continue
+      }
       val parsedOption = Option.find(option.toString()) ?: throw ProtocolException("Got unknown option '$option'")
       result.add(parsedOption)
     }
