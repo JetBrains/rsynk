@@ -49,7 +49,7 @@ class FinishProtocolSetupProcedure(options: Set<Option>, protocolVersion: Int) {
 
   private fun encodeCompatFlags(options: Set<Option>): Byte {
     var flags: Int = 0
-    if (options.contains(Option.INC_RECURSIVE)) {
+    if (options.contains(Option.INC_RECURSE)) {
       flags = 1
     }
     if (false) {

@@ -12,7 +12,7 @@ enum class Option(val textValue: String) {
   GROUP("g"),
   ICONV("iconv"),
   ITEMSIZE_CHANGES("i"),
-  INC_RECURSIVE("inc-recursive"),
+  INC_RECURSE("inc-recursive"),
   INPLACE("inplace"),
   LINKS("l"),
   ONE_FILE_SYSTEM("x"),
