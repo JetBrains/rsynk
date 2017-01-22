@@ -49,6 +49,12 @@ class IOSession(private val input: InputStream, private val output: OutputStream
     return bytes
   }
 
+  fun readBytes(size: Int): ByteArray {
+    val bytes = ByteArray(size)
+    readBytes(bytes, 0, size)
+    return bytes
+  }
+
   fun writeString(str: String) {
     val bytes = str.toByteArray()
     writeBytes(bytes, 0, bytes.size)

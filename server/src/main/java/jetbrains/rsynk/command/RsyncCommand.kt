@@ -18,7 +18,10 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     assertCommandSupported(args)
 
     val io = IOSession(input, output)
+    negotiate(io)
+  }
 
+  private fun negotiate(io: IOSession) {
   /* protocol negotiation phase */
     val clientProtocolVersion = io.readString().dropNewLine()
     log.debug("Client protocol version=$clientProtocolVersion")
@@ -53,7 +56,15 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
     io.writeInt(protocolSetup.checksumSeed)
 
   /* receiving filter list phase */
-
+    val filterListLength = io.readInt()
+    val filterListParser: FilterListParser? = if (filterListLength <= 4096) {
+      val filterList = io.readBytes(filterListLength)
+       FilterListParser(String(filterList))
+    } else {
+      // TODO: perhaps it's a way client say there's no filter list
+      log.error("Received filter list length is too big: $filterListLength, skip filter list reading")
+      null
+    }
   /* sending files phase */
   }
 
