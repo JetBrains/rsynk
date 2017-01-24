@@ -3,6 +3,7 @@ package jetbrains.rsynk.command
 import jetbrains.rsynk.exitvalues.ActionNotSupportedException
 import jetbrains.rsynk.exitvalues.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
+import jetbrains.rsynk.files.Module
 import jetbrains.rsynk.files.Modules
 import jetbrains.rsynk.io.IOSession
 import jetbrains.rsynk.protocol.*
@@ -66,10 +67,24 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
       null
     }
   /* sending files phase */
+    // is there something to read?
+    val filesSender = SendingFilesProcedure(module, request.options, protocolSetup.checksumSeed, protocolVersionParser.protocolVersion, request.files)
+    io.writeString(filesSender.filesList)
+    io.writeByte(0)
+    io.writeString(filesSender.files)
+
+  /* read final goodbye */
+    if (protocolVersionParser.protocolVersion >= 24) {
+      val finalGoodbye = if (protocolVersionParser.protocolVersion < 29) {
+         io.readInt()
+      } else {
+        TODO()
+      }
+    }
   }
 
   private fun assertCommandSupported(args: List<String>) {
-    if (args[0] == "rsync" && args[1] == "--server" && args[2] == "--daemon" && args[3] == ".") {
+    if (args.size == 4 && args[0] == "rsync" && args[1] == "--server" && args[2] == "--daemon" && args[3] == ".") {
       return
     }
     throw ActionNotSupportedException("Command $args is not supported")
