@@ -16,5 +16,8 @@ class UnsupportedProtocolException(message: String) :
 class ModuleNotFoundException(message: String) :
         RsynkException(message, ERROR_SELECTING_INPUT_FILES)
 
+class InvalidFileException(message: String) :
+        RsynkException(message, ERROR_SELECTING_INPUT_FILES)
+
 class ActionNotSupportedException(message: String) :
         RsynkException(message, REQUESTED_ACTION_NOT_SUPPORTED)

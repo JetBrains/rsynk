@@ -2,6 +2,7 @@ package jetbrains.rsynk.protocol
 
 enum class Option(val textValue: String) {
   APPEND("append"),
+  ARCHIVE("a"),
   COPY_DEST("copy_dest"),
   COMPARE_DEST("compare_dest"),
   COPY_LINKS("L"),
