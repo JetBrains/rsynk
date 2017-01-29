@@ -1,6 +1,7 @@
 package jetbrains.rsynk.command
 
 import jetbrains.rsynk.exitvalues.ActionNotSupportedException
+import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.ModuleNotFoundException
 import jetbrains.rsynk.extensions.dropNewLine
 import jetbrains.rsynk.files.Module
@@ -8,7 +9,10 @@ import jetbrains.rsynk.files.Modules
 import jetbrains.rsynk.io.IOSession
 import jetbrains.rsynk.protocol.*
 import org.slf4j.LoggerFactory
-import java.io.*
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.*
 
 class RsyncCommand(private val modules: Modules) : SSHCommand {
 
@@ -33,11 +37,11 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
   /* module negotiation phase */
     val requestedModule = io.readString().dropNewLine()
     if (requestedModule == "") {
-      log.debug("Request: list all modules")
+      log.debug("Requested all modules listing")
       io.writeString(ListAllModulesProcedure(modules).response)
       return
     }
-    val module = modules.find(requestedModule)
+    val module = Module("sandbox", File("/Users/voytovichs/desktop"), "ahsds")//modules.find(requestedModule)
     if (module == null) {
       io.writeString("${Constants.ERROR}Unknown module $requestedModule")
       throw ModuleNotFoundException("Unknown module $requestedModule")
@@ -62,16 +66,15 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
       val filterList = io.readBytes(filterListLength)
        FilterListParser(String(filterList))
     } else {
-      // TODO: perhaps it's a way client say there's no filter list
       log.error("Received filter list length is too big: $filterListLength, skip filter list reading")
       null
     }
-  /* sending files phase */
-    // is there something to read?
-    val filesSender = SendingFilesProcedure(module, request.options, protocolSetup.checksumSeed, protocolVersionParser.protocolVersion, request.files)
-    io.writeString(filesSender.filesList)
-    io.writeByte(0)
-    io.writeString(filesSender.files)
+  /* sending files list phase */
+
+    val files = findRequestedFiles(request.files, module)
+    val nextLine = io.readString() //Got \0 x4
+    TODO()
+    io.writeByte(0) // end of the file list transmission signal
 
   /* read final goodbye */
     if (protocolVersionParser.protocolVersion >= 24) {
@@ -81,6 +84,27 @@ class RsyncCommand(private val modules: Modules) : SSHCommand {
         TODO()
       }
     }
+  }
+
+  private fun findRequestedFiles(files: List<String>, module: Module): List<File> {
+    val result = ArrayList<File>()
+    for (path in files) {
+      if (!path.startsWith(module.name + "/")) {
+        throw InvalidFileException("File '$path' doesn't belong to requested '${module.name}' module")
+      }
+
+      val moduleRelativePath = path.substring(module.name.length + 1)
+      log.debug("Request file $moduleRelativePath from module $module")
+      val reconstructedGlobalPath = module.root.absolutePath + File.separator + moduleRelativePath.replace("/", File.separator)
+      val file = File(reconstructedGlobalPath)
+
+      if (!file.isFile) {
+        throw InvalidFileException("File '$moduleRelativePath' not found in '${module.name}' module")
+      }
+
+      result.add(file)
+    }
+    return result
   }
 
   private fun assertCommandSupported(args: List<String>) {
