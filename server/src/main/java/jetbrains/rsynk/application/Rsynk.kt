@@ -1,10 +1,7 @@
 package jetbrains.rsynk.application
 
-import jetbrains.rsynk.files.Module
-import jetbrains.rsynk.files.Modules
 import jetbrains.rsynk.server.*
 import org.apache.sshd.common.keyprovider.KeyPairProvider
-import java.io.File
 
 class Rsynk(val port: Int,
             val nioWorkers: Int,
@@ -12,21 +9,17 @@ class Rsynk(val port: Int,
             val idleConnectionTimeout: Int,
             val serverKeys: KeyPairProvider) {
 
-  private val modules: Modules = Modules()
   private val server: SSHServer
 
   init {
     val settings = createSettings()
-    server = SSHServer(settings, ExplicitCommandFactory(settings, modules), SSHSessionFactory())
+    server = SSHServer(settings, ExplicitCommandFactory(settings), SSHSessionFactory())
   }
 
   fun start() = server.start()
 
   fun stop() = server.stop()
 
-  fun addModule(name: String, root: File, comment: String) {
-    modules.register(Module(name, root, comment))
-  }
 
   private fun createSettings(): SSHSettings {
     val that: Rsynk = this

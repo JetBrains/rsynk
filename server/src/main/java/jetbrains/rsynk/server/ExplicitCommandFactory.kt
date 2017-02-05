@@ -3,7 +3,6 @@ package jetbrains.rsynk.server
 import jetbrains.rsynk.command.RsyncCommand
 import jetbrains.rsynk.command.SSHCommand
 import jetbrains.rsynk.exitvalues.RsynkException
-import jetbrains.rsynk.files.Modules
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment
@@ -11,11 +10,11 @@ import org.apache.sshd.server.ExitCallback
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.TreeMap
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandFactory {
+class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
 
   private val log = LoggerFactory.getLogger(javaClass)
   private val commands = TreeMap<String, SSHCommand>()
@@ -26,7 +25,7 @@ class ExplicitCommandFactory(settings: SSHSettings, modules: Modules) : CommandF
   })
 
   init {
-    commands["rsync"] = RsyncCommand(modules)
+    commands["rsync"] = RsyncCommand()
   }
 
   override fun createCommand(_args: String): Command {

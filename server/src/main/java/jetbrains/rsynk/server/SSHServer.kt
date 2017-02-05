@@ -2,7 +2,6 @@ package jetbrains.rsynk.server
 
 import org.apache.sshd.common.compression.BuiltinCompressions
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory
-import org.apache.sshd.common.keyprovider.KeyPairProvider
 import org.apache.sshd.server.SshServer
 import org.apache.sshd.server.auth.password.PasswordAuthenticator
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator

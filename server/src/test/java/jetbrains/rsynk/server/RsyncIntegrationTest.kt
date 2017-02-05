@@ -28,12 +28,16 @@ class RsyncIntegrationTest {
   }
 
   @Test
+  fun sleeeep() {
+    Thread.sleep(Long.MAX_VALUE)
+  }
+
+  @Test
   fun file_transfer_test() {
     val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val source = File(moduleRoot, "from.txt")
     source.writeText(TestTools.loremIpsum)
     val module = "module-${id.incrementAndGet()}"
-    rsynk.addModule(module, moduleRoot, "$module module")
 
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val destinationFile = File(destinationDir, "to.txt")
@@ -47,7 +51,6 @@ class RsyncIntegrationTest {
     val source = File(moduleRoot, "from.txt")
     source.writeText(TestTools.loremIpsum)
     val module = "module-${id.incrementAndGet()}"
-    rsynk.addModule(module, moduleRoot, "$module module")
 
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val destinationFile = File(destinationDir, "to.txt")
@@ -64,7 +67,6 @@ class RsyncIntegrationTest {
     firstSource.writeText(TestTools.loremIpsum)
     secondSource.writeText(TestTools.loremIpsum)
     val module = "module-${id.incrementAndGet()}"
-    rsynk.addModule(module, moduleRoot, "$module module")
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     Rsync.sync("rsync://localhost:$module/", destinationDir.absolutePath + "/", rsynk.port, password, 10, "-rv")
     Assert.assertTrue(destinationDir.listFiles().any { it.name == firstSource.name })
@@ -80,7 +82,6 @@ class RsyncIntegrationTest {
     val firstSource = File(moduleRoot, "first.txt")
     firstSource.writeText(TestTools.loremIpsum)
     val module = "module-${id.incrementAndGet()}"
-    rsynk.addModule(module, moduleRoot, "$module module")
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val firstDest = File(destinationDir, "first.txt")
     val secondDest = File(destinationDir, "second.txt")
@@ -94,7 +95,6 @@ class RsyncIntegrationTest {
   fun list_all_modules_test() {
     val modules = listOf(Files.createTempDirectory("mod-${id.incrementAndGet()}"),
             Files.createTempDirectory("mod-${id.incrementAndGet()}")).map(Path::toFile)
-    modules.forEach { rsynk.addModule(it.name, it, "${it.name} module") }
     val commandOutput = Rsync.sync("rsync://localhost", "", rsynk.port, password, 100, "-rv")
     modules.forEach {
       Assert.assertTrue(commandOutput.contains(it.name))
