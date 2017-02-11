@@ -1,7 +1,7 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.command.RsyncCommand
-import jetbrains.rsynk.command.SSHCommand
+import jetbrains.rsynk.command.CommandNotFoundException
+import jetbrains.rsynk.command.RsyncCommandsHolder
 import jetbrains.rsynk.exitvalues.RsynkException
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -10,23 +10,19 @@ import org.apache.sshd.server.ExitCallback
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
 
   private val log = LoggerFactory.getLogger(javaClass)
-  private val commands = TreeMap<String, SSHCommand>()
+
+  private val rsyncCommands = RsyncCommandsHolder()
   private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
     val thread = Thread(runnable, "ssh-command")
     thread.isDaemon = true
     return@threadFactory thread
   })
-
-  init {
-    commands["rsync"] = RsyncCommand()
-  }
 
   override fun createCommand(_args: String): Command {
     var exitCallback: ExitCallback? = null
@@ -51,9 +47,20 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
     return object : Command {
       override fun start(env: Environment) {
         val args = _args.split(" ")
-        val resolvedCommand = commands[args[0]]
-        if (resolvedCommand == null) {
-          exit(127, "Cannot find ssh command: ${args[0]}")
+        if (args.isEmpty()) {
+          exit(127, "No command received")
+        }
+        val commandsHolder = when (args.first()) {
+          "rsync" -> rsyncCommands
+          else -> {
+            exit(127, "Unknown command: $args")
+            return
+          }
+        }
+        val resolvedCommand = try {
+          commandsHolder.resolve(args)
+        } catch(e: CommandNotFoundException) {
+          exit(127, "Unknown command: ${e.message}")
           return
         }
         val stdin = input
