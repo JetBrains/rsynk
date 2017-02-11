@@ -4,8 +4,10 @@ import java.io.InputStream
 import java.io.OutputStream
 
 
-interface SSHCommand {
+interface Command {
   fun execute(args: List<String>, input: InputStream, output: OutputStream, error: OutputStream)
 }
 
-interface RsyncCommand: SSHCommand
+interface RsyncCommand : Command {
+  val args: List<String>
+}
