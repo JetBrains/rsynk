@@ -6,6 +6,8 @@ import java.io.OutputStream
 
 class RsyncServerSendCommand : RsyncCommand {
 
+  override val args: List<String> = listOf("rsync", "--server", "--sender")
+
   private val log = LoggerFactory.getLogger(javaClass)
 
   override fun execute(args: List<String>, input: InputStream, output: OutputStream, error: OutputStream) {
