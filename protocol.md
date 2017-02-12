@@ -12,7 +12,7 @@
 
     [byte], 
     [byte array], 
-    [int] (always 32 bit)
+    [int] (32 bit)
     
     
 # Other:
