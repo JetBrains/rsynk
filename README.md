@@ -1,1 +1,1 @@
-rsynk
+Rsync ssh server implementation
