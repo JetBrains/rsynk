@@ -22,13 +22,13 @@
 
 1. ### Setup protocol:
 
-    *Server set nonblocking io for both input and output streams*
+    *server set nonblocking io for both input and output streams*
     
     `S >> server protocol version [byte]`
     
     `S << client protocol version [byte]`
     
-    *Just main version, so for `31.0` `31` will be sent*
+    *only main part is written, so for `31.0` `31` will be sent*
     
       
      
