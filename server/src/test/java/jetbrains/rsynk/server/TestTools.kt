@@ -57,8 +57,8 @@ object RsyncCommandWrapper {
     process.outputStream.close()
     try {
       process.waitFor(timeoutSec, TimeUnit.SECONDS)
-    } catch(t: Throwable) {
-      throw AssertionError("rsync process is running longer than 10 sec", t)
+    } catch(e: InterruptedException) {
+      throw Error("Rsync process is running longer than $timeoutSec sec, aborting...", e)
     }
     Assert.assertEquals("Rsync exit code not equals to 0\n" +
             "args=$args\n" +
