@@ -6,7 +6,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
 class RsyncIntegrationTest {
@@ -25,11 +24,6 @@ class RsyncIntegrationTest {
     fun stopServer() = rsynk.stop()
 
     val id = AtomicInteger(0)
-  }
-
-  @Test
-  fun sleeeep() {
-    Thread.sleep(Long.MAX_VALUE)
   }
 
   @Test
@@ -60,23 +54,6 @@ class RsyncIntegrationTest {
   }
 
   @Test
-  fun module_transfer_test() {
-    val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-    val firstSource = File(moduleRoot, "first.txt")
-    val secondSource = File(moduleRoot, "second.txt")
-    firstSource.writeText(TestTools.loremIpsum)
-    secondSource.writeText(TestTools.loremIpsum)
-    val module = "module-${id.incrementAndGet()}"
-    val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-    Rsync.sync("rsync://localhost:$module/", destinationDir.absolutePath + "/", rsynk.port, password, 10, "-rv")
-    Assert.assertTrue(destinationDir.listFiles().any { it.name == firstSource.name })
-    Assert.assertTrue(destinationDir.listFiles().any { it.name == secondSource.name })
-    destinationDir.listFiles().forEach { file ->
-      Assert.assertEquals(TestTools.loremIpsum, file.readText())
-    }
-  }
-
-  @Test
   fun file_deletion_test() {
     val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val firstSource = File(moduleRoot, "first.txt")
@@ -89,15 +66,5 @@ class RsyncIntegrationTest {
     secondDest.writeText(TestTools.loremIpsum)
     Rsync.sync("rsync://localhost:$module", destinationDir.absolutePath + "/", rsynk.port, password, 10, "-rv")
     Assert.assertFalse(destinationDir.listFiles().any { it.name == "second.txt" })
-  }
-
-  @Test
-  fun list_all_modules_test() {
-    val modules = listOf(Files.createTempDirectory("mod-${id.incrementAndGet()}"),
-            Files.createTempDirectory("mod-${id.incrementAndGet()}")).map(Path::toFile)
-    val commandOutput = Rsync.sync("rsync://localhost", "", rsynk.port, password, 100, "-rv")
-    modules.forEach {
-      Assert.assertTrue(commandOutput.contains(it.name))
-    }
   }
 }
