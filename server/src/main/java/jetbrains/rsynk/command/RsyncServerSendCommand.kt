@@ -1,7 +1,10 @@
 package jetbrains.rsynk.command
 
 import jetbrains.rsynk.io.ReadingIO
+import jetbrains.rsynk.io.SynchronousReadingIO
+import jetbrains.rsynk.io.SynchronousWritingIO
 import jetbrains.rsynk.io.WritingIO
+import jetbrains.rsynk.protocol.RsyncConstants
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
@@ -12,20 +15,31 @@ class RsyncServerSendCommand : RsyncCommand {
 
   private val log = LoggerFactory.getLogger(javaClass)
 
+  /**
+   * Perform negotiation and send requested file.
+   * The behaviour is identical to {@code $rsync --server --sender}
+   * command execution
+   * */
   override fun execute(args: List<String>, input: InputStream, output: OutputStream, error: OutputStream) {
+    val read = SynchronousReadingIO(input)
+    val write = SynchronousWritingIO(output)
+    /* 1 */
+    val clientVersion = setupProtocol(read, write)
+    /* 2 */
 
   }
 
 
   /**
-   * Writes our (server) protocol version
-   * we implement and reads client version.
+   * Writes server protocol version
+   * and reads protocol client's version.
    *
    * @return client protocol version
    */
   private fun setupProtocol(readingIO: ReadingIO, writingIO: WritingIO): Int {
     /* must write version in first byte and keep the rest 3 zeros */
-    writingIO.writeBytes(byteArrayOf(31, 0, 0, 0), 0, 4)
+    val serverVersion = byteArrayOf(RsyncConstants.protocolVersion.toByte(), 0, 0, 0)
+    writingIO.writeBytes(serverVersion, 0, 4)
 
     /* same for the reading: first byte is version, rest are zeros */
     val clientVersion = readingIO.readBytes(4)
