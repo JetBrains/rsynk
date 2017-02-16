@@ -45,14 +45,15 @@ object TestTools {
 }
 
 object RsyncCommandWrapper {
-  fun sync(from: String, to: String, port: Int, password: String, timeoutSec: Long, params: String): String {
-    val args = listOf("rsync", "-e$params", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
+  fun sync(from: String, to: String, port: Int, timeoutSec: Long, _params: String): String {
+    val params = if (_params.isEmpty()) "" else "-$_params"
+    val args = listOf("rsync", params, "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
     val pb = ProcessBuilder(args)
             .directory(Files.createTempDirectory("rsync_dir").toFile())
             .redirectError(ProcessBuilder.Redirect.PIPE)
             .redirectOutput(ProcessBuilder.Redirect.PIPE)
             .redirectInput(ProcessBuilder.Redirect.PIPE)
-    pb.environment()["RSYNC_PASSWORD"] = password
+
     val process = pb.start()
     process.outputStream.close()
     try {

@@ -13,8 +13,6 @@ class RsyncIntegrationTest {
     @JvmStatic
     val rsynk = Rsynk(TestTools.findFreePort(), 1, 1, 100, TestTools.getServerKey())
 
-    val password = "letmein"
-
     @BeforeClass
     @JvmStatic
     fun startServer() = rsynk.start()
@@ -36,7 +34,7 @@ class RsyncIntegrationTest {
     val destinationFile = File(destinationDir, "to.txt")
     Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, password, 10, "v")
+    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port,  10, "v")
     Assert.assertEquals(TestTools.loremIpsum, destinationFile.readText())
   }
 
@@ -49,7 +47,7 @@ class RsyncIntegrationTest {
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val destinationFile = File(destinationDir, "to.txt")
 
-    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, password, 10, "v")
+    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port,  10, "v")
     Assert.assertEquals(TestTools.loremIpsum, destinationFile.readText())
   }
 
@@ -63,7 +61,7 @@ class RsyncIntegrationTest {
     val destinationFile = File(destinationDir, "to.txt")
     destinationFile.writeText(TestTools.loremIpsum.substring(0, TestTools.loremIpsum.length / 2))
 
-    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, password, 10, "v")
+    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, 10, "v")
     Assert.assertEquals(TestTools.loremIpsum, destinationFile.readText())
   }
 }
