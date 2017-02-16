@@ -28,14 +28,28 @@ class RsyncIntegrationTest {
 
   @Test
   fun file_transfer_test() {
-    val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-    val source = File(moduleRoot, "from.txt")
+    val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+    val source = File(data, "from.txt")
     source.writeText(TestTools.loremIpsum)
-    val module = "module-${id.incrementAndGet()}"
 
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val destinationFile = File(destinationDir, "to.txt")
-    Rsync.sync("rsync://localhost:$module/${source.name}", destinationFile.absolutePath, rsynk.port, password, 10, "-v")
+    Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
+
+    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, password, 10, "v")
+    Assert.assertEquals(TestTools.loremIpsum, destinationFile.readText())
+  }
+
+  @Test
+  fun file_transfer_to_non_existing_file_test() {
+    val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+    val source = File(data, "from.txt")
+    source.writeText(TestTools.loremIpsum)
+
+    val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+    val destinationFile = File(destinationDir, "to.txt")
+
+    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, password, 10, "v")
     Assert.assertEquals(TestTools.loremIpsum, destinationFile.readText())
   }
 
@@ -44,27 +58,12 @@ class RsyncIntegrationTest {
     val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val source = File(moduleRoot, "from.txt")
     source.writeText(TestTools.loremIpsum)
-    val module = "module-${id.incrementAndGet()}"
 
     val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
     val destinationFile = File(destinationDir, "to.txt")
     destinationFile.writeText(TestTools.loremIpsum.substring(0, TestTools.loremIpsum.length / 2))
-    Rsync.sync("rsync://localhost:$module/${source.name}", destinationFile.absolutePath, rsynk.port, password, 10, "-v")
-    Assert.assertEquals(TestTools.loremIpsum, destinationFile.readText())
-  }
 
-  @Test
-  fun file_deletion_test() {
-    val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-    val firstSource = File(moduleRoot, "first.txt")
-    firstSource.writeText(TestTools.loremIpsum)
-    val module = "module-${id.incrementAndGet()}"
-    val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-    val firstDest = File(destinationDir, "first.txt")
-    val secondDest = File(destinationDir, "second.txt")
-    firstDest.writeText(TestTools.loremIpsum)
-    secondDest.writeText(TestTools.loremIpsum)
-    Rsync.sync("rsync://localhost:$module", destinationDir.absolutePath + "/", rsynk.port, password, 10, "-rv")
-    Assert.assertFalse(destinationDir.listFiles().any { it.name == "second.txt" })
+    RsyncCommandWrapper.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, password, 10, "v")
+    Assert.assertEquals(TestTools.loremIpsum, destinationFile.readText())
   }
 }

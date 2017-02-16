@@ -2,14 +2,14 @@ package jetbrains.rsynk.server
 
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 import org.junit.Assert
+import java.io.IOException
+import java.net.ServerSocket
 import java.nio.file.Files
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.concurrent.TimeUnit
-import java.net.ServerSocket
-import java.io.IOException
 
 
 object TestTools {
@@ -44,9 +44,9 @@ object TestTools {
 
 }
 
-object Rsync {
+object RsyncCommandWrapper {
   fun sync(from: String, to: String, port: Int, password: String, timeoutSec: Long, params: String): String {
-    val args = listOf("rsync", params, "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
+    val args = listOf("rsync", "-e$params", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
     val pb = ProcessBuilder(args)
             .directory(Files.createTempDirectory("rsync_dir").toFile())
             .redirectError(ProcessBuilder.Redirect.PIPE)
