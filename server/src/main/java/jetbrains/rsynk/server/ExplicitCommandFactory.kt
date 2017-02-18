@@ -2,6 +2,7 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.command.RsyncCommandsHolder
+import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -48,40 +49,40 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
       override fun start(env: Environment) {
         val args = _args.split(" ")
         if (args.isEmpty()) {
-          exit(127, "No command received")
+          exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "No command received")
         }
         val commandsHolder = when (args.first()) {
           "rsync" -> rsyncCommands
           else -> {
-            exit(127, "Unknown command: $args")
+            exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: $args")
             return
           }
         }
         val resolvedCommand = try {
           commandsHolder.resolve(args)
         } catch(e: CommandNotFoundException) {
-          exit(127, "Unknown command: ${e.message}")
+          exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: ${e.message}")
           return
         }
         val stdin = input
         if (stdin == null) {
-          exit(128, "Input stream not set")
+          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Input stream not set")
           return
         }
         val stdout = output
         if (stdout == null) {
-          exit(128, "Output stream not set")
+          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Output stream not set")
           return
         }
         val stderr = error
         if (stderr == null) {
-          exit(128, "Error stream not set")
+          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Error stream not set")
           return
         }
         runningCommand = threadPool.submit {
           try {
             resolvedCommand.execute(args, stdin, stdout, stderr)
-            exit(0)
+            exit(RsyncExitCodes.SUCCESS)
           } catch (e: RsynkException) {
             log.debug("Command $args failed: ${e.message}", e)
             val message = e.message
@@ -101,7 +102,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
                 it.flush()
               }
             }
-            exit(1)
+            exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM)
           }
         }
       }
