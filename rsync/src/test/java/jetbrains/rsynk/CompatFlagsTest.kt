@@ -1,6 +1,6 @@
 package jetbrains.rsynk
 
-import jetbrains.rsynk.protocol.CompatFlags
+import jetbrains.rsynk.protocol.CompatFlag
 import jetbrains.rsynk.protocol.decode
 import jetbrains.rsynk.protocol.encode
 import org.junit.Assert
@@ -24,7 +24,7 @@ class CompatFlagsTest {
 
   @Test
   fun encode_empty_set_to_zero_test() {
-    Assert.assertEquals(0.toByte(), emptySet<CompatFlags>().encode())
+    Assert.assertEquals(0.toByte(), emptySet<CompatFlag>().encode())
   }
 
   @Test
@@ -34,7 +34,7 @@ class CompatFlagsTest {
 
   @Test
   fun decode_zero_to_empty_set_test() {
-    Assert.assertEquals(emptySet<CompatFlags>(), 0.toByte().decode())
+    Assert.assertEquals(emptySet<CompatFlag>(), 0.toByte().decode())
   }
 
   @Test
@@ -42,15 +42,15 @@ class CompatFlagsTest {
     Assert.assertEquals(getAllFlags(), 63.toByte().decode())
   }
 
-  private fun getAllFlags(): Set<CompatFlags> {
-    val allFlags = setOf(CompatFlags.CF_INC_RECURSE,
-            CompatFlags.CF_SYMLINK_TIMES,
-            CompatFlags.CF_SYMLINK_ICONV,
-            CompatFlags.CF_SAFE_FLIST,
-            CompatFlags.CF_AVOID_XATTR_OPTIM,
-            CompatFlags.CF_CHKSUM_SEED_FIX)
+  private fun getAllFlags(): Set<CompatFlag> {
+    val allFlags = setOf(CompatFlag.CF_INC_RECURSE,
+            CompatFlag.CF_SYMLINK_TIMES,
+            CompatFlag.CF_SYMLINK_ICONV,
+            CompatFlag.CF_SAFE_FLIST,
+            CompatFlag.CF_AVOID_XATTR_OPTIM,
+            CompatFlag.CF_CHKSUM_SEED_FIX)
     val allFlagsText = allFlags.map { flag -> flag.javaClass.name }
-    CompatFlags::class.nestedClasses.forEach { nestedClass ->
+    CompatFlag::class.nestedClasses.forEach { nestedClass ->
       Assert.assertTrue("Did you added new compat-flag? You have add that to tests!",
               allFlagsText.contains(nestedClass.java.name))
     }
