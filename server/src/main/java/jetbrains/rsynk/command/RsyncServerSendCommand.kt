@@ -60,7 +60,7 @@ class RsyncServerSendCommand : RsyncCommand {
       throw UnsupportedProtocolException("Client protocol version must be at least ${RsyncConstants.clientProtocolVersionMin}")
     }
     if (clientProtocolVersion > RsyncConstants.clientProtocolVersionMax) {
-      throw UnsupportedProtocolException("Client protocol version must no more than ${RsyncConstants.clientProtocolVersionMax}")
+      throw UnsupportedProtocolException("Client protocol version must be no more than ${RsyncConstants.clientProtocolVersionMax}")
     }
     return clientProtocolVersion.toInt()
   }
