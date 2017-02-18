@@ -1,6 +1,5 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.command.data.ProtocolVersionAndFlags
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.SynchronousReadingIO
@@ -8,7 +7,6 @@ import jetbrains.rsynk.io.SynchronousWritingIO
 import jetbrains.rsynk.io.WritingIO
 import jetbrains.rsynk.protocol.CompatFlag
 import jetbrains.rsynk.protocol.RsyncConstants
-import jetbrains.rsynk.protocol.decode
 import jetbrains.rsynk.protocol.encode
 import org.slf4j.LoggerFactory
 import java.io.InputStream
@@ -42,15 +40,14 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
    * Identical to original rsync code.
    * Writes server protocol version
    * and reads protocol client's version.
-   * Writes server's so-called compat-flags.
-   * Receives and parses clients compat-flags.
+   * Writes server's {@code serverCompatFlags}.
    *
    * @throws {@code UnsupportedProtocolException} if client's protocol version
    * either too old or too modern
    *
-   * @return  protocol version and compat-flags sent by client
+   * @return  protocol version sent by client
    */
-  private fun setupProtocol(input: ReadingIO, output: WritingIO): ProtocolVersionAndFlags {
+  private fun setupProtocol(input: ReadingIO, output: WritingIO): Int {
     /* must write version in first byte and keep the rest 3 zeros */
     val serverVersion = byteArrayOf(RsyncConstants.protocolVersion.toByte(), 0, 0, 0)
     output.writeBytes(serverVersion, 0, 4)
@@ -70,14 +67,10 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
       throw UnsupportedProtocolException("Client protocol version must be no more than ${RsyncConstants.clientProtocolVersionMax}")
     }
 
-    /* write server compat flags*/
+    /* write server compat flags */
     val serverCompatFlags = serverCompatFlags.encode()
     output.writeBytes(byteArrayOf(serverCompatFlags))
 
-    /* read clients compat flags client decided to use */
-    val compatFlagsResponse = input.readBytes(1)[0]
-    val negotiatedCompatFlags = compatFlagsResponse.decode()
-
-    return ProtocolVersionAndFlags(clientProtocolVersion, negotiatedCompatFlags)
+    return clientProtocolVersion.toInt()
   }
 }

@@ -43,9 +43,7 @@
     ]`
     
     `S >> server compat flags [byte]`
-    
-    `S << clients compat flags [byte]`
-    
+        
     
       
      
