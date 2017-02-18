@@ -30,6 +30,7 @@
     
     `S << client protocol version [byte array {4}]`
    
+2. ### Write compat flags
     *Since protocol 31.*
     *Compat-flags are set of per-session options, encoded into single byte, including:*
     
@@ -43,6 +44,7 @@
     ]`
     
     `S >> server compat flags [byte]`
+  
         
     
       

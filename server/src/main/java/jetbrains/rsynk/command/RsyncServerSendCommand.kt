@@ -32,6 +32,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
     /* 1 */
     val versionAndFlags = setupProtocol(inputIO, outputIO)
     /* 2 */
+    writeCompatFlags(outputIO)
 
   }
 
@@ -40,7 +41,6 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
    * Identical to original rsync code.
    * Writes server protocol version
    * and reads protocol client's version.
-   * Writes server's {@code serverCompatFlags}.
    *
    * @throws {@code UnsupportedProtocolException} if client's protocol version
    * either too old or too modern
@@ -67,10 +67,14 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
       throw UnsupportedProtocolException("Client protocol version must be no more than ${RsyncConstants.clientProtocolVersionMax}")
     }
 
-    /* write server compat flags */
+    return clientProtocolVersion.toInt()
+  }
+
+  /**
+   * Writes server's {@code serverCompatFlags}.
+   */
+  private fun writeCompatFlags(output: WritingIO) {
     val serverCompatFlags = serverCompatFlags.encode()
     output.writeBytes(byteArrayOf(serverCompatFlags))
-
-    return clientProtocolVersion.toInt()
   }
 }
