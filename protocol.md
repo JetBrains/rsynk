@@ -30,7 +30,7 @@
     
     `S << client protocol version [byte array {4}]`
    
-2. ### Write compat flags
+2. ### Send compat flags
     *Since protocol 31.*
     *Compat-flags are set of per-session options, encoded into single byte, including:*
     
@@ -44,8 +44,13 @@
     ]`
     
     `S >> server compat flags [byte]`
-  
-        
+    
+3. ### Send checksum seed
+    
+    *Seed for fast rolling checksum*
+    
+    `S  >>  checksum seed [int]`
+    
     
       
      

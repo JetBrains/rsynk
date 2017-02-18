@@ -1,6 +1,8 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.checksum.RollingChecksumSeedUtil
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
+import jetbrains.rsynk.extensions.toByteArray
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.SynchronousReadingIO
 import jetbrains.rsynk.io.SynchronousWritingIO
@@ -30,10 +32,12 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
     val outputIO = SynchronousWritingIO(output)
     val errorIO = SynchronousWritingIO(error)
     /* 1 */
-    val versionAndFlags = setupProtocol(inputIO, outputIO)
+    val clientProtocolVersion = setupProtocol(inputIO, outputIO)
     /* 2 */
     writeCompatFlags(outputIO)
-
+    /* 3 */
+    val rollingChecksumSeed = RollingChecksumSeedUtil.nextSeed()
+    writeChecksumSeed(rollingChecksumSeed, outputIO)
   }
 
 
@@ -76,5 +80,12 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
   private fun writeCompatFlags(output: WritingIO) {
     val serverCompatFlags = serverCompatFlags.encode()
     output.writeBytes(byteArrayOf(serverCompatFlags))
+  }
+
+  /**
+   * Writes rolling checksum seed.
+   * */
+  private fun writeChecksumSeed(checksumSeed: Int, output: WritingIO) {
+    output.writeBytes(checksumSeed.toByteArray())
   }
 }

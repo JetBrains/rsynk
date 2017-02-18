@@ -1,5 +1,7 @@
 package jetbrains.rsynk.extensions
 
+import java.nio.ByteBuffer
+
 fun String.dropNewLine(): String {
   if (!endsWith('\n')) {
     throw Error("String not ends with new line symbol: $this")
@@ -17,3 +19,4 @@ fun String.dropNullTerminal(): String {
   return dropLast(1)
 }
 
+fun Int.toByteArray(): ByteArray = ByteBuffer.allocate(4).putInt(this).array()
