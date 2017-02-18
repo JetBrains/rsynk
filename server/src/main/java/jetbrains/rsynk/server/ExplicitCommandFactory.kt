@@ -86,14 +86,20 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
             log.debug("Command $args failed: ${e.message}", e)
             val message = e.message
             if (message != null) {
-              error?.write(message.toByteArray())
+              error?.let {
+                it.write(message.toByteArray())
+                it.flush()
+              }
             }
             exit(e.exitCode)
           } catch(t: Throwable) {
             log.error("Command $args failed: ${t.message}", t)
             val message = t.message
             if (message != null) {
-              error?.write(message.toByteArray())
+              error?.let {
+                it.write(message.toByteArray())
+                it.flush()
+              }
             }
             exit(1)
           }
