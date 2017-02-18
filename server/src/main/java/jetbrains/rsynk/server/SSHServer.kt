@@ -10,14 +10,14 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 
 
-class SSHServer(private val settings: SSHSettings,
+class SSHServer(private val sshSettings: SSHSettings,
                 private val explicitCommands: ExplicitCommandFactory,
                 private val sessionFactory: SSHSessionFactory) {
 
   private val log = LoggerFactory.getLogger(javaClass)
   private val sshd = SshServer.setUpDefaultServer()
 
-  private val nioChannelExecutor = Executors.newFixedThreadPool(settings.nioWorkers, threadFactory@ { runnable ->
+  private val nioChannelExecutor = Executors.newFixedThreadPool(sshSettings.nioWorkers, threadFactory@ { runnable ->
     val thread = Thread(runnable, "sshd-nio")
     thread.isDaemon = true
     return@threadFactory thread
@@ -25,17 +25,17 @@ class SSHServer(private val settings: SSHSettings,
 
 
   private fun configure() {
-    sshd.port = settings.port
-    sshd.nioWorkers = settings.nioWorkers
-    sshd.properties.put(SshServer.SERVER_IDENTIFICATION, settings.applicationNameNoSpaces)
-    sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, settings.maxAuthAttempts.toString())
-    sshd.properties.put(SshServer.IDLE_TIMEOUT, settings.idleConnectionTimeout.toString())
+    sshd.port = sshSettings.port
+    sshd.nioWorkers = sshSettings.nioWorkers
+    sshd.properties.put(SshServer.SERVER_IDENTIFICATION, sshSettings.applicationNameNoSpaces)
+    sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, sshSettings.maxAuthAttempts.toString())
+    sshd.properties.put(SshServer.IDLE_TIMEOUT, sshSettings.idleConnectionTimeout.toString())
 
     sshd.commandFactory = explicitCommands
     sshd.sessionFactory = sessionFactory.createSessionFactory(sshd)
     sshd.addSessionListener(sessionFactory.createSessionListener())
 
-    sshd.keyPairProvider = settings.serverKeys
+    sshd.keyPairProvider = sshSettings.serverKeys
     sshd.publickeyAuthenticator = PublickeyAuthenticator { username, publicKey, server -> true }
     sshd.passwordAuthenticator = PasswordAuthenticator { username, password, server -> true }
 
@@ -47,11 +47,11 @@ class SSHServer(private val settings: SSHSettings,
   fun start() {
     configure()
     log.info("Starting sshd server:\n" +
-            "   port=${settings.port},\n" +
-            "   nio-workers=${settings.nioWorkers},\n" +
-            "   command-workers=${settings.commandWorkers},\n" +
-            "   idle-connection-timeout=${settings.idleConnectionTimeout},\n" +
-            "   max-auth-requests=${settings.maxAuthAttempts}\n")
+            " port=${sshSettings.port},\n" +
+            " nio-workers=${sshSettings.nioWorkers},\n" +
+            " command-workers=${sshSettings.commandWorkers},\n" +
+            " idle-connection-timeout=${sshSettings.idleConnectionTimeout},\n" +
+            " max-auth-requests=${sshSettings.maxAuthAttempts}\n")
     sshd.start()
   }
 

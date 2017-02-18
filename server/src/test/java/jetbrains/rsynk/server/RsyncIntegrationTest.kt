@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class RsyncIntegrationTest {
   companion object {
     @JvmStatic
-    val rsynk = Rsynk(TestTools.findFreePort(), 1, 1, 100, TestTools.getServerKey())
+    val rsynk = Rsynk(TestTools.findFreePort(), 1, 1, 100, TestTools.getServerKey(), emptySet())
 
     @BeforeClass
     @JvmStatic

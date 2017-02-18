@@ -1,5 +1,6 @@
 package jetbrains.rsynk.application
 
+import jetbrains.rsynk.protocol.CompatFlag
 import jetbrains.rsynk.server.*
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
@@ -7,13 +8,15 @@ class Rsynk(val port: Int,
             val nioWorkers: Int,
             val commandWorkers: Int,
             val idleConnectionTimeout: Int,
-            val serverKeys: KeyPairProvider) {
+            val serverKeys: KeyPairProvider,
+            val options: Set<CompatFlag>) {
 
   private val server: SSHServer
 
   init {
-    val settings = createSettings()
-    server = SSHServer(settings, ExplicitCommandFactory(settings), SSHSessionFactory())
+    val settings = createSSHSettings()
+    val serverCompatFlags = ServerCompatFlagsHolder(options)
+    server = SSHServer(settings, ExplicitCommandFactory(settings, serverCompatFlags), SSHSessionFactory())
   }
 
   fun start() = server.start()
@@ -21,7 +24,7 @@ class Rsynk(val port: Int,
   fun stop() = server.stop()
 
 
-  private fun createSettings(): SSHSettings {
+  private fun createSSHSettings(): SSHSettings {
     val that: Rsynk = this
     return object : SSHSettings {
       override val port: Int = that.port
