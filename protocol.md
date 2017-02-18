@@ -24,13 +24,28 @@
 
 1. ### Setup protocol:
 
-    *server set nonblocking io for both input and output streams*
+    *Server set nonblocking io for both input and output streams.*
     
-    `S >> server protocol version [byte array 4]` *example [31, 0, 0, 0] for version 31*
+    `S >> server protocol version [byte array {4}]` *example [31, 0, 0, 0] for version 31*
     
-    `S << client protocol version [byte array 4]`
+    `S << client protocol version [byte array {4}]`
+   
+    *Since protocol 31.*
+    *Compat-flags are set of per-session options, encoded into single byte, including:*
     
-    *only main part is written, so for `31.0` `31` will be sent*
+    `[
+    CF_INC_RECURSE(1),
+    CF_SYMLINK_TIMES(2),
+    CF_SYMLINK_ICONV(4),
+    CF_SAFE_FLIST(8),
+    CF_AVOID_XATTR_OPTIM(16),
+    CF_CHKSUM_SEED_FIX(32)
+    ]`
+    
+    `S >> server compat flags [byte]`
+    
+    `S << clients compat flags [byte]`
+    
     
       
      
