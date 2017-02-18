@@ -1,12 +1,12 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.application.ServerCompatFlagsHolder
 import jetbrains.rsynk.command.data.ProtocolVersionAndFlags
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.SynchronousReadingIO
 import jetbrains.rsynk.io.SynchronousWritingIO
 import jetbrains.rsynk.io.WritingIO
+import jetbrains.rsynk.protocol.CompatFlag
 import jetbrains.rsynk.protocol.RsyncConstants
 import jetbrains.rsynk.protocol.decode
 import jetbrains.rsynk.protocol.encode
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
 
-class RsyncServerSendCommand(private val serverCompatFlags: ServerCompatFlagsHolder) : RsyncCommand {
+class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : RsyncCommand {
 
   override val args: List<String> = listOf("rsync", "--server", "--sender")
 
@@ -71,7 +71,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: ServerCompatFlagsHol
     }
 
     /* write server compat flags*/
-    val serverCompatFlags = serverCompatFlags.compatFlags.encode()
+    val serverCompatFlags = serverCompatFlags.encode()
     output.writeBytes(byteArrayOf(serverCompatFlags))
 
     /* read clients compat flags client decided to use */

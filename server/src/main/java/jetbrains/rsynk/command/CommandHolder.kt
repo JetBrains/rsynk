@@ -1,6 +1,6 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.application.ServerCompatFlagsHolder
+import jetbrains.rsynk.protocol.CompatFlag
 import java.util.*
 
 
@@ -8,7 +8,7 @@ interface CommandsHolder {
   fun resolve(args: List<String>): Command
 }
 
-class RsyncCommandsHolder(serverCompatFlags: ServerCompatFlagsHolder) : CommandsHolder {
+class RsyncCommandsHolder(serverCompatFlags: Set<CompatFlag>) : CommandsHolder {
 
   private val commands: List<RsyncCommand> = listOf(
           RsyncServerSendCommand(serverCompatFlags)

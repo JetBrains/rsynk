@@ -1,10 +1,10 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.application.ServerCompatFlagsHolder
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.command.RsyncCommandsHolder
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
+import jetbrains.rsynk.protocol.CompatFlag
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment
@@ -16,11 +16,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 class ExplicitCommandFactory(settings: SSHSettings,
-                             serverCompatFlagsHolder: ServerCompatFlagsHolder) : CommandFactory {
+                             serverCompatFlags: Set<CompatFlag>) : CommandFactory {
 
   private val log = LoggerFactory.getLogger(javaClass)
 
-  private val rsyncCommands = RsyncCommandsHolder(serverCompatFlagsHolder)
+  private val rsyncCommands = RsyncCommandsHolder(serverCompatFlags)
   private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
     val thread = Thread(runnable, "ssh-command")
     thread.isDaemon = true

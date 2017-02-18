@@ -15,7 +15,7 @@ class Rsynk(val port: Int,
 
   init {
     val settings = createSSHSettings()
-    val serverCompatFlags = ServerCompatFlagsHolder(options)
+    val serverCompatFlags = options
     server = SSHServer(settings, ExplicitCommandFactory(settings, serverCompatFlags), SSHSessionFactory())
   }
 
