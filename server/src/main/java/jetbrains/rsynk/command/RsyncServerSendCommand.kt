@@ -57,10 +57,10 @@ class RsyncServerSendCommand : RsyncCommand {
 
     val clientProtocolVersion = response[0]
     if (clientProtocolVersion < RsyncConstants.clientProtocolVersionMin) {
-      throw UnsupportedProtocolException("Protocol must be at least ${RsyncConstants.clientProtocolVersionMin} on the Client")
+      throw UnsupportedProtocolException("Client protocol version must be at least ${RsyncConstants.clientProtocolVersionMin}")
     }
     if (clientProtocolVersion > RsyncConstants.clientProtocolVersionMax) {
-      throw UnsupportedProtocolException("Protocol must no more than ${RsyncConstants.clientProtocolVersionMax} on the Client")
+      throw UnsupportedProtocolException("Client protocol version must no more than ${RsyncConstants.clientProtocolVersionMax}")
     }
     return clientProtocolVersion.toInt()
   }
