@@ -47,7 +47,7 @@ object TestTools {
 object RsyncCommandWrapper {
   fun sync(from: String, to: String, port: Int, timeoutSec: Long, _params: String): String {
     val params = if (_params.isEmpty()) "" else "-$_params"
-    val args = listOf("rsync", params, "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
+    val args = listOf(rsyncPath, params, "--protocol", "31", "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
     val pb = ProcessBuilder(args)
             .directory(Files.createTempDirectory("rsync_dir").toFile())
             .redirectError(ProcessBuilder.Redirect.PIPE)
@@ -70,5 +70,14 @@ object RsyncCommandWrapper {
     process.inputStream.read(buffer)
     return String(buffer)
   }
+
+  private val rsyncPath: String
+    get() {
+      val isMac = System.getProperty("os.name")?.toLowerCase()?.contains("mac") ?: false
+      if (isMac) {
+        return "/usr/local/bin/rsync"
+      }
+      return "rsync"
+    }
 }
 
