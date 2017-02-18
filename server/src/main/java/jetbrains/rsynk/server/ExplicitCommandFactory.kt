@@ -51,34 +51,34 @@ class ExplicitCommandFactory(settings: SSHSettings,
       override fun start(env: Environment) {
         val args = _args.split(" ")
         if (args.isEmpty()) {
-          exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "No command received")
+          exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "No command received\n")
         }
         val commandsHolder = when (args.first()) {
           "rsync" -> rsyncCommands
           else -> {
-            exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: $args")
+            exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: $args\n")
             return
           }
         }
         val resolvedCommand = try {
           commandsHolder.resolve(args)
         } catch(e: CommandNotFoundException) {
-          exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: ${e.message}")
+          exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: ${e.message}\n")
           return
         }
         val stdin = input
         if (stdin == null) {
-          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Input stream not set")
+          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Input stream not set\n")
           return
         }
         val stdout = output
         if (stdout == null) {
-          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Output stream not set")
+          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Output stream not set\n")
           return
         }
         val stderr = error
         if (stderr == null) {
-          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Error stream not set")
+          exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Error stream not set\n")
           return
         }
         runningCommand = threadPool.submit {
@@ -90,7 +90,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
             val message = e.message
             if (message != null) {
               error?.let {
-                it.write(message.toByteArray())
+                it.write("$message\n".toByteArray())
                 it.flush()
               }
             }
@@ -100,7 +100,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
             val message = t.message
             if (message != null) {
               error?.let {
-                it.write(message.toByteArray())
+                it.write("$message\n".toByteArray())
                 it.flush()
               }
             }
