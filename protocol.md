@@ -20,6 +20,8 @@
  
 # Protocol from server side perspective (not in daemon mode)
 
+## Command `rsync --server --sender`
+
 1. ### Setup protocol:
 
     *server set nonblocking io for both input and output streams*
