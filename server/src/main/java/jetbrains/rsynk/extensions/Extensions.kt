@@ -20,3 +20,10 @@ fun String.dropNullTerminal(): String {
 }
 
 fun Int.toByteArray(): ByteArray = ByteBuffer.allocate(4).putInt(this).array()
+
+fun ByteArray.toInt(): Int {
+  if (this.size != 4) {
+    throw IllegalArgumentException("Cannot convert array of ${this.size} to Int")
+  }
+  return ByteBuffer.wrap(this).int
+}
