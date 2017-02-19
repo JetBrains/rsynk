@@ -3,8 +3,9 @@ package jetbrains.rsynk.protocol
 enum class Option(val textValue: String) {
   APPEND("append"),
   ARCHIVE("a"),
-  COPY_DEST("copy_dest"),
-  COMPARE_DEST("compare_dest"),
+  CHECKSUM_CHOICE("checksum-choice"),
+  COPY_DEST("copy-dest"),
+  COMPARE_DEST("compare-dest"),
   COPY_LINKS("L"),
   CVS_EXCLUDE("C"),
   DEVICES("D"),
@@ -22,16 +23,17 @@ enum class Option(val textValue: String) {
   PRESERVE_ACLS("acls"),
   PRESERVE_XATTRS("xattrs"),
   PROTECT_ARGS("s"),
-  PRUNE_EMPTY_DIRS("m"), //also prune-empty-dirs  //TODO: check both long and short names for each option
+  PRUNE_EMPTY_DIRS("m"),
   RECURSIVE("r"),
   RSH("e"),
   SENDER("sender"),
   SERVER("server"),
   TIMEOUT("timeout"),
   TIMES("t"),
-  VERBOSE("v");
+  VERBOSE("v"),
+  WHOLE_FILE("w");
 
   companion object {
-    fun find(textValue: String): Option? = Option.values().firstOrNull { it.textValue == textValue }
+    fun find(textValue: String): Option? = Option.values().singleOrNull { it.textValue == textValue }
   }
 }
