@@ -22,9 +22,9 @@
 
     /* Server set nonblocking io for both input and output streams */
     
-    >> server protocol version [byte array {4}] /* example [31, 0, 0, 0] for version 31 */
+    >> server protocol version [int] 
     
-    << client protocol version [byte array {4}]
+    << client protocol version [int]
    
 ### Send compat flags
     /* Since protocol 31 
