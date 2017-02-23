@@ -1,9 +1,13 @@
 package jetbrains.rsynk.checksum
 
+import java.util.*
+
 object RollingChecksumSeedUtil {
+
+  private val seed = System.currentTimeMillis()
+
   fun nextSeed(): Int {
-    val time = System.currentTimeMillis().toInt()
-    val thread = Thread.currentThread().id.toInt()
-    return time.xor(thread.shl(6))
+    val random = Random(seed)
+    return Math.abs(random.nextInt())
   }
 }
