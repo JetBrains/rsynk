@@ -2,7 +2,8 @@ package jetbrains.rsynk.command
 
 import jetbrains.rsynk.checksum.RollingChecksumSeedUtil
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
-import jetbrains.rsynk.extensions.toByteArray
+import jetbrains.rsynk.extensions.reverseAndCastToInt
+import jetbrains.rsynk.extensions.toReversedByteArray
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.SynchronousReadingIO
 import jetbrains.rsynk.io.SynchronousWritingIO
@@ -38,8 +39,6 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
 
     val rollingChecksumSeed = RollingChecksumSeedUtil.nextSeed()
     writeChecksumSeed(rollingChecksumSeed, outputIO)
-
-
   }
 
 
@@ -55,7 +54,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
    */
   private fun setupProtocol(input: ReadingIO, output: WritingIO): Int {
     /* must write version in first byte and keep the rest 3 zeros */
-    val serverVersion = byteArrayOf(RsyncConstants.protocolVersion.toByte(), 0, 0, 0)
+    val serverVersion = 31.toReversedByteArray()
     output.writeBytes(serverVersion, 0, 4)
 
     /* same for the reading: first byte is version, rest are zeros */
@@ -65,7 +64,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
               clientVersionResponse.joinToString())
     }
 
-    val clientProtocolVersion = clientVersionResponse[0]
+    val clientProtocolVersion = clientVersionResponse.reverseAndCastToInt()
     if (clientProtocolVersion < RsyncConstants.clientProtocolVersionMin) {
       throw UnsupportedProtocolException("Client protocol version must be at least ${RsyncConstants.clientProtocolVersionMin}")
     }
@@ -73,7 +72,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
       throw UnsupportedProtocolException("Client protocol version must be no more than ${RsyncConstants.clientProtocolVersionMax}")
     }
 
-    return clientProtocolVersion.toInt()
+    return clientProtocolVersion
   }
 
   /**
@@ -88,6 +87,6 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
    * Writes rolling checksum seed.
    * */
   private fun writeChecksumSeed(checksumSeed: Int, output: WritingIO) {
-    output.writeBytes(checksumSeed.toByteArray())
+    output.writeBytes(checksumSeed.toReversedByteArray())
   }
 }
