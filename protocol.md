@@ -1,8 +1,4 @@
-# Roles:
-
-    `S` for Server
-    `C` for Client
-    
+  
 # Actions:
 
     `<<` reading
@@ -22,17 +18,17 @@
 
 ## Command `rsync --server --sender`
 
-1. ### Setup protocol:
+### Setup protocol:
 
-    *Server set nonblocking io for both input and output streams.*
+    /* Server set nonblocking io for both input and output streams */
     
-    `S >> server protocol version [byte array {4}]` *example [31, 0, 0, 0] for version 31*
+    >> server protocol version [byte array {4}] /* example [31, 0, 0, 0] for version 31 */
     
-    `S << client protocol version [byte array {4}]`
+    << client protocol version [byte array {4}]
    
-2. ### Send compat flags
-    *Since protocol 31.*
-    *Compat-flags are set of per-session options, encoded into single byte, including:*
+### Send compat flags
+    /* Since protocol 31 
+    Compat-flags are set of per-session options, encoded into single byte, including: 
     
     `[
     CF_INC_RECURSE(1),
@@ -42,14 +38,16 @@
     CF_AVOID_XATTR_OPTIM(16),
     CF_CHKSUM_SEED_FIX(32)
     ]`
+    */
     
-    `S >> server compat flags [byte]`
+    >> server compat flags [byte]
     
-3. ### Send checksum seed
+### Send checksum seed
     
-    *Seed for fast rolling checksum*
+    /* Seed for fast rolling checksum */
     
-    `S  >>  checksum seed [int]`
+    >>  checksum seed [int]
+    
     
     
       

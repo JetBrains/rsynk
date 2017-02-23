@@ -31,13 +31,15 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
     val inputIO = SynchronousReadingIO(input)
     val outputIO = SynchronousWritingIO(output)
     val errorIO = SynchronousWritingIO(error)
-    /* 1 */
+
     val clientProtocolVersion = setupProtocol(inputIO, outputIO)
-    /* 2 */
+
     writeCompatFlags(outputIO)
-    /* 3 */
+
     val rollingChecksumSeed = RollingChecksumSeedUtil.nextSeed()
     writeChecksumSeed(rollingChecksumSeed, outputIO)
+
+
   }
 
 
