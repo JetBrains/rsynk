@@ -35,9 +35,12 @@ fun ByteArray.reverseAndCastToInt(): Int {
  * bytes[0] - lowest byte
  * bytes[1] - second lowest byte
  * */
-fun Int.twoLowestBytes(): ByteArray {
+fun Int.getTwoLowestBytes(): ByteArray {
   val b1 = this.toByte()
   val b2 = this.ushr(8).toByte()
   return byteArrayOf(b1, b2)
 }
+
+val Byte.Companion.MAX_VALUE_UNSIGNED: Int
+  get() = Byte.MAX_VALUE * 2 + 1
 

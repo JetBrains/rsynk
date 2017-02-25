@@ -49,9 +49,15 @@
     >>  checksum seed [int]
 
 ### Client starts multiplexing 
-    << [4 bytes array] // it's purpose remains unknown
+    << it's purpose remains unknown [4 bytes array]
     
-### Receive flist
+### Receiving filter list
+    << length [int]
+    << filter list [byte array <length>] 
+    repeat untill length != 0
+
+### Sending file list
+
     
     
     
