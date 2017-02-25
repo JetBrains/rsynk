@@ -1,4 +1,4 @@
-package jetbrains.rsynk.protocol
+package jetbrains.rsynk.protocol.flags
 
 sealed class CompatFlag(val value: Int) {
   object CF_INC_RECURSE : CompatFlag(1)
