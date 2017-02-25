@@ -4,6 +4,7 @@ import jetbrains.rsynk.checksum.RollingChecksumSeedUtil
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.reverseAndCastToInt
 import jetbrains.rsynk.extensions.toReversedByteArray
+import jetbrains.rsynk.files.FilterList
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.SynchronousReadingIO
 import jetbrains.rsynk.io.SynchronousWritingIO
@@ -40,7 +41,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
     val rollingChecksumSeed = RollingChecksumSeedUtil.nextSeed()
     writeChecksumSeed(rollingChecksumSeed, outputIO)
 
-    receiveFilterList(inputIO)
+    val filter = receiveFilterList(inputIO)
   }
 
 
@@ -96,7 +97,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
   /**
    * Receives filter list
    * */
-  private fun receiveFilterList(input: ReadingIO) {
+  private fun receiveFilterList(input: ReadingIO): FilterList {
 
     var len = input.readBytes(4).reverseAndCastToInt()
 
@@ -110,9 +111,11 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
       len = input.readBytes(4).reverseAndCastToInt()
     }
     while (len != 0) {
+      //TODO: receive & parse filter list
+      //http://blog.mudflatsoftware.com/blog/2012/10/31/tricks-with-rsync-filter-rules/
       val bytes = input.readBytes(len).reverseAndCastToInt()
       len = input.readBytes(4).reverseAndCastToInt()
-      TODO("Not implemented. Received data remains unused.")
     }
+    return FilterList()
   }
 }
