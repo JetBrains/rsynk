@@ -39,6 +39,8 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
 
     val rollingChecksumSeed = RollingChecksumSeedUtil.nextSeed()
     writeChecksumSeed(rollingChecksumSeed, outputIO)
+
+    receiveFilterList(inputIO)
   }
 
 
@@ -88,5 +90,29 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
    * */
   private fun writeChecksumSeed(checksumSeed: Int, output: WritingIO) {
     output.writeBytes(checksumSeed.toReversedByteArray())
+  }
+
+
+  /**
+   * Receives filter list
+   * */
+  private fun receiveFilterList(input: ReadingIO) {
+
+    var len = input.readBytes(4).reverseAndCastToInt()
+
+    /* It's not clear why client writes those 4 bytes.
+    * Rsync uses it's 'safe_read' on early stages
+    * which deals with circular buffer. It's probably
+    * remained in buffer data. Try to ignore it while
+    * things work.
+    * */
+    if (len > 1024 * 5) {
+      len = input.readBytes(4).reverseAndCastToInt()
+    }
+    while (len != 0) {
+      val bytes = input.readBytes(len).reverseAndCastToInt()
+      len = input.readBytes(4).reverseAndCastToInt()
+      TODO("Not implemented. Received data remains unused.")
+    }
   }
 }

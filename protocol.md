@@ -47,6 +47,11 @@
     /* Seed for fast rolling checksum */
     
     >>  checksum seed [int]
+
+### Client starts multiplexing 
+    << [4 bytes array] // it's purpose remains unknown
+    
+### Receive flist
     
     
     
