@@ -1,7 +1,6 @@
 package jetbrains.rsynk.command
 
 import jetbrains.rsynk.protocol.CompatFlag
-import java.util.*
 
 
 interface CommandsHolder {
@@ -27,8 +26,7 @@ class RsyncCommandsHolder(serverCompatFlags: Set<CompatFlag>) : CommandsHolder {
     if (args.first() != "rsync") {
       return false
     }
-    val argsSet = HashSet(args)
-    return this.args.all { argsSet.contains(it) }
+    return this.matchArgs.zip(args).all { it.first == it.second }
   }
 }
 
