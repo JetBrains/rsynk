@@ -9,5 +9,5 @@ interface Command {
 }
 
 interface RsyncCommand : Command {
-  val args: List<String>
+  val matchArgs: List<String>
 }

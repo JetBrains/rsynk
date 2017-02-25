@@ -1,6 +1,6 @@
 package jetbrains.rsynk.application
 
-import jetbrains.rsynk.protocol.CompatFlag
+import jetbrains.rsynk.protocol.flags.CompatFlag
 import jetbrains.rsynk.server.*
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
