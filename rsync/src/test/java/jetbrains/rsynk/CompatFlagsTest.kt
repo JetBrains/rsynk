@@ -1,8 +1,8 @@
 package jetbrains.rsynk
 
-import jetbrains.rsynk.protocol.CompatFlag
-import jetbrains.rsynk.protocol.decode
-import jetbrains.rsynk.protocol.encode
+import jetbrains.rsynk.protocol.flags.CompatFlag
+import jetbrains.rsynk.protocol.flags.decode
+import jetbrains.rsynk.protocol.flags.encode
 import org.junit.Assert
 import org.junit.Test
 
