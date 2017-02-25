@@ -1,11 +1,16 @@
 package jetbrains.rsynk.checksum
 
+import java.util.*
+
 object Checksum {
-  /**
-   *  incremental 32-bit checksum
-   *  @return checksum data[begin, end] (including bounds)
-   *
-   **/
+
+  private val seed = System.currentTimeMillis()
+
+  fun nextSeed(): Int {
+    val random = Random(seed)
+    return Math.abs(random.nextInt())
+  }
+
   fun rollingChecksum(data: CharArray, begin: Int, end: Int): Long {
     var s1 = 0L
     @Suppress("LoopToCallChain")
@@ -24,16 +29,6 @@ object Checksum {
     return (s1.and(0xFFFF) + s2.ushr(16)) % 0xFFFFFFFF
   }
 
-  /**
-   *  @return md4 data[begin, end] (including bounds)
-   */
-  fun md4(data: CharArray, begin: Int, end: Int): Long {
-    TODO()
-  }
-
-  /**
-   *  @return md5 data[begin, end] (including bounds)
-   */
   fun md5(data: CharArray, begin: Int, end: Int): Long {
     TODO()
   }
