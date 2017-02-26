@@ -15,15 +15,15 @@ import java.nio.ByteBuffer
  * we should send reversed array, pretending rsynk
  * casts bytes to int same way
  */
-fun Int.toReversedByteArray(): ByteArray = ByteBuffer.allocate(4).putInt(this).array().reversedArray()
+fun Int.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(4).putInt(this).array().reversedArray()
 
 
 /**
- * Same as @{code Int.toReversedByteArray}
+ * Same as @{code Int.toLittleEndianBytes}
  * Rsync sends reversed 4 bytes when it sends int.
  * Received bytes should be reversed to reconstruct the sent integer.
  * */
-fun ByteArray.reverseAndCastToInt(): Int {
+fun ByteArray.littleEndianToInt(): Int {
   if (this.size != 4) {
     throw IllegalArgumentException("Cannot convert array of ${this.size} to Int")
   }
@@ -37,9 +37,8 @@ fun ByteArray.reverseAndCastToInt(): Int {
  * */
 val Int.twoLowestBytes: ByteArray
   get() {
-    val b1 = this.toByte()
-    val b2 = this.ushr(8).toByte()
-    return byteArrayOf(b1, b2)
+    val bytes = this.toLittleEndianBytes()
+    return byteArrayOf(bytes[0], bytes[1])
   }
 
 /**
@@ -54,7 +53,7 @@ val Int.twoLowestBytes: ByteArray
  * we should send reversed array, pretending rsynk
  * casts bytes to long same way
  */
-fun Long.toReversedByteArray(): ByteArray = ByteBuffer.allocate(8).putLong(this).array().reversedArray()
+fun Long.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(8).putLong(this).array().reversedArray()
 
 val Byte.Companion.MAX_VALUE_UNSIGNED: Int
   get() = Byte.MAX_VALUE * 2 + 1
