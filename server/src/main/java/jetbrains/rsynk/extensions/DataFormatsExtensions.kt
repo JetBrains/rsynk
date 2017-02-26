@@ -11,8 +11,8 @@ import java.nio.ByteBuffer
  *	    	const uint32 *num;
  *	    } u;
  * }
- * Since bytes for int read from the end to begin.
- * Reversed array should be sent, pretending rsynk
+ * Since reading a number works from the end to begin
+ * we should send reversed array, pretending rsynk
  * casts bytes to int same way
  */
 fun Int.toReversedByteArray(): ByteArray = ByteBuffer.allocate(4).putInt(this).array().reversedArray()
@@ -35,12 +35,26 @@ fun ByteArray.reverseAndCastToInt(): Int {
  * bytes[0] - lowest byte
  * bytes[1] - second lowest byte
  * */
-fun Int.getTwoLowestBytes(): ByteArray {
-  val b1 = this.toByte()
-  val b2 = this.ushr(8).toByte()
-  return byteArrayOf(b1, b2)
-}
+val Int.twoLowestBytes: ByteArray
+  get() {
+    val b1 = this.toByte()
+    val b2 = this.ushr(8).toByte()
+    return byteArrayOf(b1, b2)
+  }
+
+/**
+ * Rsync transforms bytes to int like this:
+ * {@code
+ *     union {
+ *      char *b;
+ *      int64 *num;
+ *     } u;
+ * }
+ * Since reading a number works from the end to begin
+ * we should send reversed array, pretending rsynk
+ * casts bytes to long same way
+ */
+fun Long.toReversedByteArray(): ByteArray = ByteBuffer.allocate(8).putLong(this).array().reversedArray()
 
 val Byte.Companion.MAX_VALUE_UNSIGNED: Int
   get() = Byte.MAX_VALUE * 2 + 1
-
