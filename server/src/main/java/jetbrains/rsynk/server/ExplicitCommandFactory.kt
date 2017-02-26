@@ -5,6 +5,8 @@ import jetbrains.rsynk.command.RsyncCommandsHolder
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
 import jetbrains.rsynk.flags.CompatFlag
+import jetbrains.rsynk.io.SynchronousReadingIO
+import jetbrains.rsynk.io.SynchronousWritingIO
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment
@@ -85,7 +87,10 @@ class ExplicitCommandFactory(settings: SSHSettings,
         val sessionInfo = optionsParser.parse(args)
         runningCommand = threadPool.submit {
           try {
-            resolvedCommand.execute(sessionInfo, stdin, stdout, stderr)
+            resolvedCommand.execute(sessionInfo,
+                    SynchronousReadingIO(stdin),
+                    SynchronousWritingIO(stdout),
+                    SynchronousWritingIO(stderr))
             exit(RsyncExitCodes.SUCCESS)
           } catch (e: RsynkException) {
             log.debug("Command $args failed: ${e.message}", e)

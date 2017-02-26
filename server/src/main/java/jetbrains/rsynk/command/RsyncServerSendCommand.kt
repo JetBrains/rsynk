@@ -11,15 +11,11 @@ import jetbrains.rsynk.flags.CompatFlag
 import jetbrains.rsynk.flags.TransmitFlags
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
-import jetbrains.rsynk.io.SynchronousReadingIO
-import jetbrains.rsynk.io.SynchronousWritingIO
 import jetbrains.rsynk.io.WritingIO
 import jetbrains.rsynk.protocol.RsyncConstants
 import jetbrains.rsynk.session.SessionInfo
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
 
 class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : RsyncCommand {
 
@@ -35,21 +31,17 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
    * Protocol phases enumerated and phases documented in protocol.md
    * */
   override fun execute(sessionInfo: SessionInfo,
-                       input: InputStream,
-                       output: OutputStream,
-                       error: OutputStream) {
-    val inputIO = SynchronousReadingIO(input)
-    val outputIO = SynchronousWritingIO(output)
-    val errorIO = SynchronousWritingIO(error)
+                       input: ReadingIO,
+                       output: WritingIO,
+                       error: WritingIO) {
+    setupProtocol(input, output)
 
-    setupProtocol(inputIO, outputIO)
+    writeCompatFlags(output)
 
-    writeCompatFlags(outputIO)
+    writeChecksumSeed(sessionInfo.checskumSeed, output)
 
-    writeChecksumSeed(sessionInfo.checskumSeed, outputIO)
-
-    val filter = receiveFilterList(inputIO)
-    sendFileList(sessionInfo.files, filter, outputIO)
+    val filter = receiveFilterList(input)
+    sendFileList(sessionInfo.files, filter, output)
   }
 
   /**

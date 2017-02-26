@@ -1,15 +1,15 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.io.ReadingIO
+import jetbrains.rsynk.io.WritingIO
 import jetbrains.rsynk.session.SessionInfo
-import java.io.InputStream
-import java.io.OutputStream
 
 
 interface Command {
   fun execute(sessionInfo: SessionInfo,
-              input: InputStream,
-              output: OutputStream,
-              error: OutputStream)
+              input: ReadingIO,
+              output: WritingIO,
+              error: WritingIO)
 }
 
 interface RsyncCommand : Command {
