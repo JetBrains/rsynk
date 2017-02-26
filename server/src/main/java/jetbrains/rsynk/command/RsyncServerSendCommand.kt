@@ -6,14 +6,14 @@ import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.reverseAndCastToInt
 import jetbrains.rsynk.extensions.toReversedByteArray
-import jetbrains.rsynk.extensions.getTwoLowestBytes
+import jetbrains.rsynk.extensions.twoLowestBytes
 import jetbrains.rsynk.files.FilterList
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.SynchronousReadingIO
 import jetbrains.rsynk.io.SynchronousWritingIO
 import jetbrains.rsynk.io.WritingIO
-import jetbrains.rsynk.protocol.flags.CompatFlag
 import jetbrains.rsynk.protocol.RsyncConstants
+import jetbrains.rsynk.protocol.flags.CompatFlag
 import jetbrains.rsynk.protocol.flags.FileFlags
 import jetbrains.rsynk.protocol.flags.encode
 import jetbrains.rsynk.protocol.flags.flags
@@ -148,7 +148,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
        * other end will terminate the flist transfer.  Note that
        * the use of XMIT_TOP_DIR on a non-dir has no meaning, so
        * it's harmless way to add a bit to the first flag byte. */
-      output.writeBytes(encodedFlags.or(FileFlags.XMIT_TOP_DIR.value).getTwoLowestBytes())
+      output.writeBytes(encodedFlags.or(FileFlags.XMIT_TOP_DIR.value).twoLowestBytes)
     } else {
       output.writeBytes(byteArrayOf(encodedFlags.toByte()))
     }
@@ -169,16 +169,44 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
     val nameToSend = fileName.substring(l1)
     val l2 = nameToSend.length
     if (l2 > Byte.MAX_VALUE_UNSIGNED) {
-      //TODO:
+      write_varint(l2, output)
     } else {
       output.writeBytes(byteArrayOf(l2.toByte()))
     }
     output.writeBytes(nameToSend.toByteArray())
-    //TODO: flist 570
+    write_varlong(fileToSend.length(), 3, output)
   }
 
   private fun resolveFile(path: String): File {
     //TODO: very naive
     return File(path)
+  }
+
+  //TODO: such code doesn't suit the project
+  private fun write_varint(value: Int, output: WritingIO) {
+    write_var_number(value.toReversedByteArray(), 1, output)
+  }
+
+  //TODO: such code doesn't suit the project
+  private fun write_varlong(value: Long, minBytes: Int, output: WritingIO) {
+    write_var_number(value.toReversedByteArray(), minBytes, output)
+  }
+
+  private fun write_var_number(_bytes: ByteArray, minBytes: Int, output: WritingIO) {
+    var cnt = _bytes.size
+    val bytes = _bytes + byteArrayOf(0)
+    while (cnt > minBytes && bytes[cnt] == 0.toByte()) {
+      cnt--
+    }
+    val bit = 1.shl(7 - cnt + minBytes)
+    if (bytes[cnt] >= bit) {
+      cnt++
+      bytes[0] = (bit - 1).inv().toByte()
+    } else if (cnt > 1) {
+      bytes[0] = bytes[cnt].toInt().or((bit * 2 - 1).inv()).toByte()
+    } else {
+      bytes[0] = bytes[cnt]
+    }
+    output.writeBytes(bytes, 0, cnt)
   }
 }
