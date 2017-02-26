@@ -4,7 +4,7 @@ import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.command.RsyncCommandsHolder
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
-import jetbrains.rsynk.protocol.flags.CompatFlag
+import jetbrains.rsynk.flags.CompatFlag
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment

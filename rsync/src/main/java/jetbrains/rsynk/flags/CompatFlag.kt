@@ -1,4 +1,4 @@
-package jetbrains.rsynk.protocol.flags
+package jetbrains.rsynk.flags
 
 sealed class CompatFlag(val value: Int) {
   object CF_INC_RECURSE : CompatFlag(1)
@@ -13,7 +13,7 @@ fun Set<CompatFlag>.encode(): Byte {
   return this.fold(0, { value, flag -> value.or(flag.value) }).toByte()
 }
 
-fun Byte.decode(): Set<CompatFlag> {
+fun Byte.decodeCompatFlags(): Set<CompatFlag> {
   val thisIntValue = this.toInt()
   return listOf(CompatFlag.CF_INC_RECURSE,
           CompatFlag.CF_SYMLINK_TIMES,
