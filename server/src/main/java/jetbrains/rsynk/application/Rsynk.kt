@@ -1,7 +1,10 @@
 package jetbrains.rsynk.application
 
-import jetbrains.rsynk.protocol.flags.CompatFlag
-import jetbrains.rsynk.server.*
+import jetbrains.rsynk.flags.CompatFlag
+import jetbrains.rsynk.server.ExplicitCommandFactory
+import jetbrains.rsynk.server.SSHServer
+import jetbrains.rsynk.server.SSHSessionFactory
+import jetbrains.rsynk.server.SSHSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
 class Rsynk(val port: Int,
@@ -9,6 +12,7 @@ class Rsynk(val port: Int,
             val commandWorkers: Int,
             val idleConnectionTimeout: Int,
             val serverKeys: KeyPairProvider,
+            //TODO: get rid of it here!
             val options: Set<CompatFlag>) {
 
   private val server: SSHServer

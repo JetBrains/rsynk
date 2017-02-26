@@ -1,6 +1,6 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.protocol.flags.CompatFlag
+import jetbrains.rsynk.flags.CompatFlag
 
 
 interface CommandsHolder {
