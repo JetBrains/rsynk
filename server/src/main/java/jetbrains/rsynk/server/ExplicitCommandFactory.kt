@@ -21,6 +21,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
   private val log = LoggerFactory.getLogger(javaClass)
 
   private val rsyncCommands = RsyncCommandsHolder(serverCompatFlags)
+  private val optionsParser = SessionInfoParser()
   private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
     val thread = Thread(runnable, "ssh-command")
     thread.isDaemon = true
@@ -81,9 +82,10 @@ class ExplicitCommandFactory(settings: SSHSettings,
           exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Error stream not set\n")
           return
         }
+        val sessionInfo = optionsParser.parse(args)
         runningCommand = threadPool.submit {
           try {
-            resolvedCommand.execute(args, stdin, stdout, stderr)
+            resolvedCommand.execute(sessionInfo, stdin, stdout, stderr)
             exit(RsyncExitCodes.SUCCESS)
           } catch (e: RsynkException) {
             log.debug("Command $args failed: ${e.message}", e)

@@ -35,8 +35,6 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
    * Protocol phases enumerated and phases documented in protocol.md
    * */
   override fun execute(sessionInfo: SessionInfo,
-                       dir: String,
-                       files: List<String>,
                        input: InputStream,
                        output: OutputStream,
                        error: OutputStream) {
@@ -51,7 +49,7 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
     writeChecksumSeed(sessionInfo.checskumSeed, outputIO)
 
     val filter = receiveFilterList(inputIO)
-    sendFileList(files, filter, outputIO)
+    sendFileList(sessionInfo.files, filter, outputIO)
   }
 
   /**

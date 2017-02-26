@@ -7,8 +7,6 @@ import java.io.OutputStream
 
 interface Command {
   fun execute(sessionInfo: SessionInfo,
-              dir: String,
-              files: List<String>,
               input: InputStream,
               output: OutputStream,
               error: OutputStream)
