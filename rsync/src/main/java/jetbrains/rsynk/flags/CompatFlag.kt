@@ -1,26 +1,30 @@
 package jetbrains.rsynk.flags
 
-sealed class CompatFlag(val value: Int) {
-  object CF_INC_RECURSE : CompatFlag(1)
-  object CF_SYMLINK_TIMES : CompatFlag(2)
-  object CF_SYMLINK_ICONV : CompatFlag(4)
-  object CF_SAFE_FLIST : CompatFlag(8)
-  object CF_AVOID_XATTR_OPTIM : CompatFlag(16)
-  object CF_CHKSUM_SEED_FIX : CompatFlag(32)
+import java.util.*
+
+sealed class CompatFlag(override val value: Int) : Flag {
+  object IncRecurse : CompatFlag(1)
+  object SymlincTimes : CompatFlag(2)
+  object SymlinkIconv : CompatFlag(4)
+  object SafeFileList : CompatFlag(8)
+  object AvoidXattrOptimization : CompatFlag(16)
+  object FixChecksumSeed : CompatFlag(32)
 }
 
-fun Set<CompatFlag>.encode(): Byte {
-  return this.fold(0, { value, flag -> value.or(flag.value) }).toByte()
+fun Set<CompatFlag>.encode(): Int {
+  val flagSet = HashSet<Flag>()
+  flagSet.addAll(this)
+  return flagSet.encode()
 }
 
 fun Byte.decodeCompatFlags(): Set<CompatFlag> {
   val thisIntValue = this.toInt()
-  return listOf(CompatFlag.CF_INC_RECURSE,
-          CompatFlag.CF_SYMLINK_TIMES,
-          CompatFlag.CF_SYMLINK_ICONV,
-          CompatFlag.CF_SAFE_FLIST,
-          CompatFlag.CF_AVOID_XATTR_OPTIM,
-          CompatFlag.CF_CHKSUM_SEED_FIX)
+  return listOf(CompatFlag.IncRecurse,
+          CompatFlag.SymlincTimes,
+          CompatFlag.SymlinkIconv,
+          CompatFlag.SafeFileList,
+          CompatFlag.AvoidXattrOptimization,
+          CompatFlag.FixChecksumSeed)
           .filter { flag -> thisIntValue.and(flag.value) == flag.value }
           .toSet()
 }
