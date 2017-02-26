@@ -11,10 +11,10 @@ sealed class CompatFlag(override val value: Int) : Flag {
   object FixChecksumSeed : CompatFlag(32)
 }
 
-fun Set<CompatFlag>.encode(): Int {
+fun Set<CompatFlag>.encode(): Byte {
   val flagSet = HashSet<Flag>()
   flagSet.addAll(this)
-  return flagSet.encode()
+  return flagSet.encode().toByte()
 }
 
 fun Byte.decodeCompatFlags(): Set<CompatFlag> {
