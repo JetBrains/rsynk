@@ -1,4 +1,4 @@
-group 'jetbrains'
+group 'org.jetbrains.rsynk'
 version '0.1.0-SNAPSHOT'
 
 buildscript {
