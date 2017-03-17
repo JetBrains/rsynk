@@ -7,11 +7,11 @@ import jetbrains.rsynk.exitvalues.RsynkException
 import jetbrains.rsynk.flags.CompatFlag
 import jetbrains.rsynk.io.SynchronousReadingIO
 import jetbrains.rsynk.io.SynchronousWritingIO
+import mu.KLogging
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
 import org.apache.sshd.server.Environment
 import org.apache.sshd.server.ExitCallback
-import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.Executors
@@ -20,7 +20,7 @@ import java.util.concurrent.Future
 class ExplicitCommandFactory(settings: SSHSettings,
                              serverCompatFlags: Set<CompatFlag>) : CommandFactory {
 
-  private val log = LoggerFactory.getLogger(javaClass)
+  companion object : KLogging()
 
   private val rsyncCommands = RsyncCommandsHolder(serverCompatFlags)
   private val optionsParser = SessionInfoParser()
@@ -42,7 +42,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
       if (callback != null) {
         callback.onExit(code, message)
       } else {
-        log.error("exit callback for $_args is null")
+        logger.error("exit callback for $_args is null")
       }
     }
 
@@ -93,7 +93,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
                     SynchronousWritingIO(stderr))
             exit(RsyncExitCodes.SUCCESS)
           } catch (e: RsynkException) {
-            log.debug("Command $args failed: ${e.message}", e)
+            logger.debug("Command $args failed: ${e.message}", e)
             val message = e.message
             if (message != null) {
               error?.let {
@@ -103,7 +103,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
             }
             exit(e.exitCode)
           } catch(t: Throwable) {
-            log.error("Command $args failed: ${t.message}", t)
+            logger.error("Command $args failed: ${t.message}", t)
             val message = t.message
             if (message != null) {
               error?.let {
@@ -120,7 +120,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
         try {
           runningCommand?.cancel(true)
         } catch (t: Throwable) {
-          log.error("cannot cancel running command: ${t.message}", t)
+          logger.error("cannot cancel running command: ${t.message}", t)
         }
       }
 

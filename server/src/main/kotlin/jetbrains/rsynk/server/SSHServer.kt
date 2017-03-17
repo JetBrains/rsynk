@@ -1,12 +1,12 @@
 package jetbrains.rsynk.server
 
+import mu.KLogging
 import org.apache.sshd.common.compression.BuiltinCompressions
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory
 import org.apache.sshd.server.SshServer
 import org.apache.sshd.server.auth.password.PasswordAuthenticator
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator
 import org.apache.sshd.server.forward.RejectAllForwardingFilter
-import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 
 
@@ -14,7 +14,8 @@ class SSHServer(private val sshSettings: SSHSettings,
                 private val explicitCommands: ExplicitCommandFactory,
                 private val sessionFactory: SSHSessionFactory) {
 
-  private val log = LoggerFactory.getLogger(javaClass)
+  companion object : KLogging()
+
   private val sshd = SshServer.setUpDefaultServer()
 
   private val nioChannelExecutor = Executors.newFixedThreadPool(sshSettings.nioWorkers, threadFactory@ { runnable ->
@@ -46,7 +47,7 @@ class SSHServer(private val sshSettings: SSHSettings,
 
   fun start() {
     configure()
-    log.info("Starting sshd server:\n" +
+    logger.info("Starting sshd server:\n" +
             " port=${sshSettings.port},\n" +
             " nio-workers=${sshSettings.nioWorkers},\n" +
             " command-workers=${sshSettings.commandWorkers},\n" +
@@ -57,6 +58,6 @@ class SSHServer(private val sshSettings: SSHSettings,
 
   fun stop() {
     sshd.stop()
-    log.info("SSH server stopped")
+    logger.info("SSH server stopped")
   }
 }

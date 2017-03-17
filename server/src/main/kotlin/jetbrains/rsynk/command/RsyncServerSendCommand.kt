@@ -14,14 +14,14 @@ import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WritingIO
 import jetbrains.rsynk.protocol.RsyncConstants
 import jetbrains.rsynk.session.SessionInfo
-import org.slf4j.LoggerFactory
+import mu.KLogging
 import java.io.File
 
 class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : RsyncCommand {
 
   override val matchArgs: List<String> = listOf("rsync", "--server", "--sender")
 
-  private val log = LoggerFactory.getLogger(javaClass)
+  companion object : KLogging()
 
   /**
    * Perform negotiation and send requested file.
