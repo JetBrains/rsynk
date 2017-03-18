@@ -1,7 +1,7 @@
 package jetbrains.rsynk.command
 
 
-interface CommandsResolver {
+internal interface CommandsResolver {
     fun resolve(args: List<String>): Pair<Command, RequestData>?
 }
 
@@ -24,24 +24,38 @@ internal class AllCommandsResolver : CommandsResolver {
 
 }
 
-internal class RsyncCommandsResolver : CommandsResolver {
-
-    private val commands: List<RsyncCommand> = listOf(
-            RsyncServerSendCommand()
-    )
-
-    override fun resolve(args: List<String>): Pair<Command, RequestData>? {
-        return commands.singleOrNull { cmd -> cmd.matches(args) }
-    }
-
-    private fun RsyncCommand.matches(args: List<String>): Boolean {
+private data class RsyncCommandArgs(val args: List<String>) {
+    fun match(args: List<String>): Boolean {
         if (args.isEmpty()) {
             return false
         }
         if (args.first() != "rsync") {
             return false
         }
-        return this.matchArgs.zip(args).all { it.first == it.second }
+        return this.args.zip(args).all { it.first == it.second }
+    }
+}
+
+internal class RsyncCommandsResolver : CommandsResolver {
+
+    private val commands: Map<RsyncCommand, RsyncCommandArgs> = mapOf(
+            RsyncServerSendCommand() to RsyncCommandArgs(listOf("rsync", "--server", "--sender"))
+    )
+
+    override fun resolve(args: List<String>): Pair<Command, RequestData>? {
+        val (command, commandArgs) = commands.map { (k, v) -> Pair(k, v) }
+                .singleOrNull { (_, cmdArgs) -> cmdArgs.match(args) } ?: return null
+        val requestData = parseRequestData(commandArgs, args)
+        return Pair(command, requestData)
+    }
+
+    private fun parseRequestData(commandArgs: RsyncCommandArgs, args: List<String>): RequestData {
+        val nonCommandArgs = args.removeCommandArgs(commandArgs)
+        throw UnsupportedOperationException()
+    }
+
+    private fun List<String>.removeCommandArgs(commandArgs: RsyncCommandArgs): List<String> {
+        return this.zip(commandArgs.args).dropWhile { it.first == it.second }.unzip().first
     }
 }
 

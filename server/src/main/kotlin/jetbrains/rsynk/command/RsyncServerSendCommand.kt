@@ -17,8 +17,6 @@ import java.io.File
 
 class RsyncServerSendCommand : RsyncCommand {
 
-    override val matchArgs: List<String> = listOf("rsync", "--server", "--sender")
-
     companion object : KLogging()
 
     /**
