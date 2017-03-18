@@ -21,11 +21,10 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
     companion object : KLogging()
 
     private val commands = AllCommandsHolder()
-    private val optionsParser = SessionInfoParser()
     private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
-        val thread = Thread(runnable, "ssh-command")
-        thread.isDaemon = true
-        return@threadFactory thread
+        val newThread = Thread(runnable, "ssh-command")
+        newThread.isDaemon = true
+        return@threadFactory newThread
     })
 
     override fun createCommand(cmd: String): Command {
@@ -46,7 +45,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
                     exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "No command received\n")
                 }
 
-                val command = try {
+                val (command, requestData) = try {
                     commands.resolve(args)
                 } catch(e: CommandNotFoundException) {
                     exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: ${e.message}\n")
@@ -67,11 +66,10 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
                     exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Error stream not set\n")
                     return
                 }
-                val sessionInfo = optionsParser.parse(args)
                 runningCommand = threadPool.submit {
                     try {
                         command.execute(
-                                sessionInfo,
+                                requestData,
                                 SynchronousReadingIO(stdin),
                                 SynchronousWritingIO(stdout),
                                 SynchronousWritingIO(stderr)

@@ -2,7 +2,7 @@ package jetbrains.rsynk.command
 
 
 interface CommandsHolder {
-    fun resolve(args: List<String>): Command?
+    fun resolve(args: List<String>): Pair<Command, RequestData>?
 }
 
 internal class AllCommandsHolder: CommandsHolder {
@@ -11,7 +11,7 @@ internal class AllCommandsHolder: CommandsHolder {
             RsyncCommandsHolder()
     )
 
-    override fun resolve(args: List<String>): Command {
+    override fun resolve(args: List<String>): Pair<Command, RequestData> {
         commandHolders.forEach { holder ->
             val command = holder.resolve(args)
             if (command != null) {
@@ -30,7 +30,7 @@ internal class RsyncCommandsHolder : CommandsHolder {
             RsyncServerSendCommand()
     )
 
-    override fun resolve(args: List<String>): Command? {
+    override fun resolve(args: List<String>): Pair<Command, RequestData>? {
         return commands.singleOrNull { cmd -> cmd.matches(args) }
     }
 

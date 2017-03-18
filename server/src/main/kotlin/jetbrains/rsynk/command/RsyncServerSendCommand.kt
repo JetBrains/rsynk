@@ -12,7 +12,6 @@ import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WritingIO
 import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
-import jetbrains.rsynk.session.SessionInfo
 import mu.KLogging
 import java.io.File
 
@@ -29,7 +28,7 @@ class RsyncServerSendCommand : RsyncCommand {
      *
      * Protocol phases enumerated and phases documented in protocol.md
      * */
-    override fun execute(sessionInfo: SessionInfo,
+    override fun execute(requestData: RequestData,
                          input: ReadingIO,
                          output: WritingIO,
                          error: WritingIO) {
@@ -37,10 +36,10 @@ class RsyncServerSendCommand : RsyncCommand {
 
         writeCompatFlags(output)
 
-        writeChecksumSeed(sessionInfo.checskumSeed, output)
+        writeChecksumSeed(requestData.checskumSeed, output)
 
         val filter = receiveFilterList(input)
-        sendFileList(sessionInfo.files, filter, output)
+        sendFileList(requestData.files, filter, output)
     }
 
     /**
