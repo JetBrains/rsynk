@@ -14,7 +14,7 @@ class RsyncServerSenderSetupProtocolTest {
 
     companion object {
         @JvmStatic
-        val rsynk = Rsynk(TestTools.findFreePort(), 1, 1, 100, TestTools.getServerKey(), emptySet())
+        val rsynk = Rsynk(TestTools.findFreePort(), 1, 1, 100, TestTools.getServerKey())
 
         val jsch = JSch()
 
