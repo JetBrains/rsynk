@@ -1,35 +1,42 @@
 package jetbrains.rsynk.options
 
-sealed class Option(val long: String?, val short: String?) {
-    object Server : Option("server", null)
-    object Sender : Option("sender", null)
-    object Daemon : Option("daemon", null)
+sealed class Option {
+    object Server : Option()
+    object Sender : Option()
+    object Daemon : Option()
 
-    object Compress : Option(null, "z")
-    object Delete : Option("delete", null)
-    object DeleteBefore: Option("delete-before", null)
-    object DeleteDuring: Option("delete-during", null)
+    object Compress : Option()
+    object ChecksumSeedOrderFix : Option()
+    object Delete : Option()
 
-    object IncrementalRecurse : Option("inc-recursive", null)
-    object RelativeNames : Option("relative", "R")
-    object CopyDirectoriesWithoutContent : Option("dirs", "d")
-    sealed class FileSelection(long: String?, short: String?) : Option(long, short) {
+    object FListIOErrorSafety: Option()
+    object IncrementalRecurse : Option()
+    object RelativePaths : Option()
+    object ShellCommand : Option()
+    object SymlinkTimeSetting: Option()
+    object OneFileSystem: Option()
+    class PreReleaseInfo(val info: String) : Option()
+    object ProtectArgs: Option()
+
+    sealed class FileSelection : Option() {
         /**
          * Transfer client's file list exactly but exclude directories
          * */
-        object NoDirectories : FileSelection("no-dirs", null)
+        object NoDirectories : FileSelection()
 
         /**
          * Transfer client's file list exactly and include directories
          * recursively
          * */
-        object TransferDirectoriesRecurse : FileSelection("recursive", "r")
+        object TransferDirectoriesRecurse : FileSelection()
 
         /**
          * Transfer client's file list and the content of any dot directory
          * */
-        object TransferDirectoriesWithoutContent : FileSelection("dirs", "d")
+        object TransferDirectoriesWithoutContent : FileSelection()
     }
+
+    object VerboseMode : Option()
 }
 
 
