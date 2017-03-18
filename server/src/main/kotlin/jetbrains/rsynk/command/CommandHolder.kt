@@ -1,16 +1,14 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.flags.CompatFlag
-
 
 interface CommandsHolder {
     fun resolve(args: List<String>): Command
 }
 
-class RsyncCommandsHolder(serverCompatFlags: Set<CompatFlag>) : CommandsHolder {
+internal class RsyncCommandsHolder : CommandsHolder {
 
     private val commands: List<RsyncCommand> = listOf(
-            RsyncServerSendCommand(serverCompatFlags)
+            RsyncServerSendCommand()
     )
 
     override fun resolve(args: List<String>): Command {
@@ -30,4 +28,4 @@ class RsyncCommandsHolder(serverCompatFlags: Set<CompatFlag>) : CommandsHolder {
     }
 }
 
-class CommandNotFoundException(message: String) : RuntimeException(message)
+internal class CommandNotFoundException(message: String) : RuntimeException(message)

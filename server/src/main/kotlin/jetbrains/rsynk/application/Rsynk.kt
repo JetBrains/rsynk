@@ -1,6 +1,5 @@
 package jetbrains.rsynk.application
 
-import jetbrains.rsynk.flags.CompatFlag
 import jetbrains.rsynk.server.ExplicitCommandFactory
 import jetbrains.rsynk.server.SSHServer
 import jetbrains.rsynk.server.SSHSessionFactory
@@ -11,16 +10,13 @@ class Rsynk(val port: Int,
             val nioWorkers: Int,
             val commandWorkers: Int,
             val idleConnectionTimeout: Int,
-            val serverKeys: KeyPairProvider,
-        //TODO: get rid of it here!
-            val options: Set<CompatFlag>) {
+            val serverKeys: KeyPairProvider) {
 
     private val server: SSHServer
 
     init {
-        val settings = createSSHSettings()
-        val serverCompatFlags = options
-        server = SSHServer(settings, ExplicitCommandFactory(settings, serverCompatFlags), SSHSessionFactory())
+        val sshSettings = createSSHSettings()
+        server = SSHServer(sshSettings, ExplicitCommandFactory(sshSettings), SSHSessionFactory())
     }
 
     fun start() = server.start()

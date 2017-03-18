@@ -7,17 +7,16 @@ import jetbrains.rsynk.extensions.littleEndianToInt
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.extensions.twoLowestBytes
 import jetbrains.rsynk.files.FilterList
-import jetbrains.rsynk.flags.CompatFlag
 import jetbrains.rsynk.flags.TransmitFlags
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WritingIO
-import jetbrains.rsynk.protocol.RsyncConstants
+import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
 import jetbrains.rsynk.session.SessionInfo
 import mu.KLogging
 import java.io.File
 
-class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : RsyncCommand {
+class RsyncServerSendCommand : RsyncCommand {
 
     override val matchArgs: List<String> = listOf("rsync", "--server", "--sender")
 
@@ -52,21 +51,21 @@ class RsyncServerSendCommand(private val serverCompatFlags: Set<CompatFlag>) : R
      * either too old or too modern
      */
     private fun setupProtocol(input: ReadingIO, output: WritingIO) {
-        output.writeBytes(RsyncConstants.serverProtocolVersion.toLittleEndianBytes())
+        output.writeBytes(RsyncServerStaticConfiguration.serverProtocolVersion.toLittleEndianBytes())
         val clientProtocolVersion = input.readBytes(4).littleEndianToInt()
-        if (clientProtocolVersion < RsyncConstants.clientProtocolVersionMin) {
-            throw UnsupportedProtocolException("Client protocol version must be at least ${RsyncConstants.clientProtocolVersionMin}")
+        if (clientProtocolVersion < RsyncServerStaticConfiguration.clientProtocolVersionMin) {
+            throw UnsupportedProtocolException("Client protocol version must be at least ${RsyncServerStaticConfiguration.clientProtocolVersionMin}")
         }
-        if (clientProtocolVersion > RsyncConstants.clientProtocolVersionMax) {
-            throw UnsupportedProtocolException("Client protocol version must be no more than ${RsyncConstants.clientProtocolVersionMax}")
+        if (clientProtocolVersion > RsyncServerStaticConfiguration.clientProtocolVersionMax) {
+            throw UnsupportedProtocolException("Client protocol version must be no more than ${RsyncServerStaticConfiguration.clientProtocolVersionMax}")
         }
     }
 
     /**
-     * Writes server's {@code serverCompatFlags}.
+     * Writes server's compat flags.
      */
     private fun writeCompatFlags(output: WritingIO) {
-        val serverCompatFlags = serverCompatFlags.encode()
+        val serverCompatFlags = RsyncServerStaticConfiguration.serverCompatFlags.encode()
         output.writeBytes(byteArrayOf(serverCompatFlags))
     }
 
