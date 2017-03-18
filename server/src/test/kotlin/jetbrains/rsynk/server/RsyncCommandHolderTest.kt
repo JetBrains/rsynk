@@ -1,13 +1,13 @@
 package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.CommandNotFoundException
-import jetbrains.rsynk.command.RsyncCommandsHolder
+import jetbrains.rsynk.command.RsyncCommandsResolver
 import jetbrains.rsynk.command.RsyncServerSendCommand
 import org.junit.Test
 
 class RsyncCommandHolderTest {
 
-    private val rsyncCommandsHolder = RsyncCommandsHolder()
+    private val rsyncCommandsHolder = RsyncCommandsResolver()
 
     @Test(expected = CommandNotFoundException::class)
     fun empty_args_list_does_not_match_any_command() {

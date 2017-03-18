@@ -1,6 +1,6 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.command.AllCommandsHolder
+import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
@@ -20,7 +20,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
 
     companion object : KLogging()
 
-    private val commands = AllCommandsHolder()
+    private val commands = AllCommandsResolver()
     private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
         val newThread = Thread(runnable, "ssh-command")
         newThread.isDaemon = true

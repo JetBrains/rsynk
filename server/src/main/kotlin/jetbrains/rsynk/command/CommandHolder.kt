@@ -1,14 +1,14 @@
 package jetbrains.rsynk.command
 
 
-interface CommandsHolder {
+interface CommandsResolver {
     fun resolve(args: List<String>): Pair<Command, RequestData>?
 }
 
-internal class AllCommandsHolder: CommandsHolder {
+internal class AllCommandsResolver : CommandsResolver {
 
     private val commandHolders = listOf(
-            RsyncCommandsHolder()
+            RsyncCommandsResolver()
     )
 
     override fun resolve(args: List<String>): Pair<Command, RequestData> {
@@ -24,7 +24,7 @@ internal class AllCommandsHolder: CommandsHolder {
 
 }
 
-internal class RsyncCommandsHolder : CommandsHolder {
+internal class RsyncCommandsResolver : CommandsResolver {
 
     private val commands: List<RsyncCommand> = listOf(
             RsyncServerSendCommand()
