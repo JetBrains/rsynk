@@ -36,7 +36,7 @@ class RsyncCommandsResolver : CommandsResolver {
         val requestData = try {
             RsyncRequestDataParser.parse(args)
         } catch (t: Throwable) {
-            throw InvalidArgumentsException("Cannot parse request arguments: $args")
+            throw InvalidArgumentsException("Cannot parse request arguments: $args.", t)
         }
         for ((command, predicate) in commands) {
             if (predicate(requestData.options)) {
@@ -48,4 +48,4 @@ class RsyncCommandsResolver : CommandsResolver {
 }
 
 class CommandNotFoundException(message: String) : RuntimeException(message)
-class InvalidArgumentsException(message: String) : RuntimeException(message)
+class InvalidArgumentsException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
