@@ -1,11 +1,11 @@
 package jetbrains.rsynk.command
 
 
-internal interface CommandsResolver {
+interface CommandsResolver {
     fun resolve(args: List<String>): Pair<Command, RequestData>?
 }
 
-internal class AllCommandsResolver : CommandsResolver {
+class AllCommandsResolver : CommandsResolver {
 
     private val commandHolders = listOf(
             RsyncCommandsResolver()
@@ -36,7 +36,7 @@ private data class RsyncCommandArgs(val args: List<String>) {
     }
 }
 
-internal class RsyncCommandsResolver : CommandsResolver {
+class RsyncCommandsResolver : CommandsResolver {
 
     private val commands: Map<RsyncCommand, RsyncCommandArgs> = mapOf(
             RsyncServerSendCommand() to RsyncCommandArgs(listOf("rsync", "--server", "--sender"))
@@ -59,4 +59,4 @@ internal class RsyncCommandsResolver : CommandsResolver {
     }
 }
 
-internal class CommandNotFoundException(message: String) : RuntimeException(message)
+class CommandNotFoundException(message: String) : RuntimeException(message)
