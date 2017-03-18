@@ -6,12 +6,12 @@ import jetbrains.rsynk.session.SessionInfo
 
 
 interface Command {
-  fun execute(sessionInfo: SessionInfo,
-              input: ReadingIO,
-              output: WritingIO,
-              error: WritingIO)
+    fun execute(sessionInfo: SessionInfo,
+                input: ReadingIO,
+                output: WritingIO,
+                error: WritingIO)
 }
 
 interface RsyncCommand : Command {
-  val matchArgs: List<String>
+    val matchArgs: List<String>
 }

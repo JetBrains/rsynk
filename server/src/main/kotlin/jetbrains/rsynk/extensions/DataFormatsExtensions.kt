@@ -24,10 +24,10 @@ fun Int.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(4).putInt(this).a
  * Received bytes should be reversed to reconstruct the sent integer.
  * */
 fun ByteArray.littleEndianToInt(): Int {
-  if (this.size != 4) {
-    throw IllegalArgumentException("Cannot convert array of ${this.size} to Int")
-  }
-  return ByteBuffer.wrap(this.reversedArray()).int
+    if (this.size != 4) {
+        throw IllegalArgumentException("Cannot convert array of ${this.size} to Int")
+    }
+    return ByteBuffer.wrap(this.reversedArray()).int
 }
 
 /**
@@ -36,10 +36,10 @@ fun ByteArray.littleEndianToInt(): Int {
  * bytes[1] - second lowest byte
  * */
 val Int.twoLowestBytes: ByteArray
-  get() {
-    val bytes = this.toLittleEndianBytes()
-    return byteArrayOf(bytes[0], bytes[1])
-  }
+    get() {
+        val bytes = this.toLittleEndianBytes()
+        return byteArrayOf(bytes[0], bytes[1])
+    }
 
 /**
  * Rsync transforms bytes to int like this:
@@ -56,4 +56,4 @@ val Int.twoLowestBytes: ByteArray
 fun Long.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(8).putLong(this).array().reversedArray()
 
 val Byte.Companion.MAX_VALUE_UNSIGNED: Int
-  get() = Byte.MAX_VALUE * 2 + 1
+    get() = Byte.MAX_VALUE * 2 + 1
