@@ -1,7 +1,7 @@
 package jetbrains.rsynk.server
 
+import jetbrains.rsynk.command.AllCommandsHolder
 import jetbrains.rsynk.command.CommandNotFoundException
-import jetbrains.rsynk.command.RsyncCommandsHolder
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
 import jetbrains.rsynk.io.SynchronousReadingIO
@@ -20,7 +20,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
 
     companion object : KLogging()
 
-    private val rsyncCommands = RsyncCommandsHolder()
+    private val commands = AllCommandsHolder()
     private val optionsParser = SessionInfoParser()
     private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
         val thread = Thread(runnable, "ssh-command")
@@ -28,7 +28,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
         return@threadFactory thread
     })
 
-    override fun createCommand(command: String): Command {
+    override fun createCommand(cmd: String): Command {
 
         var exitCallback: ExitCallback? = null
         var runningCommand: Future<*>? = null
@@ -40,21 +40,14 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
 
         return object : Command {
             override fun start(env: Environment) {
-                val args = command.split(" ")
+                val args = cmd.split(" ")
 
                 if (args.isEmpty()) {
                     exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "No command received\n")
                 }
 
-                val commandsHolder = when (args.first()) {
-                    "rsync" -> rsyncCommands
-                    else -> {
-                        exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: $args\n")
-                        return
-                    }
-                }
-                val resolvedCommand = try {
-                    commandsHolder.resolve(args)
+                val command = try {
+                    commands.resolve(args)
                 } catch(e: CommandNotFoundException) {
                     exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: ${e.message}\n")
                     return
@@ -77,7 +70,7 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
                 val sessionInfo = optionsParser.parse(args)
                 runningCommand = threadPool.submit {
                     try {
-                        resolvedCommand.execute(
+                        command.execute(
                                 sessionInfo,
                                 SynchronousReadingIO(stdin),
                                 SynchronousWritingIO(stdout),

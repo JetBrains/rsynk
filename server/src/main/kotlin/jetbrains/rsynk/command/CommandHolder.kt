@@ -2,7 +2,26 @@ package jetbrains.rsynk.command
 
 
 interface CommandsHolder {
-    fun resolve(args: List<String>): Command
+    fun resolve(args: List<String>): Command?
+}
+
+internal class AllCommandsHolder: CommandsHolder {
+
+    private val commandHolders = listOf(
+            RsyncCommandsHolder()
+    )
+
+    override fun resolve(args: List<String>): Command {
+        commandHolders.forEach { holder ->
+            val command = holder.resolve(args)
+            if (command != null) {
+                return command
+            }
+        }
+        throw CommandNotFoundException("Zero or more than one command match given args " +
+                args.joinToString(prefix = "[", postfix = "]", separator = ", "))
+    }
+
 }
 
 internal class RsyncCommandsHolder : CommandsHolder {
@@ -11,10 +30,8 @@ internal class RsyncCommandsHolder : CommandsHolder {
             RsyncServerSendCommand()
     )
 
-    override fun resolve(args: List<String>): Command {
-        val command = commands.singleOrNull { cmd -> cmd.matches(args) } ?:
-                throw CommandNotFoundException("Cannot resolve rsync command for given args [$args]")
-        return command
+    override fun resolve(args: List<String>): Command? {
+        return commands.singleOrNull { cmd -> cmd.matches(args) }
     }
 
     private fun RsyncCommand.matches(args: List<String>): Boolean {
