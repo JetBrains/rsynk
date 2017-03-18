@@ -34,7 +34,7 @@ class RsyncServerSendCommand : RsyncCommand {
 
         writeCompatFlags(output)
 
-        writeChecksumSeed(requestData.checskumSeed, output)
+        writeChecksumSeed(requestData.checksumSeed, output)
 
         val filter = receiveFilterList(input)
         sendFileList(requestData.files, filter, output)

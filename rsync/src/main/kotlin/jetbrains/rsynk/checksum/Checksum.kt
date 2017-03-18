@@ -6,7 +6,7 @@ object Checksum {
 
     private val seed = System.currentTimeMillis()
 
-    fun nextSeed(): Int {
+    fun newSeed(): Int {
         val random = Random(seed)
         return Math.abs(random.nextInt())
     }
