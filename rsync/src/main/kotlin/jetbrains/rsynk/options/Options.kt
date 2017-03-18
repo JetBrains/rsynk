@@ -1,34 +1,34 @@
 package jetbrains.rsynk.options
 
-sealed class Option {
-    object Delete : Option()
-    object IncrementalRecurse : Option()
-    object PreserveDevices : Option()
-    object PreserveLinks : Option()
-    object PreservePermissions : Option()
-    object PreserveSpecials : Option()
-    object PreserveTimes : Option()
-    object PreserveUser : Option()
-    object PreserveGroup : Option()
-    object UseNumericId : Option()
-    object IgnoreTimes : Option()
-    object SafeFileList : Option()
-    sealed class FileSelection : Option() {
+sealed class Option(val long: String?, val short: String?) {
+    object Server : Option("server", null)
+    object Sender : Option("sender", null)
+    object Daemon : Option("daemon", null)
+
+    object Compress : Option(null, "z")
+    object Delete : Option("delete", null)
+    object DeleteBefore: Option("delete-before", null)
+    object DeleteDuring: Option("delete-during", null)
+
+    object IncrementalRecurse : Option("inc-recursive", null)
+    object RelativeNames : Option("relative", "R")
+    object CopyDirectoriesWithoutContent : Option("dirs", "d")
+    sealed class FileSelection(long: String?, short: String?) : Option(long, short) {
         /**
          * Transfer client's file list exactly but exclude directories
          * */
-        object Exact : FileSelection()
+        object NoDirectories : FileSelection("no-dirs", null)
 
         /**
          * Transfer client's file list exactly and include directories
          * recursively
          * */
-        object Recurse : FileSelection()
+        object TransferDirectoriesRecurse : FileSelection("recursive", "r")
 
         /**
          * Transfer client's file list and the content of any dot directory
          * */
-        object TransferDirectories : FileSelection()
+        object TransferDirectoriesWithoutContent : FileSelection("dirs", "d")
     }
 }
 
