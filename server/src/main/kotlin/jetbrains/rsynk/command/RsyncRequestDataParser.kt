@@ -33,6 +33,7 @@ object RsyncRequestDataParser {
                             options.addAll(parseShortName(arg))
                         }
                         else -> {
+                            files.add(arg)
                             nextArg = State.FILE
                         }
                     }
