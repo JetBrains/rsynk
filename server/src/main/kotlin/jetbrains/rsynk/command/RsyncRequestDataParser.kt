@@ -63,7 +63,8 @@ object RsyncRequestDataParser {
         val preReleaseInfoRegex = Regex("e\\d*\\.\\d*")
         val preReleaseInfo = preReleaseInfoRegex.find(o)?.value
         if (preReleaseInfo != null && preReleaseInfo != "e.") {
-            options.add(Option.PreReleaseInfo(preReleaseInfo))
+            val info = preReleaseInfo.drop(1)
+            options.add(Option.PreReleaseInfo(info))
         }
         val optionToParse = o.replace(preReleaseInfoRegex, "")
         optionToParse.forEach { c ->
