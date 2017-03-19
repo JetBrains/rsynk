@@ -13,9 +13,8 @@ class AllCommandsResolver : CommandsResolver {
 
     override fun resolve(args: List<String>): Pair<Command, RequestData> {
         commandHolders.forEach { holder ->
-            val command = holder.resolve(args)
-            if (command != null) {
-                return command
+            holder.resolve(args)?.let {
+                return it
             }
         }
         throw CommandNotFoundException("Zero or more than one command match given args " +
