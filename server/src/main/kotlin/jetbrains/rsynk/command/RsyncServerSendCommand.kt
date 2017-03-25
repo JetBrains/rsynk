@@ -6,6 +6,7 @@ import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.littleEndianToInt
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.extensions.twoLowestBytes
+import jetbrains.rsynk.files.FileResolver
 import jetbrains.rsynk.files.FilterList
 import jetbrains.rsynk.flags.TransmitFlags
 import jetbrains.rsynk.flags.encode
@@ -108,12 +109,7 @@ class RsyncServerSendCommand : RsyncCommand {
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
 
-        val wildcard = Regex(".*[\\[*?].*")
-        requestedFiles.firstOrNull { path -> wildcard.matches(path) }?.let {
-            throw UnsupportedOperationException("Cannot expand $it path (not supported)")
-        }
-
-        val fileToSend = resolveFile(requestedFiles.single())
+        val fileToSend = FileResolver.resolve(requestedFiles.single())
         if (!filterList.include(fileToSend)) {
             // gracefully exit, work is done when work is none
             return
@@ -157,11 +153,6 @@ class RsyncServerSendCommand : RsyncCommand {
         write_varlong(fileToSend.length(), 3, output)
         write_varlong(fileToSend.lastModified(), 4, output)
         //TODO: wiremode
-    }
-
-    private fun resolveFile(path: String): File {
-        //TODO: very naive
-        return File(path)
     }
 
     //TODO: such code doesn't suit the project
