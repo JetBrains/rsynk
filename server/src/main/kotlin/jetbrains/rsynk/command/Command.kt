@@ -45,9 +45,8 @@ class RequestOptions(val options: Set<Option>) {
 }
 
 
-class RequestData(val options: RequestOptions,
-                  val files: List<String>) {
-    val checksumSeed = Checksum.newSeed()
-}
+data class RequestData(val options: RequestOptions,
+                  val files: List<String>,
+                  val checksumSeed: Int = Checksum.newSeed())
 
 interface RsyncCommand : Command

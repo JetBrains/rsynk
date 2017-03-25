@@ -6,6 +6,7 @@ sealed class Option {
     object Daemon : Option()
 
     object Compress : Option()
+    class ChecksumSeed(val seed: Int): Option()
     object ChecksumSeedOrderFix : Option()
     object Delete : Option()
 

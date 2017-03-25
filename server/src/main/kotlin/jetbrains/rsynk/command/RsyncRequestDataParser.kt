@@ -44,7 +44,8 @@ object RsyncRequestDataParser {
                 }
             }
         }
-        return RequestData(RequestOptions(options), files)
+        val seedOption = options.firstOrNull { it is Option.ChecksumSeed } ?: return RequestData(RequestOptions (options), files)
+        return RequestData(RequestOptions (options), files, (seedOption as Option.ChecksumSeed).seed)
     }
 
     private fun String.isShortOption(): Boolean {
@@ -99,7 +100,12 @@ object RsyncRequestDataParser {
 
             "one-file-system" -> Option.OneFileSystem
             "protect-args" -> Option.ProtectArgs
-            else -> throw Error("Unknown long named option '$o'")
+            else -> {
+                if (o.startsWith("--checksum-seed")) {
+                    return Option.ChecksumSeed(o.substring("--checksum-seed=".length).toInt())
+                }
+                throw Error("Unknown long named option '$o'")
+            }
         }
     }
 }

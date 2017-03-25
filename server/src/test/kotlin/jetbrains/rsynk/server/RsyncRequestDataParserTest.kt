@@ -52,4 +52,10 @@ class RsyncRequestDataParserTest {
         }
         Assert.fail()
     }
+
+    @Test
+    fun parse_checksum_seed_test() {
+        val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "--checksum-seed=42"))
+        Assert.assertEquals(42, data.checksumSeed)
+    }
 }
