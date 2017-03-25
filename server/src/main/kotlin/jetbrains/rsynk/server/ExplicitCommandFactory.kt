@@ -4,8 +4,8 @@ import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
-import jetbrains.rsynk.io.SynchronousReadingIO
-import jetbrains.rsynk.io.SynchronousWritingIO
+import jetbrains.rsynk.io.BasicReadingIO
+import jetbrains.rsynk.io.FlushingWritingIO
 import mu.KLogging
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -70,9 +70,9 @@ class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
                     try {
                         command.execute(
                                 requestData,
-                                SynchronousReadingIO(stdin),
-                                SynchronousWritingIO(stdout),
-                                SynchronousWritingIO(stderr)
+                                BasicReadingIO(stdin),
+                                FlushingWritingIO(stdout),
+                                FlushingWritingIO(stderr)
                         )
                         exit(RsyncExitCodes.SUCCESS)
                     } catch (e: RsynkException) {

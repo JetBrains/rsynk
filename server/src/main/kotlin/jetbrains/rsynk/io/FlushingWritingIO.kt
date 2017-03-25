@@ -2,7 +2,7 @@ package jetbrains.rsynk.io
 
 import java.io.OutputStream
 
-class SynchronousWritingIO(private val output: OutputStream) : WritingIO {
+class FlushingWritingIO(private val output: OutputStream) : WritingIO {
 
     /**
      * Writes {@code bytes} buffer with given {@code offset} and
