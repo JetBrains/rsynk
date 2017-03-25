@@ -1,6 +1,7 @@
 package jetbrains.rsynk.command
 
 import jetbrains.rsynk.exitvalues.InvalidFileException
+import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.littleEndianToInt
@@ -88,6 +89,12 @@ class RsyncServerSendCommand : RsyncCommand {
         if (len > 1024 * 5) {
             len = input.readBytes(4).littleEndianToInt()
         }
+
+        if (len != 0) {
+            //TODO
+            throw NotSupportedException("Filter list is not supported")
+        }
+
         while (len != 0) {
             //TODO: receive & parse filter list
             //http://blog.mudflatsoftware.com/blog/2012/10/31/tricks-with-rsync-filter-rules/
