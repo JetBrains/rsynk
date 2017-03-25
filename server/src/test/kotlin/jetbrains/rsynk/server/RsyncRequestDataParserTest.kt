@@ -1,6 +1,7 @@
 package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.RsyncRequestDataParser
+import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
 import org.junit.Assert
 import org.junit.Test
@@ -43,14 +44,9 @@ class RsyncRequestDataParserTest {
         Assert.assertEquals("31.100002", data.options.preReleaseInfo)
     }
 
-    @Test
+    @Test(expected = ArgsParingException::class)
     fun parse_non_rsync_command_test() {
-        try {
-            RsyncRequestDataParser.parse(listOf("--server", "-e.sd", "."))
-        } catch (t: Throwable) {
-            return
-        }
-        Assert.fail()
+        RsyncRequestDataParser.parse(listOf("--server", "-e.sd", "."))
     }
 
     @Test

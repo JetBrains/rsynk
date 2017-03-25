@@ -10,6 +10,9 @@ open class RsynkException(message: String, val exitCode: Int) : RuntimeException
 class ProtocolException(message: String, exitCode: Int = ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM) :
         RsynkException(message, exitCode)
 
+class ArgsParingException(message: String, exitCode: Int = ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM) :
+        RsynkException(message, exitCode)
+
 class UnsupportedProtocolException(message: String) :
         RsynkException(message, PROTOCOL_INCOMPATIBILITY)
 

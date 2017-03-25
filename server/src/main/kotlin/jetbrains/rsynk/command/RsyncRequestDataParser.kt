@@ -1,5 +1,6 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
 import java.util.*
 
@@ -19,7 +20,7 @@ object RsyncRequestDataParser {
 
                 State.RSYNC -> {
                     if (arg != "rsync") {
-                        throw Error("'rsync' argument must be sent first")
+                        throw ArgsParingException("'rsync' argument must be sent first")
                     }
                     nextArg = State.OPTION
                 }
@@ -34,7 +35,7 @@ object RsyncRequestDataParser {
                         }
                         else -> {
                             if (arg != ".") {
-                                throw Error("'.' argument expected after options list, got $arg")
+                                throw ArgsParingException("'.' argument expected after options list, got $arg")
                             }
                             nextArg = State.FILE
                         }
@@ -85,7 +86,7 @@ object RsyncRequestDataParser {
                 'x' -> Option.OneFileSystem
                 'z' -> Option.Compress
 
-                else -> throw Error("Unknown short named option '$c' ($o)")
+                else -> throw ArgsParingException("Unknown short named option '$c' ($o)")
             }
             if (option != null) {
                 options.add(option)
@@ -106,7 +107,7 @@ object RsyncRequestDataParser {
                 if (o.startsWith("--checksum-seed")) {
                     return Option.ChecksumSeed(o.substring("--checksum-seed=".length).toInt())
                 }
-                throw Error("Unknown long named option '$o'")
+                throw ArgsParingException("Unknown long named option '$o'")
             }
         }
     }

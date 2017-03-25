@@ -105,7 +105,7 @@ class RsyncServerSendCommand : RsyncCommand {
         }
         val fileToSend = resolveFile(requestedFiles.single())
         if (!filterList.include(fileToSend)) {
-            // gracefully exit, work is done when work is *none*
+            // gracefully exit, work is done when work is none
             return
         }
 
