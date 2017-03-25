@@ -30,7 +30,7 @@ class RsyncServerSendCommand : RsyncCommand {
                          input: ReadingIO,
                          output: WritingIO,
                          error: WritingIO) {
-        setupProtocol(input, output)
+        exchangeProtocolVersions(input, output)
 
         writeCompatFlags(output)
 
@@ -47,7 +47,7 @@ class RsyncServerSendCommand : RsyncCommand {
      * @throws {@code UnsupportedProtocolException} if client's protocol version
      * either too old or too modern
      */
-    private fun setupProtocol(input: ReadingIO, output: WritingIO) {
+    private fun exchangeProtocolVersions(input: ReadingIO, output: WritingIO) {
         output.writeBytes(RsyncServerStaticConfiguration.serverProtocolVersion.toLittleEndianBytes())
         val clientProtocolVersion = input.readBytes(4).littleEndianToInt()
         if (clientProtocolVersion < RsyncServerStaticConfiguration.clientProtocolVersionMin) {
@@ -107,6 +107,12 @@ class RsyncServerSendCommand : RsyncCommand {
             //TODO: then try multiple files, directories and whole combinatorics
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
+
+        val wildcard = Regex(".*[\\[*?].*")
+        requestedFiles.firstOrNull { path -> wildcard.matches(path) }?.let {
+            throw UnsupportedOperationException("Cannot expand $it path (not supported)")
+        }
+
         val fileToSend = resolveFile(requestedFiles.single())
         if (!filterList.include(fileToSend)) {
             // gracefully exit, work is done when work is none
