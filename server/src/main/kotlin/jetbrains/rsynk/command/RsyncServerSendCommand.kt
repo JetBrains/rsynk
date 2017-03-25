@@ -1,6 +1,5 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
@@ -90,16 +89,14 @@ class RsyncServerSendCommand : RsyncCommand {
             len = input.readBytes(4).littleEndianToInt()
         }
 
-        if (len != 0) {
-            //TODO
-            throw NotSupportedException("Filter list is not supported")
-        }
-
         while (len != 0) {
+            throw NotSupportedException("Filter list is not supported")
+            /*
             //TODO: receive & parse filter list
             //http://blog.mudflatsoftware.com/blog/2012/10/31/tricks-with-rsync-filter-rules/
             val bytes = input.readBytes(len).littleEndianToInt()
             len = input.readBytes(4).littleEndianToInt()
+            */
         }
         return FilterList()
     }
@@ -108,7 +105,7 @@ class RsyncServerSendCommand : RsyncCommand {
         if (requestedFiles.size != 1) {
             //TODO: ok while goal is to send single file
             //TODO: then try multiple files, directories and whole combinatorics
-            throw InvalidFileException("Multiple files requests not implemented yet")
+            throw NotSupportedException("Multiple files requests not implemented yet")
         }
         val fileToSend = resolveFile(requestedFiles.single())
         if (!filterList.include(fileToSend)) {

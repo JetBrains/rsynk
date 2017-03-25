@@ -22,5 +22,5 @@ class ModuleNotFoundException(message: String) :
 class InvalidFileException(message: String) :
         RsynkException(message, ERROR_SELECTING_INPUT_FILES)
 
-class ActionNotSupportedException(message: String) :
+class NotSupportedException(message: String) :
         RsynkException(message, REQUESTED_ACTION_NOT_SUPPORTED)
