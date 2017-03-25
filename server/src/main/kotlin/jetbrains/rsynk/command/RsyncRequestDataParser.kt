@@ -33,7 +33,9 @@ object RsyncRequestDataParser {
                             options.addAll(parseShortName(arg))
                         }
                         else -> {
-                            files.add(arg)
+                            if (arg != ".") {
+                                throw Error("'.' argument expected after options list, got $arg")
+                            }
                             nextArg = State.FILE
                         }
                     }
