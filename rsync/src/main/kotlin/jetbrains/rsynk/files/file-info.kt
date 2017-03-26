@@ -37,6 +37,8 @@ data class FileInfo(
         get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.CharacterDevice
     val isFIFO: Boolean
         get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.FIFO
+    val isReqularFile: Boolean
+        get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.RegularFile
 
     val isNotDotDir = path.nameCount == 1 && path.endsWith(".")
 }

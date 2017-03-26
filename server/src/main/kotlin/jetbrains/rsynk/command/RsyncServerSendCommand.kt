@@ -2,17 +2,16 @@ package jetbrains.rsynk.command
 
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
-import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.littleEndianToInt
 import jetbrains.rsynk.extensions.toLittleEndianBytes
-import jetbrains.rsynk.extensions.twoLowestBytes
 import jetbrains.rsynk.files.FileInfoReader
+import jetbrains.rsynk.files.FileList
 import jetbrains.rsynk.files.FileResolver
 import jetbrains.rsynk.files.FilterList
-import jetbrains.rsynk.flags.TransmitFlags
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WritingIO
+import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
 import mu.KLogging
 
@@ -52,10 +51,12 @@ class RsyncServerSendCommand(private val fileInfo: FileInfoReader) : RsyncComman
         output.writeBytes(RsyncServerStaticConfiguration.serverProtocolVersion.toLittleEndianBytes())
         val clientProtocolVersion = input.readBytes(4).littleEndianToInt()
         if (clientProtocolVersion < RsyncServerStaticConfiguration.clientProtocolVersionMin) {
-            throw UnsupportedProtocolException("Client protocol version must be at least ${RsyncServerStaticConfiguration.clientProtocolVersionMin}")
+            throw UnsupportedProtocolException("Client protocol version must be at least " +
+                    RsyncServerStaticConfiguration.clientProtocolVersionMin)
         }
         if (clientProtocolVersion > RsyncServerStaticConfiguration.clientProtocolVersionMax) {
-            throw UnsupportedProtocolException("Client protocol version must be no more than ${RsyncServerStaticConfiguration.clientProtocolVersionMax}")
+            throw UnsupportedProtocolException("Client protocol version must be no more than " +
+                    RsyncServerStaticConfiguration.clientProtocolVersionMax)
         }
     }
 
@@ -104,64 +105,22 @@ class RsyncServerSendCommand(private val fileInfo: FileInfoReader) : RsyncComman
 
     private fun sendFileList(data: RequestData, filterList: FilterList, output: WritingIO) {
         if (data.files.size != 1) {
-            //TODO: ok while goal is to send single file
-            //TODO: then try multiple files, directories and whole combinatorics
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
 
         val filesToSend = listOf(FileResolver.resolve(data.files.single()))
         if (!filterList.include(filesToSend.first())) {
-            // gracefully exit, work is done when work is none
             return
         }
-        val filesList = filesToSend.map { fileInfo.getFileInfo(it, data.options) }
 
-        //TODO: set transmit flags!
-        val flags = emptySet<TransmitFlags>()
-        val encodedFlags = flags.encode()
-        if (encodedFlags.and(0xFF00) != 0 /* means value doesn't fit one byte */ || encodedFlags == 0) {
-            /* Rsync plays very dirty there. Comment from native rsync sources:
-             * We must make sure we don't send a zero flag byte or the
-             * other end will terminate the flist transfer.  Note that
-             * the use of XMIT_TOP_DIR on a non-dir has no meaning, so
-             * it's harmless way to add a bit to the first flag byte. */
-            output.writeBytes(encodedFlags.or(TransmitFlags.TopDirectory.value).twoLowestBytes)
-        } else {
-            output.writeBytes(byteArrayOf(encodedFlags.toByte()))
-        }
-
-        //TODO:
-        /* This is used for recursive directory sending
-         * used at flist.c ~537. I failed to find any
-         * any l1 variable assignment. Very likely things
-         * won't work in recursive directory transmission
-         * all because of this variable */
-        val lastName = ""
-        val fileName = filesToSend.first().name
-
-        val l1 = filesToSend.first().name.commonPrefixWith(lastName).length
-        if (l1 > 0) {
-            output.writeBytes(byteArrayOf(l1.toByte()))
-        }
-        val nameToSend = fileName.substring(l1)
-        val l2 = nameToSend.length
-        if (l2 > Byte.MAX_VALUE_UNSIGNED) {
-            write_varint(l2, output)
-        } else {
-            output.writeBytes(byteArrayOf(l2.toByte()))
-        }
-        output.writeBytes(nameToSend.toByteArray())
-        write_varlong(filesToSend.first().length(), 3, output)
-        write_varlong(filesToSend.first().lastModified(), 4, output)
-        //TODO: wiremode
+        val fileList = FileList(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
+        fileList.addFileSegment(null, filesToSend.map { fileInfo.getFileInfo(it, data.options) })
     }
 
-    //TODO: such code doesn't suit the project
     private fun write_varint(value: Int, output: WritingIO) {
         write_var_number(value.toLittleEndianBytes(), 1, output)
     }
 
-    //TODO: such code doesn't suit the project
     private fun write_varlong(value: Long, minBytes: Int, output: WritingIO) {
         write_var_number(value.toLittleEndianBytes(), minBytes, output)
     }
