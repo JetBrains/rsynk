@@ -1,25 +1,32 @@
 package jetbrains.rsynk.files
 
 import jetbrains.rsynk.options.RequestOptions
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.TimeUnit
 
 
 internal object FileBitmasks {
-    val S_IFLNK = 40960
-    val S_IFREG = 32768
-    val S_IFDIR = 16384
-    val S_IFUNK = 53248
+    val FileTypeBitMask = 61440
+
+    val Socket = 49152
+    val SymLink = 40960
+    val RegularFile = 32768
+    val BlockDevice = 24576
+    val Directory = 16384
+    val CharacterDevice = 8192
+    val FIFO = 4096
+
+    val Other = 53248
 }
 
 class FileInfoReader(private val fs: FileSystemInfo) {
 
-    fun getFileInfo(file: File, options: RequestOptions): FileInfo {
+    fun getFileInfo(file: Path, options: RequestOptions): FileInfo {
 
-        val attributes = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+        val attributes = Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
         val mode = getFileMode(attributes)
 
         return FileInfo(
@@ -33,14 +40,14 @@ class FileInfoReader(private val fs: FileSystemInfo) {
 
     private fun getFileMode(attributes: BasicFileAttributes): Int {
         if (attributes.isDirectory) {
-            return FileBitmasks.S_IFDIR or fs.defaultDirPermission
+            return FileBitmasks.Directory or fs.defaultDirPermission
         }
         if (attributes.isRegularFile) {
-            return FileBitmasks.S_IFREG or fs.defaultFilePermission
+            return FileBitmasks.RegularFile or fs.defaultFilePermission
         }
         if (attributes.isSymbolicLink) {
-            FileBitmasks.S_IFLNK or fs.defaultFilePermission
+            FileBitmasks.SymLink or fs.defaultFilePermission
         }
-        return FileBitmasks.S_IFUNK
+        return FileBitmasks.Other
     }
 }
