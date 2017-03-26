@@ -30,6 +30,7 @@ class FileInfoReader(private val fs: FileSystemInfo) {
         val mode = getFileMode(attributes)
 
         return FileInfo(
+                file,
                 mode,
                 attributes.size(),
                 attributes.lastModifiedTime().to(TimeUnit.SECONDS),

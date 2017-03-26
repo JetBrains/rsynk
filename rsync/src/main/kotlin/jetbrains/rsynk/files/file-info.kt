@@ -1,5 +1,7 @@
 package jetbrains.rsynk.files
 
+import java.nio.file.Path
+
 data class User(
         val name: String,
         val uid: Int
@@ -11,12 +13,18 @@ data class Group(
 )
 
 data class FileInfo(
+        val path: Path,
         val mode: Int,
         val size: Long,
         val lastModified: Long,
         val user: User,
         val group: Group
-) {
+): Comparable<FileInfo> {
+
+    override fun compareTo(other: FileInfo): Int {
+        throw UnsupportedOperationException("not implemented")
+    }
+
     val isDirectory: Boolean
         get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.Directory
     val isSocket: Boolean
@@ -29,6 +37,8 @@ data class FileInfo(
         get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.CharacterDevice
     val isFIFO: Boolean
         get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.FIFO
+
+    val isNotDotDir = path.nameCount == 1 && path.endsWith(".")
 }
 
 
