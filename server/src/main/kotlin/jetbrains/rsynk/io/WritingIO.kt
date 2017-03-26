@@ -6,4 +6,6 @@ interface WritingIO {
     fun writeBytes(bytes: ByteArray) {
         writeBytes(bytes, 0, bytes.size)
     }
+
+    val writtenBytes: Long
 }
