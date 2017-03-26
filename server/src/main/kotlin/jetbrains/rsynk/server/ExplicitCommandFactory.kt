@@ -4,6 +4,7 @@ import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
+import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.io.BasicReadingIO
 import jetbrains.rsynk.io.FlushingWritingIO
 import mu.KLogging
@@ -16,11 +17,12 @@ import java.io.OutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-class ExplicitCommandFactory(settings: SSHSettings) : CommandFactory {
+class ExplicitCommandFactory(settings: SSHSettings,
+                             fileInfoReader: FileInfoReader) : CommandFactory {
 
     companion object : KLogging()
 
-    private val commands = AllCommandsResolver()
+    private val commands = AllCommandsResolver(fileInfoReader)
     private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
         val newThread = Thread(runnable, "ssh-command")
         newThread.isDaemon = true

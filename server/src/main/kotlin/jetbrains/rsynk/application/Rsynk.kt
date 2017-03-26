@@ -1,5 +1,7 @@
 package jetbrains.rsynk.application
 
+import jetbrains.rsynk.files.FileInfoReader
+import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
 import jetbrains.rsynk.server.ExplicitCommandFactory
 import jetbrains.rsynk.server.SSHServer
 import jetbrains.rsynk.server.SSHSessionFactory
@@ -15,8 +17,14 @@ class Rsynk(val port: Int,
     private val server: SSHServer
 
     init {
-        val sshSettings = createSSHSettings()
-        server = SSHServer(sshSettings, ExplicitCommandFactory(sshSettings), SSHSessionFactory())
+        val sshSettings = sshSetting()
+        val fileInfoReader = fileInfoReader()
+
+        server = SSHServer(
+                sshSettings,
+                ExplicitCommandFactory(sshSettings, fileInfoReader),
+                SSHSessionFactory()
+        )
     }
 
     fun start() = server.start()
@@ -24,7 +32,11 @@ class Rsynk(val port: Int,
     fun stop() = server.stop()
 
 
-    private fun createSSHSettings(): SSHSettings {
+    private fun fileInfoReader(): FileInfoReader {
+        return FileInfoReader(UnixDefaultFileSystemInfo())
+    }
+
+    private fun sshSetting(): SSHSettings {
         val that: Rsynk = this
         return object : SSHSettings {
             override val port: Int = that.port

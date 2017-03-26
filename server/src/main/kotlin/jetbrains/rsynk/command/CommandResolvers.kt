@@ -1,5 +1,6 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.options.RequestOptions
 
 
@@ -7,10 +8,10 @@ interface CommandsResolver {
     fun resolve(args: List<String>): Pair<Command, RequestData>?
 }
 
-class AllCommandsResolver : CommandsResolver {
+class AllCommandsResolver(fileInfoReader: FileInfoReader) : CommandsResolver {
 
     private val commandHolders = listOf(
-            RsyncCommandsResolver()
+            RsyncCommandsResolver(fileInfoReader)
     )
 
     override fun resolve(args: List<String>): Pair<Command, RequestData> {
@@ -25,10 +26,10 @@ class AllCommandsResolver : CommandsResolver {
 
 }
 
-class RsyncCommandsResolver : CommandsResolver {
+class RsyncCommandsResolver(fileInfoReader: FileInfoReader) : CommandsResolver {
 
     private val commands: Map<RsyncCommand, (RequestOptions) -> Boolean> = mapOf(
-            RsyncServerSendCommand() to { options ->
+            RsyncServerSendCommand(fileInfoReader) to { options ->
                 options.server && options.sender && !options.daemon
             }
     )

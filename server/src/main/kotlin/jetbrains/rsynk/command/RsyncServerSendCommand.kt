@@ -6,6 +6,7 @@ import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.littleEndianToInt
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.extensions.twoLowestBytes
+import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.FileResolver
 import jetbrains.rsynk.files.FilterList
 import jetbrains.rsynk.flags.TransmitFlags
@@ -14,9 +15,8 @@ import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WritingIO
 import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
 import mu.KLogging
-import java.io.File
 
-class RsyncServerSendCommand : RsyncCommand {
+class RsyncServerSendCommand(private val fileInfo: FileInfoReader) : RsyncCommand {
 
     companion object : KLogging()
 
@@ -38,7 +38,7 @@ class RsyncServerSendCommand : RsyncCommand {
         writeChecksumSeed(requestData.checksumSeed, output)
 
         val filter = receiveFilterList(input)
-        sendFileList(requestData.files, filter, output)
+        sendFileList(requestData, filter, output)
     }
 
     /**
@@ -102,18 +102,19 @@ class RsyncServerSendCommand : RsyncCommand {
         return FilterList()
     }
 
-    private fun sendFileList(requestedFiles: List<String>, filterList: FilterList, output: WritingIO) {
-        if (requestedFiles.size != 1) {
+    private fun sendFileList(data: RequestData, filterList: FilterList, output: WritingIO) {
+        if (data.files.size != 1) {
             //TODO: ok while goal is to send single file
             //TODO: then try multiple files, directories and whole combinatorics
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
 
-        val fileToSend = FileResolver.resolve(requestedFiles.single())
-        if (!filterList.include(fileToSend)) {
+        val filesToSend = listOf(FileResolver.resolve(data.files.single()))
+        if (!filterList.include(filesToSend.first())) {
             // gracefully exit, work is done when work is none
             return
         }
+        val filesList = filesToSend.map { fileInfo.getFileInfo(it, data.options) }
 
         //TODO: set transmit flags!
         val flags = emptySet<TransmitFlags>()
@@ -136,9 +137,9 @@ class RsyncServerSendCommand : RsyncCommand {
          * won't work in recursive directory transmission
          * all because of this variable */
         val lastName = ""
-        val fileName = fileToSend.name
+        val fileName = filesToSend.first().name
 
-        val l1 = fileToSend.name.commonPrefixWith(lastName).length
+        val l1 = filesToSend.first().name.commonPrefixWith(lastName).length
         if (l1 > 0) {
             output.writeBytes(byteArrayOf(l1.toByte()))
         }
@@ -150,8 +151,8 @@ class RsyncServerSendCommand : RsyncCommand {
             output.writeBytes(byteArrayOf(l2.toByte()))
         }
         output.writeBytes(nameToSend.toByteArray())
-        write_varlong(fileToSend.length(), 3, output)
-        write_varlong(fileToSend.lastModified(), 4, output)
+        write_varlong(filesToSend.first().length(), 3, output)
+        write_varlong(filesToSend.first().lastModified(), 4, output)
         //TODO: wiremode
     }
 
