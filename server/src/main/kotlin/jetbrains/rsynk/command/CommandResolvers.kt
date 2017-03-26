@@ -1,5 +1,7 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.options.RequestOptions
+
 
 interface CommandsResolver {
     fun resolve(args: List<String>): Pair<Command, RequestData>?
