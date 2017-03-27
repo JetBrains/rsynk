@@ -32,7 +32,7 @@ class FileList(private val isRecursive: Boolean) {
         }
     }
 
-    fun addFileSegment(root: FileInfo?, fileList: List<FileInfo>) {
+    fun addFileBlock(root: FileInfo?, fileList: List<FileInfo>) {
 
         if (isRecursive && stubDirectories != null) {
             fileList.filter { it.isDirectory }.sorted().forEach { dir ->

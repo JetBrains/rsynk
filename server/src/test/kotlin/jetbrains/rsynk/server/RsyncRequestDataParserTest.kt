@@ -27,9 +27,9 @@ class RsyncRequestDataParserTest {
     fun parse_files_test() {
         val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/firs/file",
                 "path/to/second-file"))
-        Assert.assertEquals(data.files.joinToString(), 2, data.files.size)
-        Assert.assertTrue(data.files.contains("/path/to/firs/file"))
-        Assert.assertTrue(data.files.contains("path/to/second-file"))
+        Assert.assertEquals(data.filePaths.joinToString(), 2, data.filePaths.size)
+        Assert.assertTrue(data.filePaths.contains("/path/to/firs/file"))
+        Assert.assertTrue(data.filePaths.contains("path/to/second-file"))
     }
 
     @Test

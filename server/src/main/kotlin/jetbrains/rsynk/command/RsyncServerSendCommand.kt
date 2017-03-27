@@ -103,18 +103,19 @@ class RsyncServerSendCommand(private val fileInfo: FileInfoReader) : RsyncComman
         return FilterList()
     }
 
-    private fun sendFileList(data: RequestData, filterList: FilterList, output: WritingIO) {
-        if (data.files.size != 1) {
+    private fun sendFileList(data: RequestData, filterList: FilterList/*TODO: filter files*/, output: WritingIO) {
+        if (data.filePaths.size != 1) {
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
 
-        val filesToSend = listOf(FileResolver.resolve(data.files.single()))
-        if (!filterList.include(filesToSend.first())) {
-            return
-        }
+        val filePaths = listOf(FileResolver.resolve(data.filePaths.single()))
 
         val fileList = FileList(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
-        fileList.addFileSegment(null, filesToSend.map { fileInfo.getFileInfo(it, data.options) })
+
+        filePaths.forEach {  path ->
+            //fileList.addFileBlock(null, fileInfo.getFileInfo(path, data.options))
+            //TODO: expand path to file list recursively?
+        }
     }
 
     private fun write_varint(value: Int, output: WritingIO) {

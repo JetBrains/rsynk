@@ -14,7 +14,7 @@ interface Command {
 
 data class RequestData(
         val options: RequestOptions,
-        val files: List<String>,
+        val filePaths: List<String>,
         val checksumSeed: Int = Checksum.newSeed()
 )
 
