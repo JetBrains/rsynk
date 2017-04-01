@@ -15,7 +15,7 @@ import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
 import mu.KLogging
 
-class RsyncServerSendCommand(private val fileInfo: FileInfoReader) : RsyncCommand {
+class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : RsyncCommand {
 
     companion object : KLogging()
 
@@ -108,14 +108,10 @@ class RsyncServerSendCommand(private val fileInfo: FileInfoReader) : RsyncComman
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
 
-        val filePaths = listOf(FileResolver.resolve(data.filePaths.single()))
+        val paths = listOf(FileResolver.resolve(data.filePaths.single()))
 
         val fileList = FileList(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
-
-        filePaths.forEach {  path ->
-            //fileList.addFileBlock(null, fileInfo.getFileInfo(path, data.options))
-            //TODO: expand path to file list recursively?
-        }
+        fileList.addFileBlock(null, paths.map {  path ->  fileInfoReader.getFileInfo(path) })
     }
 
     private fun write_varint(value: Int, output: WritingIO) {

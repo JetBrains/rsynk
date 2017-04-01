@@ -1,6 +1,5 @@
 package jetbrains.rsynk.files
 
-import jetbrains.rsynk.options.RequestOptions
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -24,7 +23,7 @@ internal object FileBitmasks {
 
 class FileInfoReader(private val fs: FileSystemInfo) {
 
-    fun getFileInfo(file: Path, options: RequestOptions): FileInfo {
+    fun getFileInfo(file: Path): FileInfo {
 
         val attributes = Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
         val mode = getFileMode(attributes)
