@@ -12,7 +12,7 @@ import java.security.spec.X509EncodedKeySpec
 import java.util.concurrent.TimeUnit
 
 
-object TestTools {
+object IntegrationTestTools {
     fun getServerKey(): KeyPairProvider {
         javaClass.classLoader.getResource("private_key.der")
         val privateBytes = javaClass.classLoader.getResource("private_key.der").readBytes()
