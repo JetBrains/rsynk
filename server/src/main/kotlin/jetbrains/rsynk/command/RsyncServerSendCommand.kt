@@ -19,17 +19,18 @@ import java.nio.ByteBuffer
 import java.util.*
 
 
-private class PreviousFileSentFileInfoCache {
-    //TODO: make it immutable
-    var mode: Int? = null
-    var user: User? = null
-    var group: Group? = null
-    var lastModified: Long? = null
-    var pathBytes: ByteArray = byteArrayOf()
-    val sentUserNames = HashSet<User>()
-    val sendGroupNames = HashSet<Group>()
+private data class PreviousFileSentFileInfoCache(val mode: Int?,
+                                                 val user: User?,
+                                                 val group: Group?,
+                                                 val lastModified: Long?,
+                                                 val path: String,
+                                                 val sentUserNames: Set<User>,
+                                                 val sendGroupNames: Set<Group>
+) {
+    val pathBytes = path.toByteArray()
 }
 
+private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null, null, null, null, "", emptySet(), emptySet())
 
 class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : RsyncCommand {
 
@@ -129,9 +130,16 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         val fileList = FileList(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
         val initialBlock = fileList.addFileBlock(null, paths.map { path -> fileInfoReader.getFileInfo(path) })
 
-        val cache = PreviousFileSentFileInfoCache()
+        var prevFileCache = emptyPreviousFileCache
         initialBlock.files.forEach { ndx, file ->
-            sendFileInfo(file, cache, data.options, output)
+            sendFileInfo(file, prevFileCache, data.options, output)
+            prevFileCache = PreviousFileSentFileInfoCache(file.mode,
+                    file.user,
+                    file.group,
+                    file.lastModified,
+                    file.path.toUri().path,
+                    prevFileCache.sentUserNames + file.user,
+                    prevFileCache.sendGroupNames + file.group)
         }
     }
 
@@ -144,42 +152,26 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 
         if (f.mode == cache.mode) {
             encodedAttributes = encodedAttributes or TransmitFlags.SameMode.value
-        } else {
-            cache.mode = f.mode
         }
 
         if (options.preserveUser && f.user == cache.user) {
             encodedAttributes = encodedAttributes or TransmitFlags.SameUserId.value
-        } else {
-            cache.user = f.user
-            if (!f.user.isRoot && !options.numericIds) {
-                if (options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.user in cache.sentUserNames) {
-                    encodedAttributes = encodedAttributes or TransmitFlags.UserNameFollows.value
-                }
-                cache.sentUserNames.add(f.user)
-            }
+        } else if (!f.user.isRoot && !options.numericIds && options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.user in cache.sentUserNames) {
+            encodedAttributes = encodedAttributes or TransmitFlags.UserNameFollows.value
         }
 
         if (options.preserveGroup && f.group == cache.group) {
             encodedAttributes = encodedAttributes or TransmitFlags.SameGroupId.value
-        } else {
-            cache.group = f.group
-            if (!f.group.isRoot && !options.numericIds) {
-                if (options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.group in cache.sendGroupNames) {
-                    encodedAttributes = encodedAttributes or TransmitFlags.GroupNameFollows.value
-                }
-            }
+        } else if (!f.group.isRoot && !options.numericIds && options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.group in cache.sendGroupNames) {
+            encodedAttributes = encodedAttributes or TransmitFlags.GroupNameFollows.value
         }
 
         if (f.lastModified == cache.lastModified) {
             encodedAttributes = encodedAttributes or TransmitFlags.SameLastModifiedTime.value
-        } else {
-            cache.lastModified = f.lastModified
         }
 
         val pathBytes = f.path.toUri().path.toByteArray()
         val commonPrefixLength = (pathBytes zip cache.pathBytes).takeWhile { it.first == it.second }.size
-        cache.pathBytes = pathBytes
         val suffix = Arrays.copyOfRange(pathBytes, commonPrefixLength, pathBytes.size)
 
         if (commonPrefixLength > 0) {
