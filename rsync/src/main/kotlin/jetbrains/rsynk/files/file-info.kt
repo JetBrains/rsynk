@@ -19,11 +19,52 @@ data class FileInfo(
         val lastModified: Long,
         val user: User,
         val group: Group
-): Comparable<FileInfo> {
+) : Comparable<FileInfo> {
+
+    private infix fun Byte.compare(other: Byte): Int {
+        return (0xFF and this.toInt()) - (0xFF and other.toInt())
+    }
 
     override fun compareTo(other: FileInfo): Int {
-        throw UnsupportedOperationException("not implemented")
+        when {
+            this.isDotDir && other.isDotDir -> return 0
+            this.isDotDir && other.isNotDotDir -> return -1
+            this.isNotDotDir && other.isDotDir -> return 1
+        }
+
+        when {
+            this.isDirectory && !other.isDirectory -> return 1
+            !this.isDirectory && other.isDirectory -> return -1
+        }
+
+        val thisBytes = this.path.toUri().path.toByteArray()
+        val otherBytes = other.path.toUri().path.toByteArray()
+        (thisBytes zip otherBytes).forEach { (a, b) ->
+            val result = a compare b
+            if (result != 0) {
+                return result
+            }
+        }
+
+        if (thisBytes.size == otherBytes.size) {
+            return 0
+        }
+
+        val callerPathIsShorter = thisBytes.size < otherBytes.size
+        if (this.isDirectory && other.isDirectory) {
+            if (callerPathIsShorter) {
+                return '/'.toByte() compare otherBytes[thisBytes.size]
+            } else {
+                return thisBytes[otherBytes.size] compare '/'.toByte()
+            }
+        }
+
+        if (callerPathIsShorter) {
+            return -1
+        }
+        return 1
     }
+
 
     val isDirectory: Boolean
         get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.Directory
@@ -40,7 +81,8 @@ data class FileInfo(
     val isReqularFile: Boolean
         get() = (mode and FileBitmasks.FileTypeBitMask) == FileBitmasks.RegularFile
 
-    val isNotDotDir = path.nameCount == 1 && path.endsWith(".")
+    val isDotDir = path.nameCount == 1 && path.endsWith(".")
+    val isNotDotDir = !isDotDir
 }
 
 
