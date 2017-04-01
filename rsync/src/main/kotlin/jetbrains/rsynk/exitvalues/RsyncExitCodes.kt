@@ -1,13 +1,13 @@
 package jetbrains.rsynk.exitvalues
 
 object RsyncExitCodes {
-    val SUCCESS = 0
-    val SYNTAX_OR_USAGE_ERROR = 1
-    val PROTOCOL_INCOMPATIBILITY = 2
-    val ERROR_SELECTING_INPUT_FILES = 3
-    val REQUESTED_ACTION_NOT_SUPPORTED = 4
-    val ERROR_STARTING_SERVER_CLIENT_PROTOCOL = 5
-    val ERROR_IN_SOCKET_IO = 10
-    val ERROR_IN_FILE_IO = 11
-    val ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM = 12
+    val Success = 0
+    val SyntaxOrUsageError = 1
+    val ProtocolIncompatibility = 2
+    val SelectInputFilesError = 3
+    val RequestActionNotSupported = 4
+    val StartingServerClientProtocolError = 5
+    val SocketIOError = 10
+    val FileIOError = 11
+    val RsyncProtocolDataStreamError = 12
 }

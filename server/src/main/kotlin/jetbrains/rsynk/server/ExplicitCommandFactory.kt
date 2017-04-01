@@ -44,28 +44,28 @@ class ExplicitCommandFactory(settings: SSHSettings,
                 val args = cmd.split(" ")
 
                 if (args.isEmpty()) {
-                    exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "No command received\n")
+                    exit(RsyncExitCodes.RsyncProtocolDataStreamError, "No command received\n")
                 }
 
                 val (command, requestData) = try {
                     commands.resolve(args)
                 } catch(e: CommandNotFoundException) {
-                    exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM, "Unknown command: ${e.message}\n")
+                    exit(RsyncExitCodes.RsyncProtocolDataStreamError, "Unknown command: ${e.message}\n")
                     return
                 }
                 val stdin = inputStream
                 if (stdin == null) {
-                    exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Input stream not set\n")
+                    exit(RsyncExitCodes.SocketIOError, "Input stream not set\n")
                     return
                 }
                 val stdout = outputStream
                 if (stdout == null) {
-                    exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Output stream not set\n")
+                    exit(RsyncExitCodes.SocketIOError, "Output stream not set\n")
                     return
                 }
                 val stderr = errorStream
                 if (stderr == null) {
-                    exit(RsyncExitCodes.ERROR_IN_SOCKET_IO, "Error stream not set\n")
+                    exit(RsyncExitCodes.SocketIOError, "Error stream not set\n")
                     return
                 }
                 runningCommand = threadPool.submit {
@@ -76,7 +76,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
                                 FlushingWritingIO(stdout),
                                 FlushingWritingIO(stderr)
                         )
-                        exit(RsyncExitCodes.SUCCESS)
+                        exit(RsyncExitCodes.Success)
                     } catch (e: RsynkException) {
                         logger.info { "Command $args failed: with $e (${e.message})" }
                         writeError(e)
@@ -84,7 +84,7 @@ class ExplicitCommandFactory(settings: SSHSettings,
                     } catch(t: Throwable) {
                         logger.error("Command $args failed: ${t.message}", t)
                         writeError(t)
-                        exit(RsyncExitCodes.ERROR_IN_RSYNC_PROTOCOL_DATA_STREAM)
+                        exit(RsyncExitCodes.RsyncProtocolDataStreamError)
                     }
                 }
             }
