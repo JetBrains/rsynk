@@ -57,3 +57,4 @@ fun Long.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(8).putLong(this)
 
 val Byte.Companion.MAX_VALUE_UNSIGNED: Int
     get() = Byte.MAX_VALUE * 2 + 1
+

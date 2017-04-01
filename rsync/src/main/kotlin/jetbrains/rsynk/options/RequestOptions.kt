@@ -18,11 +18,35 @@ class RequestOptions(val options: Set<Option>) {
         }
 
     val incrementalRecurse: Boolean = options.contains(Option.IncrementalRecurse)
+    val numericIds: Boolean
+        get() {
+            throw UnsupportedOperationException("Not implemented")
+        }
     val oneFileSystem: Boolean = options.contains(Option.OneFileSystem)
     val preReleaseInfo: String?
         get() {
             val info = options.firstOrNull { it is Option.PreReleaseInfo } as? Option.PreReleaseInfo
             return info?.info
+        }
+    val preserveDevices: Boolean
+        get() {
+            throw UnsupportedOperationException("Not implemented")
+        }
+    val preserveGroup: Boolean
+        get() {
+            throw UnsupportedOperationException("Not implemented")
+        }
+    val preserveLinks: Boolean
+        get() {
+            throw UnsupportedOperationException("Not implemented")
+        }
+    val preserveSpecials: Boolean
+        get() {
+            throw UnsupportedOperationException("Not implemented")
+        }
+    val preserveUser: Boolean
+        get() {
+            throw UnsupportedOperationException("Not implemented")
         }
     val protectArgs: Boolean = options.contains(Option.ProtectArgs)
     val relativeNames: Boolean = options.contains(Option.RelativePaths)

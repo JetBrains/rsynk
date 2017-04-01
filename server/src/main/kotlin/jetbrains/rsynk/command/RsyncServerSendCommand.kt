@@ -2,18 +2,34 @@ package jetbrains.rsynk.command
 
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
+import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.littleEndianToInt
 import jetbrains.rsynk.extensions.toLittleEndianBytes
-import jetbrains.rsynk.files.FileInfoReader
-import jetbrains.rsynk.files.FileList
-import jetbrains.rsynk.files.FileResolver
-import jetbrains.rsynk.files.FilterList
+import jetbrains.rsynk.files.*
+import jetbrains.rsynk.flags.TransmitFlags
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
+import jetbrains.rsynk.io.VarintEncoder
 import jetbrains.rsynk.io.WritingIO
 import jetbrains.rsynk.options.Option
+import jetbrains.rsynk.options.RequestOptions
 import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
 import mu.KLogging
+import java.nio.ByteBuffer
+import java.util.*
+
+
+private class PreviousFileSentFileInfoCache {
+    //TODO: make it immutable
+    var mode: Int? = null
+    var user: User? = null
+    var group: Group? = null
+    var lastModified: Long? = null
+    var pathBytes: ByteArray = byteArrayOf()
+    val sentUserNames = HashSet<User>()
+    val sendGroupNames = HashSet<Group>()
+}
+
 
 class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : RsyncCommand {
 
@@ -111,7 +127,124 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         val paths = listOf(FileResolver.resolve(data.filePaths.single()))
 
         val fileList = FileList(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
-        fileList.addFileBlock(null, paths.map {  path ->  fileInfoReader.getFileInfo(path) })
+        val initialBlock = fileList.addFileBlock(null, paths.map { path -> fileInfoReader.getFileInfo(path) })
+
+        val cache = PreviousFileSentFileInfoCache()
+        initialBlock.files.forEach { ndx, file ->
+            sendFileInfo(file, cache, data.options, output)
+        }
+    }
+
+    private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WritingIO) {
+        var encodedAttributes = if (f.isDirectory) 1 else 0
+
+        if (f.isBlockDevice || f.isCharacterDevice || f.isSocket || f.isFIFO) {
+            // TODO set or discard TransmitFlags.SameRdevMajor
+        }
+
+        if (f.mode == cache.mode) {
+            encodedAttributes = encodedAttributes or TransmitFlags.SameMode.value
+        } else {
+            cache.mode = f.mode
+        }
+
+        if (options.preserveUser && f.user == cache.user) {
+            encodedAttributes = encodedAttributes or TransmitFlags.SameUserId.value
+        } else {
+            cache.user = f.user
+            if (!f.user.isRoot && !options.numericIds) {
+                if (options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.user in cache.sentUserNames) {
+                    encodedAttributes = encodedAttributes or TransmitFlags.UserNameFollows.value
+                }
+                cache.sentUserNames.add(f.user)
+            }
+        }
+
+        if (options.preserveGroup && f.group == cache.group) {
+            encodedAttributes = encodedAttributes or TransmitFlags.SameGroupId.value
+        } else {
+            cache.group = f.group
+            if (!f.group.isRoot && !options.numericIds) {
+                if (options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.group in cache.sendGroupNames) {
+                    encodedAttributes = encodedAttributes or TransmitFlags.GroupNameFollows.value
+                }
+            }
+        }
+
+        if (f.lastModified == cache.lastModified) {
+            encodedAttributes = encodedAttributes or TransmitFlags.SameLastModifiedTime.value
+        } else {
+            cache.lastModified = f.lastModified
+        }
+
+        val pathBytes = f.path.toUri().path.toByteArray()
+        val commonPrefixLength = (pathBytes zip cache.pathBytes).takeWhile { it.first == it.second }.size
+        cache.pathBytes = pathBytes
+        val suffix = Arrays.copyOfRange(pathBytes, commonPrefixLength, pathBytes.size)
+
+        if (commonPrefixLength > 0) {
+            encodedAttributes = encodedAttributes or TransmitFlags.SameName.value
+        }
+        if (suffix.size > Byte.MAX_VALUE_UNSIGNED) {
+            encodedAttributes = encodedAttributes or TransmitFlags.SameLongName.value
+        }
+        if (encodedAttributes == 0 && !f.isDirectory) {
+            encodedAttributes = encodedAttributes or TransmitFlags.TopDirectory.value
+        }
+
+        if (encodedAttributes == 0 || encodedAttributes and 0xFF00 != 0) {
+            encodedAttributes = encodedAttributes and TransmitFlags.ExtendedFlags.value
+            output.writeChar(encodedAttributes.toChar())
+        } else {
+            output.writeByte(encodedAttributes.toByte())
+        }
+
+        if (encodedAttributes and TransmitFlags.SameName.value != 0) {
+            output.writeByte(Math.min(commonPrefixLength, Byte.MAX_VALUE_UNSIGNED).toByte())
+        }
+
+        if (encodedAttributes and TransmitFlags.SameLongName.value != 0) {
+            output.writeBytes(VarintEncoder.longToBytes(suffix.size.toLong(), 1))
+        } else {
+            output.writeByte(suffix.size.toByte())
+        }
+        output.writeBytes(ByteBuffer.wrap(suffix))
+
+        output.writeBytes(VarintEncoder.longToBytes(f.size, 3))
+
+        if (encodedAttributes and TransmitFlags.SameLastModifiedTime.value == 0) {
+            output.writeBytes(VarintEncoder.longToBytes(f.lastModified, 4))
+        }
+
+        if (encodedAttributes and TransmitFlags.SameMode.value == 0) {
+            output.writeInt(f.mode)
+        }
+
+        if (options.preserveUser && encodedAttributes and TransmitFlags.SameUserId.value == 0) {
+            output.writeBytes(VarintEncoder.longToBytes(f.user.uid.toLong(), 1))
+
+            if (encodedAttributes and TransmitFlags.UserNameFollows.value != 0) {
+                val buf = ByteBuffer.wrap(f.user.name.toByteArray())
+                output.writeByte(buf.remaining().toByte())
+                output.writeBytes(buf)
+            }
+        }
+
+        if (options.preserveGroup && encodedAttributes and TransmitFlags.SameGroupId.value == 0) {
+            output.writeBytes(VarintEncoder.longToBytes(f.group.gid.toLong(), 1))
+
+            if (encodedAttributes and TransmitFlags.GroupNameFollows.value != 0) {
+                val buf = ByteBuffer.wrap(f.group.name.toByteArray())
+                output.writeByte(buf.remaining().toByte())
+                output.writeBytes(buf)
+            }
+        }
+
+        if (options.preserveDevices || options.preserveSpecials) {
+            //TODO send device info if this is a device or special
+        } else if (options.preserveLinks) {
+            //TODO send target if this is a symlink
+        }
     }
 
     private fun write_varint(value: Int, output: WritingIO) {

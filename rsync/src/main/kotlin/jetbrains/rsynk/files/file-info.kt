@@ -5,12 +5,16 @@ import java.nio.file.Path
 data class User(
         val name: String,
         val uid: Int
-)
+) {
+    val isRoot: Boolean = uid == 0
+}
 
 data class Group(
         val name: String,
         val gid: Int
-)
+) {
+    val isRoot: Boolean = gid == 0
+}
 
 data class FileInfo(
         val path: Path,

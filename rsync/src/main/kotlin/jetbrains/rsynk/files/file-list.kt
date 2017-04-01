@@ -3,13 +3,13 @@ package jetbrains.rsynk.files
 import java.util.*
 
 
-private data class FileListBlock(val rootDirectory: FileInfo?,
-                                 val files: Map<Int, FileInfo>,
-                                 val begin: Int,
-                                 val end: Int,
-                                 val filesSize: Long) : Comparable<Int> {
-    override fun compareTo(other: Int): Int {
-        throw UnsupportedOperationException("not implemented")
+data class FileListBlock(val rootDirectory: FileInfo?,
+                         val files: Map<Int, FileInfo>,
+                         val begin: Int,
+                         val end: Int,
+                         val filesSize: Long) : Comparable<FileListBlock> {
+    override fun compareTo(other: FileListBlock): Int {
+        return begin.compareTo(other.begin)
     }
 }
 
@@ -25,7 +25,7 @@ class FileList(private val isRecursive: Boolean) {
         nextDirIndex = if (isRecursive) 0 else -1
     }
 
-    fun addFileBlock(root: FileInfo?, fileList: List<FileInfo>) {
+    fun addFileBlock(root: FileInfo?, fileList: List<FileInfo>): FileListBlock {
 
         if (isRecursive) {
             fileList.filter { it.isDirectory }.sorted().forEach { dir ->
@@ -36,14 +36,16 @@ class FileList(private val isRecursive: Boolean) {
             }
         }
 
-        val startIndex = nextDirIndex + 1 //reserve index for root
+        val startIndex = nextDirIndex + 1 // preserve index for root (even if it's null)
         val lastIndex = startIndex + fileList.size
 
-        nextDirIndex = lastIndex
         val map = TreeMap<Int, FileInfo>()
         val blockSize = (startIndex..lastIndex).zip(fileList.sorted()).toMap(map)        //TODO prune duplicates
         val size = fileList.filter { it.isSymlink || it.isReqularFile }.foldRight(0, { file, sum: Long -> sum + file.size })
         val block = FileListBlock(root, blockSize, startIndex, lastIndex, size)
         blocks.add(block)
+
+        nextDirIndex = lastIndex + 1
+        return block
     }
 }

@@ -10,7 +10,7 @@ sealed class TransmitFlags(override val value: Int) : Flag {
     object SameGroupId : TransmitFlags(16)
     object SameName : TransmitFlags(32)
     object SameLongName : TransmitFlags(64)
-    object SameTime : TransmitFlags(128)
+    object SameLastModifiedTime : TransmitFlags(128)
     object SameRdevMajor : TransmitFlags(256)    /* protocols 28 - now (devices only) */
     object NoContentDirs : TransmitFlags(256)    /* protocols 30 - now (dirs only) */
     object HardLinked : TransmitFlags(512)

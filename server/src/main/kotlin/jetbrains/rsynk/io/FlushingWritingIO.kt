@@ -1,9 +1,25 @@
 package jetbrains.rsynk.io
 
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicLong
 
 class FlushingWritingIO(private val output: OutputStream) : WritingIO {
+    override fun writeChar(c: Char) {
+        throw UnsupportedOperationException("not implemented")
+    }
+
+    override fun writeInt(i: Int) {
+        throw UnsupportedOperationException("not implemented")
+    }
+
+    override fun writeByte(b: Byte) {
+        throw UnsupportedOperationException("not implemented")
+    }
+
+    override fun writeBytes(bytes: ByteBuffer) {
+        throw UnsupportedOperationException("not implemented")
+    }
 
     val written = AtomicLong(0)
     /**
