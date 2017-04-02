@@ -1,8 +1,7 @@
 package jetbrains.rsynk.flags
 
-import java.util.*
 
-sealed class CompatFlag(override val value: Int) : Flag {
+sealed class CompatFlag(val value: Int) {
     object IncRecurse : CompatFlag(1)
     object SymlincTimes : CompatFlag(2)
     object SymlinkIconv : CompatFlag(4)
@@ -12,9 +11,7 @@ sealed class CompatFlag(override val value: Int) : Flag {
 }
 
 fun Set<CompatFlag>.encode(): Byte {
-    val flagSet = HashSet<Flag>()
-    flagSet.addAll(this)
-    return flagSet.encode().toByte()
+    return this.fold(0, { value, flag -> value.or(flag.value) }).toByte()
 }
 
 fun Byte.decodeCompatFlags(): Set<CompatFlag> {
