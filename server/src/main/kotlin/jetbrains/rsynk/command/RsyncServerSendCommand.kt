@@ -133,7 +133,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         val initialBlock = fileList.addFileBlock(null, paths.map { path -> fileInfoReader.getFileInfo(path) })
 
         var prevFileCache = emptyPreviousFileCache
-        initialBlock.files.forEach { ndx, file ->
+        initialBlock.files.forEach { _, file ->
             sendFileInfo(file, prevFileCache, data.options, output)
             prevFileCache = PreviousFileSentFileInfoCache(file.mode,
                     file.user,

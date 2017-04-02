@@ -6,9 +6,10 @@ import java.nio.ByteOrder
 import java.nio.channels.Channels
 import java.util.concurrent.atomic.AtomicLong
 
-class BufferedWritingIO(output: OutputStream) : WriteIO {
+class BufferedLittleEndianWriter(output: OutputStream,
+                                 bufferSize: Int = 1024 * 10) : WriteIO {
 
-    val buffer = ByteBuffer.allocateDirect(1024 * 10).order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
+    val buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
     val channel = Channels.newChannel(output)
 
     override fun writeChar(c: Char) {
@@ -38,9 +39,11 @@ class BufferedWritingIO(output: OutputStream) : WriteIO {
             if (bufferSpace == 0) {
                 flush()
             } else {
-                val slice = bytes.duplicate().position(bytes.position()).limit(bufferSpace) as ByteBuffer
-                buffer.put(slice)
-                bytes.position(slice.position())
+                val subsequence = bytes.duplicate()
+                        .position(bytes.position())
+                        .limit(Math.min(bytes.position() + bufferSpace, bytes.limit())) as ByteBuffer
+                buffer.put(subsequence)
+                bytes.position(subsequence.position())
             }
         }
     }
