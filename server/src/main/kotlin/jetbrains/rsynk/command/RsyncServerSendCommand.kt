@@ -47,9 +47,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                          output: WriteIO,
                          error: WriteIO) {
         exchangeProtocolVersions(input, output)
-
         writeCompatFlags(output)
-
         writeChecksumSeed(requestData.checksumSeed, output)
 
         val filter = receiveFilterList(input)
