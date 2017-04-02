@@ -143,6 +143,24 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     prevFileCache.sentUserNames + file.user,
                     prevFileCache.sendGroupNames + file.group)
         }
+        output.writeByte(0.toByte())
+
+        if (data.options.preserveUser && !data.options.numericIds && data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
+            prevFileCache.sentUserNames.forEach { user ->
+                sendUserId(user.uid, output)
+                sendUserName(user.name, output)
+            }
+            output.writeBytes(VarintEncoder.varlong(0, 1))
+        }
+
+        if (data.options.preserveGroup && !data.options.numericIds && data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
+            prevFileCache.sendGroupNames.forEach { group ->
+                sendGroupId(group.gid, output)
+                sendGroupName(group.name, output)
+            }
+            output.writeBytes(VarintEncoder.varlong(0, 1))
+        }
+
     }
 
     private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WriteIO) {
@@ -220,22 +238,16 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
 
         if (options.preserveUser && TransmitFlag.SameUserId !in flags) {
-            output.writeBytes(VarintEncoder.varlong(f.user.uid.toLong(), 1))
-
-            if (TransmitFlag.UserNameFollows !in flags) {
-                val buf = ByteBuffer.wrap(f.user.name.toByteArray())
-                output.writeByte(buf.remaining().toByte())
-                output.writeBytes(buf)
+            sendUserId(f.user.uid, output)
+            if (TransmitFlag.UserNameFollows in flags) {
+                sendUserName(f.user.name, output)
             }
         }
 
         if (options.preserveGroup && TransmitFlag.SameGroupId !in flags) {
-            output.writeBytes(VarintEncoder.varlong(f.group.gid.toLong(), 1))
-
+            sendGroupId(f.group.gid, output)
             if (TransmitFlag.GroupNameFollows in flags) {
-                val buf = ByteBuffer.wrap(f.group.name.toByteArray())
-                output.writeByte(buf.remaining().toByte())
-                output.writeBytes(buf)
+                sendGroupName(f.group.name, output)
             }
         }
 
@@ -244,5 +256,31 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         } else if (options.preserveLinks) {
             //TODO send target if this is a symlink
         }
+    }
+
+    private fun sendUserId(uid: Int, writer: WriteIO) {
+        writer.writeBytes(VarintEncoder.varlong(uid.toLong(), 1))
+    }
+
+    private fun sendUserName(name: String, writer: WriteIO) {
+        val nameBytes = name.toByteArray()
+        if (nameBytes.size > Byte.MAX_VALUE_UNSIGNED) {
+            logger.warn { "Too long user name will be truncated to ${Byte.MAX_VALUE_UNSIGNED} bytes ($name)" }
+        }
+        writer.writeByte(nameBytes.size.toByte())
+        writer.writeBytes(ByteBuffer.wrap(nameBytes))
+    }
+
+    private fun sendGroupId(gid: Int, writer: WriteIO) {
+        writer.writeBytes(VarintEncoder.varlong(gid.toLong(), 1))
+    }
+
+    private fun sendGroupName(name: String, writer: WriteIO) {
+        val nameBytes = name.toByteArray()
+        if (nameBytes.size > Byte.MAX_VALUE_UNSIGNED) {
+            logger.warn { "Too long group name will be truncated to ${Byte.MAX_VALUE_UNSIGNED} bytes (${name})" }
+        }
+        writer.writeByte(nameBytes.size.toByte())
+        writer.writeBytes(ByteBuffer.wrap(nameBytes))
     }
 }
