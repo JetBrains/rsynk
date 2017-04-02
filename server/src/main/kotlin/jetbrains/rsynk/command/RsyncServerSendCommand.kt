@@ -6,7 +6,7 @@ import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.littleEndianToInt
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
-import jetbrains.rsynk.flags.TransmitFlags
+import jetbrains.rsynk.flags.TransmitFlag
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.VarintEncoder
@@ -144,30 +144,34 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     }
 
     private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WritingIO) {
-        var encodedAttributes = if (f.isDirectory) 1 else 0
+        var flags: Set<TransmitFlag> = HashSet()
+
+        if (f.isDirectory) {
+            flags += TransmitFlag.TopDirectory
+        }
 
         if (f.isBlockDevice || f.isCharacterDevice || f.isSocket || f.isFIFO) {
-            // TODO set or discard TransmitFlags.SameRdevMajor
+            // TODO set or discard TransmitFlag.SameRdevMajor
         }
 
         if (f.mode == cache.mode) {
-            encodedAttributes = encodedAttributes or TransmitFlags.SameMode.value
+            flags += TransmitFlag.SameMode
         }
 
         if (options.preserveUser && f.user == cache.user) {
-            encodedAttributes = encodedAttributes or TransmitFlags.SameUserId.value
+            flags += TransmitFlag.SameUserId
         } else if (!f.user.isRoot && !options.numericIds && options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.user in cache.sentUserNames) {
-            encodedAttributes = encodedAttributes or TransmitFlags.UserNameFollows.value
+            flags += TransmitFlag.UserNameFollows
         }
 
         if (options.preserveGroup && f.group == cache.group) {
-            encodedAttributes = encodedAttributes or TransmitFlags.SameGroupId.value
+            flags += TransmitFlag.SameGroupId
         } else if (!f.group.isRoot && !options.numericIds && options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.group in cache.sendGroupNames) {
-            encodedAttributes = encodedAttributes or TransmitFlags.GroupNameFollows.value
+            flags += TransmitFlag.GroupNameFollows
         }
 
         if (f.lastModified == cache.lastModified) {
-            encodedAttributes = encodedAttributes or TransmitFlags.SameLastModifiedTime.value
+            flags += TransmitFlag.SameLastModifiedTime
         }
 
         val pathBytes = f.path.toUri().path.toByteArray()
@@ -175,27 +179,28 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         val suffix = Arrays.copyOfRange(pathBytes, commonPrefixLength, pathBytes.size)
 
         if (commonPrefixLength > 0) {
-            encodedAttributes = encodedAttributes or TransmitFlags.SameName.value
+            flags += TransmitFlag.SameName
         }
         if (suffix.size > Byte.MAX_VALUE_UNSIGNED) {
-            encodedAttributes = encodedAttributes or TransmitFlags.SameLongName.value
+            flags += TransmitFlag.SameLongName
         }
-        if (encodedAttributes == 0 && !f.isDirectory) {
-            encodedAttributes = encodedAttributes or TransmitFlags.TopDirectory.value
+        if (flags.isEmpty() && !f.isDirectory) {
+            flags += TransmitFlag.TopDirectory
         }
 
-        if (encodedAttributes == 0 || encodedAttributes and 0xFF00 != 0) {
-            encodedAttributes = encodedAttributes and TransmitFlags.ExtendedFlags.value
-            output.writeChar(encodedAttributes.toChar())
+        val encodedFlags = flags.encode()
+        if (flags.isEmpty() || encodedFlags and 0xFF00 != 0) {
+            flags += TransmitFlag.ExtendedFlags
+            output.writeChar(encodedFlags.toChar())
         } else {
-            output.writeByte(encodedAttributes.toByte())
+            output.writeByte(encodedFlags.toByte())
         }
 
-        if (encodedAttributes and TransmitFlags.SameName.value != 0) {
+        if (TransmitFlag.SameName in flags) {
             output.writeByte(Math.min(commonPrefixLength, Byte.MAX_VALUE_UNSIGNED).toByte())
         }
 
-        if (encodedAttributes and TransmitFlags.SameLongName.value != 0) {
+        if (TransmitFlag.SameLongName in flags) {
             output.writeBytes(VarintEncoder.longToBytes(suffix.size.toLong(), 1))
         } else {
             output.writeByte(suffix.size.toByte())
@@ -204,28 +209,28 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 
         output.writeBytes(VarintEncoder.longToBytes(f.size, 3))
 
-        if (encodedAttributes and TransmitFlags.SameLastModifiedTime.value == 0) {
+        if (TransmitFlag.SameLastModifiedTime !in flags) {
             output.writeBytes(VarintEncoder.longToBytes(f.lastModified, 4))
         }
 
-        if (encodedAttributes and TransmitFlags.SameMode.value == 0) {
+        if (TransmitFlag.SameMode !in flags) {
             output.writeInt(f.mode)
         }
 
-        if (options.preserveUser && encodedAttributes and TransmitFlags.SameUserId.value == 0) {
+        if (options.preserveUser && TransmitFlag.SameUserId !in flags) {
             output.writeBytes(VarintEncoder.longToBytes(f.user.uid.toLong(), 1))
 
-            if (encodedAttributes and TransmitFlags.UserNameFollows.value != 0) {
+            if (TransmitFlag.UserNameFollows !in flags) {
                 val buf = ByteBuffer.wrap(f.user.name.toByteArray())
                 output.writeByte(buf.remaining().toByte())
                 output.writeBytes(buf)
             }
         }
 
-        if (options.preserveGroup && encodedAttributes and TransmitFlags.SameGroupId.value == 0) {
+        if (options.preserveGroup && TransmitFlag.SameGroupId !in flags) {
             output.writeBytes(VarintEncoder.longToBytes(f.group.gid.toLong(), 1))
 
-            if (encodedAttributes and TransmitFlags.GroupNameFollows.value != 0) {
+            if (TransmitFlag.GroupNameFollows in flags) {
                 val buf = ByteBuffer.wrap(f.group.name.toByteArray())
                 output.writeByte(buf.remaining().toByte())
                 output.writeBytes(buf)
