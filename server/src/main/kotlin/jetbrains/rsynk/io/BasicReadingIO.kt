@@ -9,9 +9,6 @@ class BasicReadingIO(private val input: InputStream) : ReadingIO {
     private val buf = ByteArray(4096)
     private val readFromClient = AtomicLong(0)
 
-    /**
-     * Blocks until exactly {@code len} bytes are received
-     * */
     override fun readBytes(len: Int): ByteArray {
         val bufferToUse = if (len > buf.size) ByteArray(len) else buf
         val read = input.read(bufferToUse, 0, len)

@@ -2,14 +2,14 @@ package jetbrains.rsynk.command
 
 import jetbrains.rsynk.checksum.Checksum
 import jetbrains.rsynk.io.ReadingIO
-import jetbrains.rsynk.io.WritingIO
+import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.RequestOptions
 
 interface Command {
     fun execute(requestData: RequestData,
                 input: ReadingIO,
-                output: WritingIO,
-                error: WritingIO)
+                output: WriteIO,
+                error: WriteIO)
 }
 
 data class RequestData(

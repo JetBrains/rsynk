@@ -4,13 +4,12 @@ import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.littleEndianToInt
-import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.TransmitFlag
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.VarintEncoder
-import jetbrains.rsynk.io.WritingIO
+import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RequestOptions
 import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
@@ -45,8 +44,8 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
      * */
     override fun execute(requestData: RequestData,
                          input: ReadingIO,
-                         output: WritingIO,
-                         error: WritingIO) {
+                         output: WriteIO,
+                         error: WriteIO) {
         exchangeProtocolVersions(input, output)
 
         writeCompatFlags(output)
@@ -64,8 +63,9 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
      * @throws {@code UnsupportedProtocolException} if client's protocol version
      * either too old or too modern
      */
-    private fun exchangeProtocolVersions(input: ReadingIO, output: WritingIO) {
-        output.writeBytes(RsyncServerStaticConfiguration.serverProtocolVersion.toLittleEndianBytes())
+    private fun exchangeProtocolVersions(input: ReadingIO, output: WriteIO) {
+        output.writeInt(RsyncServerStaticConfiguration.serverProtocolVersion)
+        output.flush()
         val clientProtocolVersion = input.readBytes(4).littleEndianToInt()
         if (clientProtocolVersion < RsyncServerStaticConfiguration.clientProtocolVersionMin) {
             throw UnsupportedProtocolException("Client protocol version must be at least " +
@@ -80,16 +80,18 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     /**
      * Writes server's compat flags.
      */
-    private fun writeCompatFlags(output: WritingIO) {
+    private fun writeCompatFlags(output: WriteIO) {
         val serverCompatFlags = RsyncServerStaticConfiguration.serverCompatFlags.encode()
-        output.writeBytes(byteArrayOf(serverCompatFlags))
+        output.writeByte(serverCompatFlags)
+        output.flush()
     }
 
     /**
      * Writes rolling checksum seed.
      * */
-    private fun writeChecksumSeed(checksumSeed: Int, output: WritingIO) {
-        output.writeBytes(checksumSeed.toLittleEndianBytes())
+    private fun writeChecksumSeed(checksumSeed: Int, output: WriteIO) {
+        output.writeInt(checksumSeed)
+        output.flush()
     }
 
 
@@ -120,7 +122,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         return FilterList()
     }
 
-    private fun sendFileList(data: RequestData, filterList: FilterList/*TODO: filter files*/, output: WritingIO) {
+    private fun sendFileList(data: RequestData, filterList: FilterList/*TODO: filter files*/, output: WriteIO) {
         if (data.filePaths.size != 1) {
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
@@ -143,7 +145,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
     }
 
-    private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WritingIO) {
+    private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WriteIO) {
         var flags: Set<TransmitFlag> = HashSet()
 
         if (f.isDirectory) {
@@ -201,16 +203,16 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
 
         if (TransmitFlag.SameLongName in flags) {
-            output.writeBytes(VarintEncoder.longToBytes(suffix.size.toLong(), 1))
+            output.writeBytes(VarintEncoder.varlong(suffix.size.toLong(), 1))
         } else {
             output.writeByte(suffix.size.toByte())
         }
         output.writeBytes(ByteBuffer.wrap(suffix))
 
-        output.writeBytes(VarintEncoder.longToBytes(f.size, 3))
+        output.writeBytes(VarintEncoder.varlong(f.size, 3))
 
         if (TransmitFlag.SameLastModifiedTime !in flags) {
-            output.writeBytes(VarintEncoder.longToBytes(f.lastModified, 4))
+            output.writeBytes(VarintEncoder.varlong(f.lastModified, 4))
         }
 
         if (TransmitFlag.SameMode !in flags) {
@@ -218,7 +220,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
 
         if (options.preserveUser && TransmitFlag.SameUserId !in flags) {
-            output.writeBytes(VarintEncoder.longToBytes(f.user.uid.toLong(), 1))
+            output.writeBytes(VarintEncoder.varlong(f.user.uid.toLong(), 1))
 
             if (TransmitFlag.UserNameFollows !in flags) {
                 val buf = ByteBuffer.wrap(f.user.name.toByteArray())
@@ -228,7 +230,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
 
         if (options.preserveGroup && TransmitFlag.SameGroupId !in flags) {
-            output.writeBytes(VarintEncoder.longToBytes(f.group.gid.toLong(), 1))
+            output.writeBytes(VarintEncoder.varlong(f.group.gid.toLong(), 1))
 
             if (TransmitFlag.GroupNameFollows in flags) {
                 val buf = ByteBuffer.wrap(f.group.name.toByteArray())

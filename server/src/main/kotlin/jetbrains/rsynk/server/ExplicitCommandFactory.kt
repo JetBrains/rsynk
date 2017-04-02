@@ -6,7 +6,7 @@ import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.io.BasicReadingIO
-import jetbrains.rsynk.io.FlushingWritingIO
+import jetbrains.rsynk.io.BufferedWritingIO
 import mu.KLogging
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -73,8 +73,8 @@ class ExplicitCommandFactory(settings: SSHSettings,
                         command.execute(
                                 requestData,
                                 BasicReadingIO(stdin),
-                                FlushingWritingIO(stdout),
-                                FlushingWritingIO(stderr)
+                                BufferedWritingIO(stdout),
+                                BufferedWritingIO(stderr)
                         )
                         exit(RsyncExitCodes.Success)
                     } catch (e: RsynkException) {

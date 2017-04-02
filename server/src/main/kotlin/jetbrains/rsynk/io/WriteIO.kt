@@ -2,9 +2,7 @@ package jetbrains.rsynk.io
 
 import java.nio.ByteBuffer
 
-interface WritingIO {
-    fun writeBytes(bytes: ByteArray, offset: Int, len: Int)
-
+interface WriteIO {
     fun writeChar(c: Char)
 
     fun writeInt(i: Int)
@@ -13,9 +11,7 @@ interface WritingIO {
 
     fun writeBytes(bytes: ByteBuffer)
 
-    fun writeBytes(bytes: ByteArray) {
-        writeBytes(bytes, 0, bytes.size)
-    }
-
     val writtenBytes: Long
+
+    fun flush()
 }
