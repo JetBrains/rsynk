@@ -160,6 +160,16 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
             }
             output.writeBytes(VarintEncoder.varlong(0, 1))
         }
+        output.flush()
+
+        if (initialBlock.files.isEmpty()) {
+            if (data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
+                output.writeByte((-1).toByte())
+                output.flush()
+            }
+            return
+        }
+
 
     }
 
