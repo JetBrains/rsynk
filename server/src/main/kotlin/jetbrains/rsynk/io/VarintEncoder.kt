@@ -1,9 +1,29 @@
 package jetbrains.rsynk.io
 
+import jetbrains.rsynk.extensions.toLittleEndianBytes
 import java.nio.ByteBuffer
 
 object VarintEncoder {
     fun longToBytes(l: Long, minBytes: Int): ByteBuffer {
-        throw UnsupportedOperationException("Not imlemented!")
+        return write_var_number(l.toLittleEndianBytes(), minBytes)
+    }
+
+    private fun write_var_number(_bytes: ByteArray, minBytes: Int): ByteBuffer {
+        var count = _bytes.size
+        val bytes = byteArrayOf(0) + _bytes
+        while (count > minBytes && bytes[count] == 0.toByte()) {
+            count--
+        }
+        val firstByte = 0xFF and 1.shl(7 - count + minBytes)
+
+        if (0xFF and bytes[count].toInt() >= firstByte) {
+            count++
+            bytes[0] = (firstByte - 1).inv().toByte()
+        } else if (count > minBytes) {
+            bytes[0] = (bytes[count].toInt() or (firstByte * 2 - 1).inv()).toByte()
+        } else {
+            bytes[0] = bytes[count]
+        }
+        return ByteBuffer.wrap(bytes, 0, count)
     }
 }

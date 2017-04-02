@@ -243,30 +243,4 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
             //TODO send target if this is a symlink
         }
     }
-
-    private fun write_varint(value: Int, output: WritingIO) {
-        write_var_number(value.toLittleEndianBytes(), 1, output)
-    }
-
-    private fun write_varlong(value: Long, minBytes: Int, output: WritingIO) {
-        write_var_number(value.toLittleEndianBytes(), minBytes, output)
-    }
-
-    private fun write_var_number(_bytes: ByteArray, minBytes: Int, output: WritingIO) {
-        var cnt = _bytes.size
-        val bytes = _bytes + byteArrayOf(0)
-        while (cnt > minBytes && bytes[cnt] == 0.toByte()) {
-            cnt--
-        }
-        val bit = 1.shl(7 - cnt + minBytes)
-        if (bytes[cnt] >= bit) {
-            cnt++
-            bytes[0] = (bit - 1).inv().toByte()
-        } else if (cnt > 1) {
-            bytes[0] = bytes[cnt].toInt().or((bit * 2 - 1).inv()).toByte()
-        } else {
-            bytes[0] = bytes[cnt]
-        }
-        output.writeBytes(bytes, 0, cnt)
-    }
 }
