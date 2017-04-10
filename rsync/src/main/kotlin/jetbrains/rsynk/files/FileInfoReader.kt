@@ -39,15 +39,12 @@ class FileInfoReader(private val fs: FileSystemInfo) {
     }
 
     private fun getFileMode(attributes: BasicFileAttributes): Int {
-        if (attributes.isDirectory) {
-            return FileBitmasks.Directory or fs.defaultDirPermission
+        val modeBits = when {
+            attributes.isDirectory -> FileBitmasks.Directory
+            attributes.isRegularFile -> FileBitmasks.RegularFile
+            attributes.isSymbolicLink -> FileBitmasks.SymLink
+            else -> FileBitmasks.Other
         }
-        if (attributes.isRegularFile) {
-            return FileBitmasks.RegularFile or fs.defaultFilePermission
-        }
-        if (attributes.isSymbolicLink) {
-            FileBitmasks.SymLink or fs.defaultFilePermission
-        }
-        return FileBitmasks.Other
+        return modeBits or fs.defaultDirPermission
     }
 }
