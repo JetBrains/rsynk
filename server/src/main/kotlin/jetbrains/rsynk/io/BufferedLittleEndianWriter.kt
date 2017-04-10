@@ -3,14 +3,12 @@ package jetbrains.rsynk.io
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.channels.Channels
 import java.util.concurrent.atomic.AtomicLong
 
-class BufferedLittleEndianWriter(output: OutputStream,
+class BufferedLittleEndianWriter(private val output: OutputStream,
                                  bufferSize: Int = 1024 * 10) : WriteIO {
 
     val buffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
-    val channel = Channels.newChannel(output)
 
     override fun writeChar(c: Char) {
         if (buffer.remaining() < 2) {
@@ -52,9 +50,13 @@ class BufferedLittleEndianWriter(output: OutputStream,
         if (buffer.position() > 0) {
             written.addAndGet(buffer.position().toLong())
             buffer.flip()
-            while (buffer.hasRemaining()) {
-                channel.write(buffer)
-            }
+
+            val bytes = buffer.array()
+            val off = buffer.position()
+            val len = buffer.limit()
+            output.write(bytes, off, len)
+            output.flush()
+
             buffer.clear()
         }
     }
