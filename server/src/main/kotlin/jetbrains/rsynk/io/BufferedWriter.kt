@@ -5,8 +5,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicLong
 
-class BufferedLittleEndianWriter(private val output: OutputStream,
-                                 bufferSize: Int = 1024 * 10) : WriteIO {
+class BufferedWriter(private val output: OutputStream,
+                     bufferSize: Int = 1024 * 10) : WriteIO {
 
     val buffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
 

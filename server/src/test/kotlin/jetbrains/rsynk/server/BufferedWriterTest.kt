@@ -1,17 +1,17 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.io.BufferedLittleEndianWriter
+import jetbrains.rsynk.io.BufferedWriter
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
-class LittleEndianWritingIOTest {
+class BufferedWriterTest {
 
     @Test
-    fun ints_bytes_order_test() {
+    fun ints_bytes_little_endian_order_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedLittleEndianWriter(bos)
+        val writer = BufferedWriter(bos)
         writer.writeInt(42)
         writer.flush()
 
@@ -21,9 +21,9 @@ class LittleEndianWritingIOTest {
     }
 
     @Test
-    fun chars_bytes_order_test() {
+    fun chars_bytes_little_endian_order_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedLittleEndianWriter(bos)
+        val writer = BufferedWriter(bos)
         writer.writeChar(42.toChar())
         writer.flush()
 
@@ -33,9 +33,9 @@ class LittleEndianWritingIOTest {
     }
 
     @Test
-    fun bytes_sequences_order_test() {
+    fun bytes_sequences_little_endian_order_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedLittleEndianWriter(bos)
+        val writer = BufferedWriter(bos)
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(1, 2, 42, 3, 4)))
         writer.flush()
 
@@ -47,7 +47,7 @@ class LittleEndianWritingIOTest {
     @Test
     fun write_bytes_bigger_than_buffer_size_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedLittleEndianWriter(bos, 3)
+        val writer = BufferedWriter(bos, 3)
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(1, 2, 42, 3, 4)))
         writer.flush()
 
@@ -59,7 +59,7 @@ class LittleEndianWritingIOTest {
     @Test
     fun write_bytes_bigger_than_buffer_size_portioned_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedLittleEndianWriter(bos, 3)
+        val writer = BufferedWriter(bos, 3)
 
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(1, 2)))
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(3, 4)))
