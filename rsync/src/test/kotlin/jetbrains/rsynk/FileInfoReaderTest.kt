@@ -12,7 +12,7 @@ class FileInfoReaderTest {
     private val unixFS = UnixDefaultFileSystemInfo()
 
     @Test
-    fun `read directory info test`() {
+    fun read_directory_info_test() {
         Assume.assumeFalse(OS.isWindows)
 
         val dirPath = Files.createTempDirectory("test-dir")
@@ -31,7 +31,7 @@ class FileInfoReaderTest {
     }
 
     @Test
-    fun `read file info test`() {
+    fun read_file_info_test() {
         Assume.assumeFalse(OS.isWindows)
 
         val dirPath = Files.createTempFile("test-file", ".hoho")
