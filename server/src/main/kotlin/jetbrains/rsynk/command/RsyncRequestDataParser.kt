@@ -105,6 +105,7 @@ object RsyncRequestDataParser {
             "one-file-system" -> Option.OneFileSystem
             "protect-args" -> Option.ProtectArgs
             else -> {
+                //special cases where == isn't enough
                 if (o.startsWith("--checksum-seed")) {
                     return Option.ChecksumSeed(o.substring("--checksum-seed=".length).toInt())
                 }
