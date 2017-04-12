@@ -8,25 +8,25 @@ import java.util.*
 
 object RsyncRequestDataParser {
 
-    private enum class State { RSYNC, OPTION, FILE }
+    private enum class ArgumentType { RSYNC, OPTION, FILE }
 
     fun parse(args: List<String>): RequestData {
 
         val options = HashSet<Option>()
         val files = ArrayList<String>()
-        var nextArg = State.RSYNC
+        var nextArg = ArgumentType.RSYNC
 
         args.forEach { arg ->
             when (nextArg) {
 
-                State.RSYNC -> {
+                ArgumentType.RSYNC -> {
                     if (arg != "rsync") {
                         throw ArgsParingException("'rsync' argument must be sent first")
                     }
-                    nextArg = State.OPTION
+                    nextArg = ArgumentType.OPTION
                 }
 
-                State.OPTION -> {
+                ArgumentType.OPTION -> {
                     when {
                         arg.isLongOption() -> {
                             options.add(parseLongName(arg))
@@ -38,12 +38,12 @@ object RsyncRequestDataParser {
                             if (arg != ".") {
                                 throw ArgsParingException("'.' argument expected after options list, got $arg")
                             }
-                            nextArg = State.FILE
+                            nextArg = ArgumentType.FILE
                         }
                     }
                 }
 
-                State.FILE -> {
+                ArgumentType.FILE -> {
                     files.add(arg)
                 }
             }
@@ -62,7 +62,6 @@ object RsyncRequestDataParser {
 
     private fun parseShortName(o: String): Set<Option> {
 
-
         val options = HashSet<Option>()
 
         val preReleaseInfoRegex = Regex("e\\d*\\.\\d*")
@@ -74,8 +73,10 @@ object RsyncRequestDataParser {
         val optionToParse = o.replace(preReleaseInfoRegex, "")
         optionToParse.forEach { c ->
             val option = when (c) {
+
                 '.' -> null
                 '-' -> null
+
                 'C' -> Option.ChecksumSeedOrderFix
                 'd' -> Option.FileSelection.TransferDirectoriesWithoutContent
                 'f' -> Option.FListIOErrorSafety
@@ -98,17 +99,20 @@ object RsyncRequestDataParser {
 
     private fun parseLongName(o: String): Option {
         return when (o.dropWhile { it == '-' }) {
+
             "server" -> Option.Server
             "sender" -> Option.Sender
             "daemon" -> Option.Daemon
 
             "one-file-system" -> Option.OneFileSystem
             "protect-args" -> Option.ProtectArgs
+
             else -> {
                 //special cases where == isn't enough
                 if (o.startsWith("--checksum-seed")) {
                     return Option.ChecksumSeed(o.substring("--checksum-seed=".length).toInt())
                 }
+
                 throw ArgsParingException("Unknown long named option '$o'")
             }
         }
