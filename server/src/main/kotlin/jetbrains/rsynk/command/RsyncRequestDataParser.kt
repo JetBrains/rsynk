@@ -80,7 +80,10 @@ object RsyncRequestDataParser {
                 'C' -> Option.ChecksumSeedOrderFix
                 'd' -> Option.FileSelection.TransferDirectoriesWithoutContent
                 'f' -> Option.FListIOErrorSafety
+                'g' -> Option.PreserveGroup
                 'L' -> Option.SymlinkTimeSetting
+                'l' -> Option.PreserveLinks
+                'o' -> Option.PreserveUser
                 'r' -> Option.FileSelection.TransferDirectoriesRecurse
                 'R' -> Option.RelativePaths
                 's' -> Option.ProtectArgs
@@ -104,8 +107,14 @@ object RsyncRequestDataParser {
             "sender" -> Option.Sender
             "daemon" -> Option.Daemon
 
+            "devices" -> Option.PreserveDevices
+            "group" -> Option.PreserveGroup
+            "links" -> Option.PreserveLinks
+            "numeric-ids" -> Option.NumericIds
             "one-file-system" -> Option.OneFileSystem
+            "owner" -> Option.PreserveUser
             "protect-args" -> Option.ProtectArgs
+            "specials" -> Option.PreserveSpecials
 
             else -> {
                 //special cases where == isn't enough

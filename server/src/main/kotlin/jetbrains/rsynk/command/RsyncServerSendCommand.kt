@@ -188,13 +188,19 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 
         if (options.preserveUser && f.user == cache.user) {
             flags += TransmitFlag.SameUserId
-        } else if (!f.user.isRoot && !options.numericIds && options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.user in cache.sentUserNames) {
+        } else if (!f.user.isRoot &&
+                   !options.numericIds &&
+                    options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
+                    f.user in cache.sentUserNames) {
             flags += TransmitFlag.UserNameFollows
         }
 
         if (options.preserveGroup && f.group == cache.group) {
             flags += TransmitFlag.SameGroupId
-        } else if (!f.group.isRoot && !options.numericIds && options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse && f.group in cache.sendGroupNames) {
+        } else if (!f.group.isRoot &&
+                   !options.numericIds &&
+                    options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
+                    f.group in cache.sendGroupNames) {
             flags += TransmitFlag.GroupNameFollows
         }
 
