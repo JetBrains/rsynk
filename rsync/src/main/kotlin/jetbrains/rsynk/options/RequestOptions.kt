@@ -2,14 +2,14 @@ package jetbrains.rsynk.options
 
 class RequestOptions(val options: Set<Option>) {
 
-    val server: Boolean = options.contains(Option.Server)
-    val sender: Boolean = options.contains(Option.Sender)
-    val daemon: Boolean = options.contains(Option.Daemon)
+    val server: Boolean = Option.Server in options
+    val sender: Boolean = Option.Sender in options
+    val daemon: Boolean = Option.Daemon in options
 
-    val compress: Boolean = options.contains(Option.Compress)
-    val checksumSeedOrderFix = options.contains(Option.ChecksumSeedOrderFix)
+    val compress: Boolean = Option.Compress in options
+    val checksumSeedOrderFix = Option.ChecksumSeedOrderFix in options
 
-    val delete: Boolean = options.contains(Option.Delete)
+    val delete: Boolean = Option.Delete in options
     val directoryMode: Option.FileSelection
         get() {
             return options.filter { it is Option.FileSelection }
@@ -17,9 +17,9 @@ class RequestOptions(val options: Set<Option>) {
                     .singleOrNull() ?: Option.FileSelection.NoDirectories
         }
 
-    val incrementalRecurse: Boolean = options.contains(Option.IncrementalRecurse)
+    val incrementalRecurse: Boolean = Option.IncrementalRecurse in options
     val numericIds: Boolean = Option.NumericIds in options
-    val oneFileSystem: Boolean = options.contains(Option.OneFileSystem)
+    val oneFileSystem: Boolean = Option.OneFileSystem in options
     val preReleaseInfo: String?
         get() {
             val info = options.firstOrNull { it is Option.PreReleaseInfo } as? Option.PreReleaseInfo
@@ -30,10 +30,10 @@ class RequestOptions(val options: Set<Option>) {
     val preserveLinks: Boolean = Option.PreserveLinks in options
     val preserveSpecials: Boolean = Option.PreserveSpecials in options
     val preserveUser: Boolean = Option.PreserveUser in options
-    val protectArgs: Boolean = options.contains(Option.ProtectArgs)
-    val relativeNames: Boolean = options.contains(Option.RelativePaths)
-    val saveFlist: Boolean = options.contains(Option.FListIOErrorSafety)
-    val shellCommand: Boolean = options.contains(Option.ShellCommand)
-    val symlinkTimeSettings: Boolean = options.contains(Option.SymlinkTimeSetting)
-    val verboseMode: Boolean = options.contains(Option.VerboseMode)
+    val protectArgs: Boolean = Option.ProtectArgs in options
+    val relativeNames: Boolean = Option.RelativePaths in options
+    val saveFlist: Boolean = Option.FListIOErrorSafety in options
+    val shellCommand: Boolean = Option.ShellCommand in options
+    val symlinkTimeSettings: Boolean = Option.SymlinkTimeSetting in options
+    val verboseMode: Boolean = Option.VerboseMode in options
 }
