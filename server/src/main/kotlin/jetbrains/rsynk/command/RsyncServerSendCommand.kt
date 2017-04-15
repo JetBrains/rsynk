@@ -7,7 +7,7 @@ import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.TransmitFlag
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
-import jetbrains.rsynk.io.VarintEncoder
+import jetbrains.rsynk.data.VarintEncoder
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RequestOptions
@@ -47,7 +47,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         writeChecksumSeed(requestData.checksumSeed, output)
 
         val filter = receiveFilterList(input)
-        sendFileList(requestData, filter, output)
+        sendFileList(requestData, filter, input, output)
     }
 
     /**
@@ -116,19 +116,22 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         return FilterList()
     }
 
-    private fun sendFileList(data: RequestData, filterList: FilterList/*TODO: filter files*/, output: WriteIO) {
+    private fun sendFileList(data: RequestData,
+                             filterList: FilterList/* TODO: filter files (but not dot dir!) */,
+                             reader: ReadingIO,
+                             writer: WriteIO) {
         if (data.filePaths.size != 1) {
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
 
         val paths = listOf(FileResolver.resolve(data.filePaths.single()))
 
-        val fileList = FileList(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
+        val fileList = FileListsBlocks(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
         val initialBlock = fileList.addFileBlock(null, paths.map { path -> fileInfoReader.getFileInfo(path) })
 
         var prevFileCache = emptyPreviousFileCache
         initialBlock.files.forEach { _, file ->
-            sendFileInfo(file, prevFileCache, data.options, output)
+            sendFileInfo(file, prevFileCache, data.options, writer)
             prevFileCache = PreviousFileSentFileInfoCache(file.mode,
                     file.user,
                     file.group,
@@ -137,34 +140,34 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     prevFileCache.sentUserNames + file.user,
                     prevFileCache.sendGroupNames + file.group)
         }
-        output.writeByte(0.toByte())
+        writer.writeByte(0.toByte())
 
         if (data.options.preserveUser && !data.options.numericIds && data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
             prevFileCache.sentUserNames.forEach { user ->
-                sendUserId(user.uid, output)
-                sendUserName(user.name, output)
+                sendUserId(user.uid, writer)
+                sendUserName(user.name, writer)
             }
-            output.writeBytes(VarintEncoder.varlong(0, 1))
+            writer.writeBytes(VarintEncoder.varlong(0, 1))
         }
 
         if (data.options.preserveGroup && !data.options.numericIds && data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
             prevFileCache.sendGroupNames.forEach { group ->
-                sendGroupId(group.gid, output)
-                sendGroupName(group.name, output)
+                sendGroupId(group.gid, writer)
+                sendGroupName(group.name, writer)
             }
-            output.writeBytes(VarintEncoder.varlong(0, 1))
+            writer.writeBytes(VarintEncoder.varlong(0, 1))
         }
-        output.flush()
+        writer.flush()
 
         if (initialBlock.files.isEmpty()) {
             if (data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
-                output.writeByte((-1).toByte())
-                output.flush()
+                writer.writeByte((-1).toByte())
+                writer.flush()
             }
             return
         }
 
-
+        sendFiles(fileList, reader, writer)
     }
 
     private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WriteIO) {
@@ -185,18 +188,18 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         if (options.preserveUser && f.user == cache.user) {
             flags += TransmitFlag.SameUserId
         } else if (!f.user.isRoot &&
-                   !options.numericIds &&
-                    options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
-                    f.user in cache.sentUserNames) {
+                !options.numericIds &&
+                options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
+                f.user in cache.sentUserNames) {
             flags += TransmitFlag.UserNameFollows
         }
 
         if (options.preserveGroup && f.group == cache.group) {
             flags += TransmitFlag.SameGroupId
         } else if (!f.group.isRoot &&
-                   !options.numericIds &&
-                    options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
-                    f.group in cache.sendGroupNames) {
+                !options.numericIds &&
+                options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
+                f.group in cache.sendGroupNames) {
             flags += TransmitFlag.GroupNameFollows
         }
 
@@ -292,5 +295,16 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
         writer.writeByte(nameBytes.size.toByte())
         writer.writeBytes(ByteBuffer.wrap(nameBytes))
+    }
+
+    private fun sendFiles(fileListsBlocks: FileListsBlocks,
+                          reader: ReadingIO,
+                          writer: WriteIO) {
+        if (fileListsBlocks.hasStubDirs && fileListsBlocks.getFileListBlocks().size == 1)
+            fileListsBlocks
+    }
+
+    private fun receiveFileListIndex(reader: ReadingIO): Int {
+        return 0
     }
 }
