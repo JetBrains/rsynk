@@ -2,6 +2,11 @@ package jetbrains.rsynk.files
 
 import java.util.*
 
+sealed class FileListsCode(val code: Int) {
+    object done : FileListsCode(-1)
+    object eof : FileListsCode(-2)
+    object offset : FileListsCode(-101)
+}
 
 data class FileListBlock(val rootDirectory: FileInfo?,
                          val files: Map<Int, FileInfo>,
@@ -21,16 +26,17 @@ class FileListsBlocks(private val isRecursive: Boolean) {
     private var nextStubDirIndex: Int = 0
     private var nextDirIndex: Int
 
-    val hasStubDirs: Boolean
-        get() = stubDirectories.isNotEmpty()
-
     init {
         nextDirIndex = if (isRecursive) 0 else -1
     }
 
-    fun addFileBlock(root: FileInfo?,
-                     fileList: List<FileInfo>): FileListBlock {
+    val hasStubDirs: Boolean
+        get() = stubDirectories.isNotEmpty()
 
+    val blocksSize: Int
+        get() = blocks.size
+
+    fun addFileBlock(root: FileInfo?, fileList: List<FileInfo>): FileListBlock {
         if (isRecursive) {
             fileList.filter { it.isDirectory }
                     .sorted()
@@ -57,11 +63,19 @@ class FileListsBlocks(private val isRecursive: Boolean) {
         return block
     }
 
-    fun getFileListBlocks(): List<FileListBlock> = blocks
 
     fun popStubDir(index: Int): FileInfo? {
         val foundDir = stubDirectories[index] ?: return null
         stubDirectories.remove(index)
         return foundDir
     }
+
+    fun popBlock(): FileListBlock? {
+        if (blocks.isEmpty()) {
+            return null
+        }
+        return blocks.removeAt(0)
+    }
+
+    fun peekBlock(): FileListBlock? = blocks.firstOrNull()
 }
