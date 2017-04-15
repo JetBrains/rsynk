@@ -88,7 +88,7 @@ object RsyncRequestDataParser {
                 'L' -> Option.SymlinkTimeSetting
                 'l' -> Option.PreserveLinks
                 'o' -> Option.PreserveUser
-                'r' -> Option.FileSelection.TransferDirectoriesRecurse
+                'r' -> Option.FileSelection.Recurse
                 'R' -> Option.RelativePaths
                 's' -> Option.ProtectArgs
                 'v' -> Option.VerboseMode

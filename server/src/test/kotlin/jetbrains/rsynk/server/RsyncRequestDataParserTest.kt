@@ -1,6 +1,5 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.server.RsyncRequestDataParser
 import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
 import org.junit.Assert
@@ -20,7 +19,7 @@ class RsyncRequestDataParserTest {
         val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-LCd", "."))
         Assert.assertTrue(data.options.symlinkTimeSettings)
         Assert.assertTrue(data.options.checksumSeedOrderFix)
-        Assert.assertEquals(Option.FileSelection.TransferDirectoriesWithoutContent, data.options.directoryMode)
+        Assert.assertEquals(Option.FileSelection.TransferDirectoriesWithoutContent, data.options.filesSelection)
     }
 
     @Test
@@ -42,7 +41,7 @@ class RsyncRequestDataParserTest {
     @Test
     fun default_file_selection_status_test() {
         val data = RsyncRequestDataParser.parse(listOf("rsync"))
-        Assert.assertEquals(Option.FileSelection.NoDirectories, data.options.directoryMode)
+        Assert.assertEquals(Option.FileSelection.NoDirectories, data.options.filesSelection)
     }
 
     @Test
