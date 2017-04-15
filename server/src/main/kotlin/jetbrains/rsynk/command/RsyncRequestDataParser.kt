@@ -1,5 +1,6 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.data.Checksum
 import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RequestOptions
@@ -48,8 +49,9 @@ object RsyncRequestDataParser {
                 }
             }
         }
-        val seedOption = options.firstOrNull { it is Option.ChecksumSeed } ?: return RequestData(RequestOptions(options), files)
-        return RequestData(RequestOptions(options), files, (seedOption as Option.ChecksumSeed).seed)
+        val seedOption = options.firstOrNull { it is Option.ChecksumSeed }
+        val seed = (seedOption as? Option.ChecksumSeed)?.seed ?: Checksum.newSeed()
+        return RequestData(RequestOptions(options), files, seed)
     }
 
     private fun String.isShortOption(): Boolean {

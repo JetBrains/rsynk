@@ -1,4 +1,4 @@
-package jetbrains.rsynk.checksum
+package jetbrains.rsynk.data
 
 import java.util.*
 

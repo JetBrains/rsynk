@@ -1,6 +1,5 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.checksum.Checksum
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.RequestOptions
@@ -15,7 +14,7 @@ interface Command {
 data class RequestData(
         val options: RequestOptions,
         val filePaths: List<String>,
-        val checksumSeed: Int = Checksum.newSeed()
+        val checksumSeed: Int
 )
 
 interface RsyncCommand : Command

@@ -1,4 +1,4 @@
-package jetbrains.rsynk.io
+package jetbrains.rsynk.data
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -18,7 +18,7 @@ object VarintEncoder {
         while (count > minBytes && bytes[count] == 0.toByte()) {
             count--
         }
-        val firstByte = 0xFF and 1.shl(7 - count + minBytes)
+        val firstByte = 0xFF and 1 shl (7 - count + minBytes)
 
         if (0xFF and bytes[count].toInt() >= firstByte) {
             count++

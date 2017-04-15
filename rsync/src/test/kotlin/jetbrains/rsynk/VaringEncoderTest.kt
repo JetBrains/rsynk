@@ -1,6 +1,6 @@
-package jetbrains.rsynk.server
+package jetbrains.rsynk
 
-import jetbrains.rsynk.io.VarintEncoder
+import jetbrains.rsynk.data.VarintEncoder
 import org.junit.Assert
 import org.junit.Test
 import java.nio.ByteBuffer
