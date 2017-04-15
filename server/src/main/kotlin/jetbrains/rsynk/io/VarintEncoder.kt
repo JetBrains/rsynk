@@ -1,10 +1,13 @@
 package jetbrains.rsynk.io
 
-import jetbrains.rsynk.extensions.toLittleEndianBytes
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+
 object VarintEncoder {
+
+    private fun Long.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(this).array()
+
     fun varlong(l: Long, minBytes: Int): ByteBuffer {
         return write_var_number(l.toLittleEndianBytes(), minBytes)
     }
