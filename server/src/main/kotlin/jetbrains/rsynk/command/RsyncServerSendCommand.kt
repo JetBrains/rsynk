@@ -23,10 +23,7 @@ private data class PreviousFileSentFileInfoCache(val mode: Int?,
                                                  val lastModified: Long?,
                                                  val path: String,
                                                  val sentUserNames: Set<User>,
-                                                 val sendGroupNames: Set<Group>
-) {
-    val pathBytes = path.toByteArray()
-}
+                                                 val sendGroupNames: Set<Group>)
 
 private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null, null, null, null, "", emptySet(), emptySet())
 
@@ -208,7 +205,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
 
         val pathBytes = f.path.toUri().path.toByteArray()
-        val commonPrefixLength = (pathBytes zip cache.pathBytes).takeWhile { it.first == it.second }.size
+        val commonPrefixLength = (pathBytes zip cache.path.toByteArray()).takeWhile { it.first == it.second }.size
         val suffix = Arrays.copyOfRange(pathBytes, commonPrefixLength, pathBytes.size)
 
         if (commonPrefixLength > 0) {
