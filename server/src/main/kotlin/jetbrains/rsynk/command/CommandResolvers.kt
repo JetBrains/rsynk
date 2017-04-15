@@ -2,6 +2,7 @@ package jetbrains.rsynk.command
 
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.options.RequestOptions
+import jetbrains.rsynk.server.RsyncRequestDataParser
 
 
 interface CommandsResolver {

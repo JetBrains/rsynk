@@ -1,6 +1,6 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.command.RsyncRequestDataParser
+import jetbrains.rsynk.server.RsyncRequestDataParser
 import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
 import org.junit.Assert

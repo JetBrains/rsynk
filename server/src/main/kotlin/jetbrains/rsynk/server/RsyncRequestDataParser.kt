@@ -1,5 +1,6 @@
-package jetbrains.rsynk.command
+package jetbrains.rsynk.server
 
+import jetbrains.rsynk.command.RequestData
 import jetbrains.rsynk.data.Checksum
 import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
