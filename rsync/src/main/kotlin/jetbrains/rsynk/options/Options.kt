@@ -11,7 +11,6 @@ sealed class Option {
     object Delete : Option()
 
     object FListIOErrorSafety : Option()
-    object IncrementalRecurse : Option()
     object RelativePaths : Option()
     object ShellCommand : Option()
     object SymlinkTimeSetting : Option()
@@ -35,7 +34,7 @@ sealed class Option {
          * Transfer client's file list exactly and include directories
          * recursively
          * */
-        object TransferDirectoriesRecurse : FileSelection()
+        object Recurse : FileSelection()
 
         /**
          * Transfer client's file list and the content of any dot directory

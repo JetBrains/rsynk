@@ -10,14 +10,13 @@ class RequestOptions(val options: Set<Option>) {
     val checksumSeedOrderFix = Option.ChecksumSeedOrderFix in options
 
     val delete: Boolean = Option.Delete in options
-    val directoryMode: Option.FileSelection
+    val filesSelection: Option.FileSelection
         get() {
             return options.filter { it is Option.FileSelection }
                     .map { it as Option.FileSelection }
                     .singleOrNull() ?: Option.FileSelection.NoDirectories
         }
 
-    val incrementalRecurse: Boolean = Option.IncrementalRecurse in options
     val numericIds: Boolean = Option.NumericIds in options
     val oneFileSystem: Boolean = Option.OneFileSystem in options
     val preReleaseInfo: String?
