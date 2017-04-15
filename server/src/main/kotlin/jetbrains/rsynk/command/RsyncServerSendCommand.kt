@@ -3,7 +3,6 @@ package jetbrains.rsynk.command
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
-import jetbrains.rsynk.extensions.littleEndianToInt
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.TransmitFlag
 import jetbrains.rsynk.flags.encode
@@ -64,7 +63,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     private fun exchangeProtocolVersions(input: ReadingIO, output: WriteIO) {
         output.writeInt(RsyncServerStaticConfiguration.serverProtocolVersion)
         output.flush()
-        val clientProtocolVersion = input.readBytes(4).littleEndianToInt()
+        val clientProtocolVersion = input.readInt()
         if (clientProtocolVersion < RsyncServerStaticConfiguration.clientProtocolVersionMin) {
             throw UnsupportedProtocolException("Client protocol version must be at least " +
                     RsyncServerStaticConfiguration.clientProtocolVersionMin)
@@ -98,14 +97,14 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
      * */
     private fun receiveFilterList(input: ReadingIO): FilterList {
 
-        var len = input.readBytes(4).littleEndianToInt()
+        var len = input.readInt()
 
         /* It's not clear why client writes those 4 bytes.
          * Rsync uses it's 'safe_read' int early communication stages
          * which deals with circular buffer. It's probably data remained
          * in buffer. Ignore it unless we figure out the byte is missing. */
         if (len > 1024 * 5) {
-            len = input.readBytes(4).littleEndianToInt()
+            len = input.readInt()
         }
 
         while (len != 0) {
