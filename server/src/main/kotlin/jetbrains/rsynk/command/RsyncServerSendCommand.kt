@@ -292,7 +292,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     private fun sendGroupName(name: String, writer: WriteIO) {
         val nameBytes = name.toByteArray()
         if (nameBytes.size > Byte.MAX_VALUE_UNSIGNED) {
-            logger.warn { "Too long group name will be truncated to ${Byte.MAX_VALUE_UNSIGNED} bytes (${name})" }
+            logger.warn { "Too long group name will be truncated to ${Byte.MAX_VALUE_UNSIGNED} bytes ($name)" }
         }
         writer.writeByte(nameBytes.size.toByte())
         writer.writeBytes(ByteBuffer.wrap(nameBytes))

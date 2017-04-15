@@ -2,23 +2,29 @@ package jetbrains.rsynk.io
 
 import java.io.IOException
 import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicLong
 
 class BasicReadingIO(private val input: InputStream) : ReadingIO {
 
-    private val buf = ByteArray(4096)
-    private val readFromClient = AtomicLong(0)
+    private val readBytes = AtomicLong(0)
 
     override fun readBytes(len: Int): ByteArray {
-        val bufferToUse = if (len > buf.size) ByteArray(len) else buf
-        val read = input.read(bufferToUse, 0, len)
+        val buf = ByteArray(len)
+
+        val read = input.read(buf)
         if (read <= 0 || read != len) {
             throw IOException("Cannot read requested amount of data: only $read bytes of $len were read")
         }
-        readFromClient.addAndGet(read.toLong())
-        return bufferToUse.sliceArray(0..len - 1)
+
+        readBytes.addAndGet(read.toLong())
+        return buf
     }
 
-    override val bytesRead: Long
-        get() = readFromClient.get()
+    override fun readInt(): Int {
+        return ByteBuffer.wrap(readBytes(4)).order(ByteOrder.LITTLE_ENDIAN).int
+    }
+
+    override fun bytesRead(): Long = readBytes.get()
 }

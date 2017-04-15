@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong
 class BufferedWriter(private val output: OutputStream,
                      bufferSize: Int = 1024 * 10) : WriteIO {
 
-    val buffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
+    val buffer: ByteBuffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
 
     override fun writeChar(c: Char) {
         if (buffer.remaining() < 2) {
