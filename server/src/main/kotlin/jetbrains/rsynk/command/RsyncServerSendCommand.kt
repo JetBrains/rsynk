@@ -1,5 +1,7 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.data.VarintEncoder
+import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
@@ -7,11 +9,10 @@ import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.TransmitFlag
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
-import jetbrains.rsynk.data.VarintEncoder
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RequestOptions
-import jetbrains.rsynk.protocol.RsyncServerStaticConfiguration
+import jetbrains.rsynk.protocol.RsynkServerStaticConfiguration
 import mu.KLogging
 import java.nio.ByteBuffer
 import java.util.*
@@ -58,16 +59,16 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
      * either too old or too modern
      */
     private fun exchangeProtocolVersions(input: ReadingIO, output: WriteIO) {
-        output.writeInt(RsyncServerStaticConfiguration.serverProtocolVersion)
+        output.writeInt(RsynkServerStaticConfiguration.serverProtocolVersion)
         output.flush()
         val clientProtocolVersion = input.readInt()
-        if (clientProtocolVersion < RsyncServerStaticConfiguration.clientProtocolVersionMin) {
+        if (clientProtocolVersion < RsynkServerStaticConfiguration.clientProtocolVersionMin) {
             throw UnsupportedProtocolException("Client protocol version must be at least " +
-                    RsyncServerStaticConfiguration.clientProtocolVersionMin)
+                    RsynkServerStaticConfiguration.clientProtocolVersionMin)
         }
-        if (clientProtocolVersion > RsyncServerStaticConfiguration.clientProtocolVersionMax) {
+        if (clientProtocolVersion > RsynkServerStaticConfiguration.clientProtocolVersionMax) {
             throw UnsupportedProtocolException("Client protocol version must be no more than " +
-                    RsyncServerStaticConfiguration.clientProtocolVersionMax)
+                    RsynkServerStaticConfiguration.clientProtocolVersionMax)
         }
     }
 
@@ -75,7 +76,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
      * Writes server's compat flags.
      */
     private fun writeCompatFlags(output: WriteIO) {
-        val serverCompatFlags = RsyncServerStaticConfiguration.serverCompatFlags.encode()
+        val serverCompatFlags = RsynkServerStaticConfiguration.serverCompatFlags.encode()
         output.writeByte(serverCompatFlags)
         output.flush()
     }
@@ -126,7 +127,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 
         val paths = listOf(FileResolver.resolve(data.filePaths.single()))
 
-        val fileList = FileListsBlocks(data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse)
+        val fileList = FileListsBlocks(data.options.filesSelection is Option.FileSelection.Recurse)
         val initialBlock = fileList.addFileBlock(null, paths.map { path -> fileInfoReader.getFileInfo(path) })
 
         var prevFileCache = emptyPreviousFileCache
@@ -142,7 +143,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
         writer.writeByte(0.toByte())
 
-        if (data.options.preserveUser && !data.options.numericIds && data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
+        if (data.options.preserveUser && !data.options.numericIds && data.options.filesSelection is Option.FileSelection.Recurse) {
             prevFileCache.sentUserNames.forEach { user ->
                 sendUserId(user.uid, writer)
                 sendUserName(user.name, writer)
@@ -150,7 +151,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
             writer.writeBytes(VarintEncoder.varlong(0, 1))
         }
 
-        if (data.options.preserveGroup && !data.options.numericIds && data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
+        if (data.options.preserveGroup && !data.options.numericIds && data.options.filesSelection is Option.FileSelection.Recurse) {
             prevFileCache.sendGroupNames.forEach { group ->
                 sendGroupId(group.gid, writer)
                 sendGroupName(group.name, writer)
@@ -160,14 +161,13 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         writer.flush()
 
         if (initialBlock.files.isEmpty()) {
-            if (data.options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse) {
+            if (data.options.filesSelection is Option.FileSelection.Recurse) {
                 writer.writeByte((-1).toByte())
                 writer.flush()
             }
             return
         }
-
-        sendFiles(fileList, reader, writer)
+        sendFiles(fileList, data, reader, writer)
     }
 
     private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WriteIO) {
@@ -189,7 +189,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
             flags += TransmitFlag.SameUserId
         } else if (!f.user.isRoot &&
                 !options.numericIds &&
-                options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
+                options.filesSelection is Option.FileSelection.Recurse &&
                 f.user in cache.sentUserNames) {
             flags += TransmitFlag.UserNameFollows
         }
@@ -198,7 +198,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
             flags += TransmitFlag.SameGroupId
         } else if (!f.group.isRoot &&
                 !options.numericIds &&
-                options.directoryMode is Option.FileSelection.TransferDirectoriesRecurse &&
+                options.filesSelection is Option.FileSelection.Recurse &&
                 f.group in cache.sendGroupNames) {
             flags += TransmitFlag.GroupNameFollows
         }
@@ -298,13 +298,68 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     }
 
     private fun sendFiles(fileListsBlocks: FileListsBlocks,
+                          requestData: RequestData,
                           reader: ReadingIO,
                           writer: WriteIO) {
-        if (fileListsBlocks.hasStubDirs && fileListsBlocks.getFileListBlocks().size == 1)
-            fileListsBlocks
+
+        val firstBlock = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
+        var filesInTransition = firstBlock.files.size
+        var eofSent = false
+
+        if (fileListsBlocks.hasStubDirs &&
+                fileListsBlocks.blocksSize == 1 &&
+                filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
+
+            filesInTransition += expandAndSendStubDirs(fileListsBlocks,
+                    RsynkServerStaticConfiguration.fileListPartitionLimit,
+                    writer)
+        }
+
+        if (requestData.options.filesSelection is Option.FileSelection.Recurse
+                && !fileListsBlocks.hasStubDirs
+                && !eofSent) {
+
+            writer.writeByte(encodeFileListIndex(FileListsCode.eof))
+            eofSent = true
+        }
+
+        val code = decodeFileListIndex(reader.readBytes(1).first())
+
+        if (code is FileListsCode.done) {
+
+            if (requestData.options.filesSelection is Option.FileSelection.Recurse &&
+                    fileListsBlocks.isNotEmpty()) {
+
+                val sentBlock = fileListsBlocks.popBlock()
+                filesInTransition -= sentBlock?.files?.size ?: 0
+
+                if (fileListsBlocks.blocksSize == 0) {
+                    writer.writeByte(encodeFileListIndex(FileListsCode.done))
+                }
+            }
+
+            if (requestData.options.filesSelection !is Option.FileSelection.Recurse ||
+                    fileListsBlocks.isEmpty()) {
+                //TODO:
+                /*
+                phase.nextState()
+                if (phase !is FilesSendPhase.Stop) {
+                    writer.writeByte(encodeFileListIndex(FileListsCode.done))
+                }
+                */
+            }
+        }
     }
 
-    private fun receiveFileListIndex(reader: ReadingIO): Int {
-        return 0
+    private fun expandAndSendStubDirs(fileListsBlocks: FileListsBlocks, filesLimit: Int, writeIO: WriteIO): Int {
+
+    }
+
+    private fun decodeFileListIndex(b: Byte): FileListsCode {
+
+    }
+
+    private fun encodeFileListIndex(index: FileListsCode): Byte {
+
     }
 }

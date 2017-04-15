@@ -78,4 +78,10 @@ class FileListsBlocks(private val isRecursive: Boolean) {
     }
 
     fun peekBlock(): FileListBlock? = blocks.firstOrNull()
+
+    fun isEmpty(): Boolean {
+        return blocksSize == 0 && !hasStubDirs
+    }
+
+    fun isNotEmpty(): Boolean = !isEmpty()
 }
