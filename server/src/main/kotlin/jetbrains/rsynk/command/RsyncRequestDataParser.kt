@@ -15,16 +15,16 @@ object RsyncRequestDataParser {
 
         val options = HashSet<Option>()
         val files = ArrayList<String>()
-        var nextArg = ArgumentType.RSYNC
+        var nextArgType = ArgumentType.RSYNC
 
         args.forEach { arg ->
-            when (nextArg) {
+            when (nextArgType) {
 
                 ArgumentType.RSYNC -> {
                     if (arg != "rsync") {
                         throw ArgsParingException("'rsync' argument must be sent first")
                     }
-                    nextArg = ArgumentType.OPTION
+                    nextArgType = ArgumentType.OPTION
                 }
 
                 ArgumentType.OPTION -> {
@@ -39,7 +39,8 @@ object RsyncRequestDataParser {
                             if (arg != ".") {
                                 throw ArgsParingException("'.' argument expected after options list, got $arg")
                             }
-                            nextArg = ArgumentType.FILE
+                            files.add(arg)
+                            nextArgType = ArgumentType.FILE
                         }
                     }
                 }
