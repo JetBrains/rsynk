@@ -6,6 +6,7 @@ import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.files.*
+import jetbrains.rsynk.flags.ItemFlagsValidator
 import jetbrains.rsynk.flags.TransmitFlag
 import jetbrains.rsynk.flags.encode
 import jetbrains.rsynk.io.ReadingIO
@@ -319,47 +320,57 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                 && !fileListsBlocks.hasStubDirs
                 && !eofSent) {
 
-            writer.writeByte(encodeFileListIndex(FileListsCode.eof))
+            writer.writeByte(encodeFileListIndex(FileListsCode.eof.code))
             eofSent = true
         }
 
         val code = decodeFileListIndex(reader.readBytes(1).first())
 
-        if (code is FileListsCode.done) {
+        when {
+            code == FileListsCode.done.code -> {
 
-            if (requestData.options.filesSelection is Option.FileSelection.Recurse &&
-                    fileListsBlocks.isNotEmpty()) {
+                if (requestData.options.filesSelection is Option.FileSelection.Recurse &&
+                        fileListsBlocks.isNotEmpty()) {
 
-                val sentBlock = fileListsBlocks.popBlock()
-                filesInTransition -= sentBlock?.files?.size ?: 0
+                    val sentBlock = fileListsBlocks.popBlock()
+                    filesInTransition -= sentBlock?.files?.size ?: 0
 
-                if (fileListsBlocks.blocksSize == 0) {
-                    writer.writeByte(encodeFileListIndex(FileListsCode.done))
+                    if (fileListsBlocks.blocksSize == 0) {
+                        writer.writeByte(encodeFileListIndex(FileListsCode.done.code))
+                    }
                 }
-            }
 
-            if (requestData.options.filesSelection !is Option.FileSelection.Recurse ||
-                    fileListsBlocks.isEmpty()) {
-                //TODO:
-                /*
+                if (requestData.options.filesSelection !is Option.FileSelection.Recurse ||
+                        fileListsBlocks.isEmpty()) {
+                    //TODO:
+                    /*
                 phase.nextState()
                 if (phase !is FilesSendPhase.Stop) {
                     writer.writeByte(encodeFileListIndex(FileListsCode.done))
                 }
                 */
+                }
+            }
+
+            code >= 0 -> {
+                val itemFlag = reader.readChar()
+                if (!ItemFlagsValidator.isFlagSupported(itemFlag.toInt())) {
+                    throw NotSupportedException("Received not supported item flag ($itemFlag)")
+                }
+
             }
         }
     }
 
     private fun expandAndSendStubDirs(fileListsBlocks: FileListsBlocks, filesLimit: Int, writeIO: WriteIO): Int {
-
+        TODO()
     }
 
-    private fun decodeFileListIndex(b: Byte): FileListsCode {
-
+    private fun decodeFileListIndex(b: Byte): Int {
+        TODO()
     }
 
-    private fun encodeFileListIndex(index: FileListsCode): Byte {
-
+    private fun encodeFileListIndex(index: Int): Byte {
+        TODO()
     }
 }
