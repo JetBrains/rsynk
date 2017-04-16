@@ -84,4 +84,15 @@ class ReaderTest {
 
         Assert.assertEquals(4, reader.bytesRead())
     }
+
+    @Test
+    fun read_char_test() {
+        val bos = ByteArrayOutputStream()
+        bos.write("abc".toByteArray())
+        val reader = BasicReadingIO(ByteArrayInputStream(bos.toByteArray()))
+
+        Assert.assertEquals('a', reader.readChar())
+        reader.readBytes(2)
+        Assert.assertEquals('c', reader.readChar())
+    }
 }

@@ -5,5 +5,7 @@ interface ReadingIO {
 
     fun readInt(): Int
 
+    fun readChar(): Char
+
     fun bytesRead(): Long
 }

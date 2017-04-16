@@ -26,5 +26,9 @@ class BasicReadingIO(private val input: InputStream) : ReadingIO {
         return ByteBuffer.wrap(readBytes(4)).order(ByteOrder.LITTLE_ENDIAN).int
     }
 
+    override fun readChar(): Char {
+        return ByteBuffer.wrap(readBytes(2)).order(ByteOrder.LITTLE_ENDIAN).char
+    }
+
     override fun bytesRead(): Long = readBytes.get()
 }
