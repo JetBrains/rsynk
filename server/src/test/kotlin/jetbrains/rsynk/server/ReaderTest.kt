@@ -32,7 +32,7 @@ class ReaderTest {
     }
 
     @Test
-    fun read_int_zero_test() {
+    fun read_lit_end_int_zero_test() {
         val bos = ByteArrayOutputStream()
         bos.write(byteArrayOf(0, 0, 0, 0, 0))
         val reader = BasicReadingIO(ByteArrayInputStream(bos.toByteArray()))
@@ -42,7 +42,7 @@ class ReaderTest {
     }
 
     @Test
-    fun read_max_int_test() {
+    fun read_lit_end_max_int_test() {
         val bos = ByteArrayOutputStream()
         bos.write(byteArrayOf(-1, -1, -1, 127))
         val reader = BasicReadingIO(ByteArrayInputStream(bos.toByteArray()))
@@ -52,7 +52,7 @@ class ReaderTest {
     }
 
     @Test
-    fun read_int_test() {
+    fun read_lit_end_int_test() {
         val bos = ByteArrayOutputStream()
         bos.write(byteArrayOf(65, 117, 74, 0))
         val reader = BasicReadingIO(ByteArrayInputStream(bos.toByteArray()))
@@ -86,9 +86,9 @@ class ReaderTest {
     }
 
     @Test
-    fun read_char_test() {
+    fun read_lit_end_char_test() {
         val bos = ByteArrayOutputStream()
-        bos.write("abc".toByteArray())
+        bos.write(byteArrayOf(97, 0, 98, 0, 99, 0))
         val reader = BasicReadingIO(ByteArrayInputStream(bos.toByteArray()))
 
         Assert.assertEquals('a', reader.readChar())
