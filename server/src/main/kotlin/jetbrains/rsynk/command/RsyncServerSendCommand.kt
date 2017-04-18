@@ -302,10 +302,12 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                           reader: ReadingIO,
                           writer: WriteIO) {
 
-        var currentBlock: FileListBlock? = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
-        var filesInTransition = currentBlock?.files?.size ?: 0
+
+        val firstBlock  = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
+        var filesInTransition = firstBlock.files.size
         var eofSent = false
 
+        var currentBlock: FileListBlock? = firstBlock
         val state = FileSendingState()
 
         while (state.current != FileSendingState.Phase.Stop) {
