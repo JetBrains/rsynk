@@ -342,15 +342,11 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         }
                     }
 
-                    if (requestData.options.filesSelection !is Option.FileSelection.Recurse ||
-                            fileListsBlocks.isEmpty()) {
-                        //TODO:
-                        /*
-                phase.nextState()
-                if (phase !is FilesSendPhase.Stop) {
-                    writer.writeByte(encodeFileListIndex(FileListsCode.done))
-                }
-                */
+                    if (requestData.options.filesSelection !is Option.FileSelection.Recurse || fileListsBlocks.isEmpty()) {
+                        state.nextState()
+                        if (state.current != FileSendingState.Phase.Stop) {
+                            writer.writeByte(encodeFileListIndex(FileListsCode.done.code))
+                        }
                     }
                 }
 
@@ -380,9 +376,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     } else {
                         throw ProtocolException("Received index $index in unexpected transferring phase ${state.current.name}")
                     }
-
                 }
-
                 else -> {
                     throw ProtocolException("Invalid index $index")
                 }
@@ -416,7 +410,7 @@ class FileSendingState {
     var current: Phase = Phase.Transfer
         private set
 
-    fun next() {
+    fun nextState() {
         when (current) {
             Phase.Transfer -> Phase.TearDownOne
             Phase.TearDownOne -> Phase.TearDownTwo
