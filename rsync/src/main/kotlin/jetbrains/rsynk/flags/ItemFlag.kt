@@ -16,9 +16,31 @@ sealed class ItemFlag(val code: Int) {
     object XNameFollows : ItemFlag(1 shl 12)
     object IsNew : ItemFlag(1 shl 13)
     object LocalChange : ItemFlag(1 shl 14)
-    object ItemTransfer : ItemFlag(1 shl 15)
+    object Transfer : ItemFlag(1 shl 15)
 }
 
 object ItemFlagsValidator {
     fun isFlagSupported(f: Int): Boolean = true
+}
+
+fun Char.decodeItemFlags(): Set<ItemFlag> {
+    val thisIntValue = this.toInt()
+    return listOf(ItemFlag.UpToDate,
+            ItemFlag.ReportAtime,
+            ItemFlag.ReportChange,
+            ItemFlag.ReportSize,
+            ItemFlag.ReportTimeFail,
+            ItemFlag.ReportTime,
+            ItemFlag.ReportPermissions,
+            ItemFlag.ReportOwner,
+            ItemFlag.ReportGroup,
+            ItemFlag.ReportACL,
+            ItemFlag.ReportXATTR,
+            ItemFlag.BasicTypeFollows,
+            ItemFlag.XNameFollows,
+            ItemFlag.IsNew,
+            ItemFlag.LocalChange,
+            ItemFlag.Transfer)
+            .filter { flag -> thisIntValue and flag.code == flag.code }
+            .toSet()
 }

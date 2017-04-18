@@ -3,12 +3,11 @@ package jetbrains.rsynk.command
 import jetbrains.rsynk.data.VarintEncoder
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
+import jetbrains.rsynk.exitvalues.ProtocolException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.files.*
-import jetbrains.rsynk.flags.ItemFlagsValidator
-import jetbrains.rsynk.flags.TransmitFlag
-import jetbrains.rsynk.flags.encode
+import jetbrains.rsynk.flags.*
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
@@ -303,61 +302,90 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                           reader: ReadingIO,
                           writer: WriteIO) {
 
-        val firstBlock = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
-        var filesInTransition = firstBlock.files.size
+        var currentBlock: FileListBlock? = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
+        var filesInTransition = currentBlock?.files?.size ?: 0
         var eofSent = false
 
-        if (fileListsBlocks.hasStubDirs &&
-                fileListsBlocks.blocksSize == 1 &&
-                filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
+        val state = FileSendingState()
 
-            filesInTransition += expandAndSendStubDirs(fileListsBlocks,
-                    RsynkServerStaticConfiguration.fileListPartitionLimit,
-                    writer)
-        }
+        while (state.current != FileSendingState.Phase.Stop) {
+            if (fileListsBlocks.hasStubDirs &&
+                    fileListsBlocks.blocksSize == 1 &&
+                    filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
 
-        if (requestData.options.filesSelection is Option.FileSelection.Recurse
-                && !fileListsBlocks.hasStubDirs
-                && !eofSent) {
+                filesInTransition += expandAndSendStubDirs(fileListsBlocks,
+                        RsynkServerStaticConfiguration.fileListPartitionLimit,
+                        writer)
+            }
 
-            writer.writeByte(encodeFileListIndex(FileListsCode.eof.code))
-            eofSent = true
-        }
+            if (requestData.options.filesSelection is Option.FileSelection.Recurse
+                    && !fileListsBlocks.hasStubDirs
+                    && !eofSent) {
 
-        val code = decodeFileListIndex(reader.readBytes(1).first())
+                writer.writeByte(encodeFileListIndex(FileListsCode.eof.code))
+                eofSent = true
+            }
 
-        when {
-            code == FileListsCode.done.code -> {
+            val index = decodeFileListIndex(reader.readBytes(1).first())
 
-                if (requestData.options.filesSelection is Option.FileSelection.Recurse &&
-                        fileListsBlocks.isNotEmpty()) {
+            when {
+                index == FileListsCode.done.code -> {
 
-                    val sentBlock = fileListsBlocks.popBlock()
-                    filesInTransition -= sentBlock?.files?.size ?: 0
+                    if (requestData.options.filesSelection is Option.FileSelection.Recurse &&
+                            fileListsBlocks.isNotEmpty()) {
 
-                    if (fileListsBlocks.blocksSize == 0) {
-                        writer.writeByte(encodeFileListIndex(FileListsCode.done.code))
+                        val sentBlock = fileListsBlocks.popBlock()
+                        filesInTransition -= sentBlock?.files?.size ?: 0
+
+                        if (fileListsBlocks.blocksSize == 0) {
+                            writer.writeByte(encodeFileListIndex(FileListsCode.done.code))
+                        }
                     }
-                }
 
-                if (requestData.options.filesSelection !is Option.FileSelection.Recurse ||
-                        fileListsBlocks.isEmpty()) {
-                    //TODO:
-                    /*
+                    if (requestData.options.filesSelection !is Option.FileSelection.Recurse ||
+                            fileListsBlocks.isEmpty()) {
+                        //TODO:
+                        /*
                 phase.nextState()
                 if (phase !is FilesSendPhase.Stop) {
                     writer.writeByte(encodeFileListIndex(FileListsCode.done))
                 }
                 */
-                }
-            }
-
-            code >= 0 -> {
-                val itemFlag = reader.readChar()
-                if (!ItemFlagsValidator.isFlagSupported(itemFlag.toInt())) {
-                    throw NotSupportedException("Received not supported item flag ($itemFlag)")
+                    }
                 }
 
+                index >= 0 -> {
+                    val itemFlag = reader.readChar()
+                    if (!ItemFlagsValidator.isFlagSupported(itemFlag.toInt())) {
+                        throw NotSupportedException("Received not supported item flag ($itemFlag)")
+                    }
+                    val decodedItemFlags = itemFlag.decodeItemFlags()
+
+                    if (ItemFlag.Transfer in decodedItemFlags) {
+                        val block = currentBlock
+                        if (block == null || block.files[index] == null) {
+                            currentBlock = fileListsBlocks.peekBlock(index)
+                        }
+
+                        block ?: throw ProtocolException("Sent block index does not exist on server")
+
+                        if (index != block.begin) {
+                            block.markFileDeleted(index)
+                            filesInTransition--
+                        }
+                        writer.writeByte(encodeFileListIndex(index))
+                        writer.writeChar(itemFlag)
+                    } else if (state.current == FileSendingState.Phase.Transfer) {
+                        //line 1679
+                    } else {
+                        throw ProtocolException("Received index $index in unexpected transferring phase ${state.current.name}")
+                    }
+
+                }
+
+                else -> {
+                    throw ProtocolException("Invalid index $index")
+                }
             }
         }
     }
@@ -373,4 +401,28 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     private fun encodeFileListIndex(index: Int): Byte {
         TODO()
     }
+}
+
+
+class FileSendingState {
+
+    sealed class Phase(val name: String) {
+        object Transfer : Phase("tranfer")
+        object TearDownOne : Phase("tear-down-1")
+        object TearDownTwo : Phase("tear-down-2")
+        object Stop : Phase("stop")
+    }
+
+    var current: Phase = Phase.Transfer
+        private set
+
+    fun next() {
+        when (current) {
+            Phase.Transfer -> Phase.TearDownOne
+            Phase.TearDownOne -> Phase.TearDownTwo
+            Phase.TearDownTwo -> Phase.Stop
+            Phase.Stop -> throw IllegalStateException("Cannot set next state after stop is set")
+        }
+    }
+
 }
