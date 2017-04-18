@@ -13,6 +13,20 @@ data class FileListBlock(val rootDirectory: FileInfo?,
                          val begin: Int,
                          val end: Int,
                          val filesSize: Long) : Comparable<FileListBlock> {
+
+    private val deletedFiles = HashSet<Int>()
+
+    fun markFileDeleted(index: Int) {
+        if (index !in begin..end) {
+            throw IndexOutOfBoundsException("Requested index $index is out of segment bounds [$begin, $end]")
+        }
+        deletedFiles += index
+    }
+
+    fun isFileDeleted(index: Int): Boolean {
+        return index in deletedFiles
+    }
+
     override fun compareTo(other: FileListBlock): Int {
         return begin.compareTo(other.begin)
     }
@@ -78,6 +92,8 @@ class FileListsBlocks(private val isRecursive: Boolean) {
     }
 
     fun peekBlock(): FileListBlock? = blocks.firstOrNull()
+
+    fun peekBlock(i: Int): FileListBlock? = blocks.getOrNull(i)
 
     fun isEmpty(): Boolean {
         return blocksSize == 0 && !hasStubDirs
