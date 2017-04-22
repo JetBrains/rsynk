@@ -1,5 +1,7 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.data.Checksum
+import jetbrains.rsynk.data.ChecksumHeader
 import jetbrains.rsynk.data.VarintEncoder
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
@@ -303,7 +305,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                           writer: WriteIO) {
 
 
-        val firstBlock  = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
+        val firstBlock = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
         var filesInTransition = firstBlock.files.size
         var eofSent = false
 
@@ -374,7 +376,51 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         writer.writeByte(encodeFileListIndex(index))
                         writer.writeChar(itemFlag)
                     } else if (state.current == FileSendingState.Phase.Transfer) {
-                        //line 1679
+
+                        val fileFromCurrentBlock = currentBlock?.files?.get(index)
+
+                        val file = if (fileFromCurrentBlock == null) {
+                            val newBlock = fileListsBlocks.peekBlock(index) ?: throw ProtocolException("Got invalid file list index $index")
+                            currentBlock = newBlock
+                            val fileFromNewBlock = newBlock.files[index] ?: throw ProtocolException("Got invalid file list index $index")
+                            if (!fileFromNewBlock.isReqularFile) {
+                                throw ProtocolException("File with index $index exptected to be a regular file, but it's not")
+                            }
+                            fileFromNewBlock
+                        } else {
+                            fileFromCurrentBlock
+                        }
+
+                        val checksumHeader = receiveChecksumHeader()
+                        val checksum = receiveChecksum(checksumHeader)
+
+                        val isNewFile = checksumHeader.blockLength == 0L
+                        val transmission = if (isNewFile) {
+                            FilesTransmission(file.path, file.size, FilesTransmission.defaultBlockSize, FilesTransmission.defaultBlockFactor)
+                        } else {
+                            FilesTransmission(file.path, file.size, checksumHeader.blockLength, checksumHeader.blockLength * 10)
+                        }
+
+                        val checksumBytes = transmission.runWithOpenedFile { fileRepresentaions ->
+
+                            sendFileIndexAndItemFlag(index, itemFlag)
+                            sendChecksumHeader(checksumHeader)
+
+                            try {
+                                val checksumBytes = if (isNewFile) {
+                                    skipMatchSendData(fileRepresentaions, file)
+                                } else {
+                                    sendMatchesAndData(fileRepresentaions, checksum)
+                                }
+                                checksumBytes
+                            } catch (t: Throwable) {
+                                byteArrayOf(0) //TODO
+                            }
+                        }
+
+                        writer.writeBytes(ByteBuffer.wrap(checksumBytes))
+
+
                     } else {
                         throw ProtocolException("Received index $index in unexpected transferring phase ${state.current.name}")
                     }
@@ -397,6 +443,33 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     private fun encodeFileListIndex(index: Int): Byte {
         TODO()
     }
+
+    private fun receiveChecksumHeader(): ChecksumHeader {
+        TODO()
+    }
+
+    private fun sendChecksumHeader(header: ChecksumHeader) {
+        TODO()
+    }
+
+    private fun receiveChecksum(header: ChecksumHeader): Checksum {
+        TODO()
+    }
+
+    private fun sendFileIndexAndItemFlag(index: Int, flag: Char) {
+        TODO()
+    }
+
+    private fun skipMatchSendData(fileRepresentation: TransmissionFileRepresentation,
+                                  fileInfo: FileInfo): ByteArray {
+        TODO()
+    }
+
+    private fun sendMatchesAndData(fileRepresentation: TransmissionFileRepresentation,
+                                   checksum: Checksum): ByteArray {
+        TODO()
+    }
+
 }
 
 

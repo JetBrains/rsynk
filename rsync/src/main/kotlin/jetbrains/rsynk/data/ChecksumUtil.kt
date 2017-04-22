@@ -2,7 +2,7 @@ package jetbrains.rsynk.data
 
 import java.util.*
 
-object Checksum {
+object ChecksumUtil {
 
     private val seed = System.currentTimeMillis()
 
@@ -33,3 +33,10 @@ object Checksum {
         TODO()
     }
 }
+
+data class ChecksumHeader(val blockLength: Long,
+                          val digestLength: Long,
+                          val remains: Long,
+                          val chunkCount: Int)
+
+data class Checksum(val header: ChecksumHeader/*, TODO*/)
