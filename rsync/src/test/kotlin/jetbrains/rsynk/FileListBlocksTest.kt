@@ -26,7 +26,7 @@ class FileListBlocksTest {
     fun preserve_index_for_not_null_root_non_recursive_test() {
         val blocks = FileListsBlocks(false)
         blocks.addFileBlock(Files.directory, listOf(file))
-        val block = blocks.getFileListBlocks().single()
+        val block = blocks.popBlock() ?: throw AssertionError("Block must not be null")
         Assert.assertEquals(Files.directory, block.rootDirectory)
 
         val blockFiles = block.files
@@ -38,7 +38,7 @@ class FileListBlocksTest {
     fun preserve_index_for_null_root_non_recursive_test() {
         val blocks = FileListsBlocks(false)
         blocks.addFileBlock(null, listOf(file))
-        val block = blocks.getFileListBlocks().single()
+        val block = blocks.popBlock() ?: throw AssertionError("Block must not be null")
         Assert.assertNull(block.rootDirectory)
 
         val blockFiles = block.files
@@ -50,7 +50,7 @@ class FileListBlocksTest {
     fun directory_index_is_minus_1_for_non_recursive_mode_test() {
         val blocks = FileListsBlocks(false)
         blocks.addFileBlock(null, listOf(Files.file))
-        val blockFiles = blocks.getFileListBlocks().single().files
+        val blockFiles = blocks.popBlock()?.files ?: throw AssertionError("Block must not be null")
         Assert.assertEquals(1, blockFiles.size)
         Assert.assertEquals(Files.file, blockFiles[0])
     }
@@ -59,7 +59,7 @@ class FileListBlocksTest {
     fun first_directory_index_is_zero_for_recursive_mode_test() {
         val blocks = FileListsBlocks(true)
         blocks.addFileBlock(null, listOf(Files.file))
-        val blockFiles = blocks.getFileListBlocks().single().files
+        val blockFiles = blocks.popBlock()?.files ?: throw AssertionError("Block must not be null")
         Assert.assertEquals(1, blockFiles.size)
         Assert.assertEquals(Files.file, blockFiles[1])
     }
