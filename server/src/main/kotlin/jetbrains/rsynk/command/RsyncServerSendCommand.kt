@@ -394,8 +394,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         val checksumHeader = receiveChecksumHeader()
                         val checksum = receiveChecksum(checksumHeader)
 
-                        val isNewFile = checksumHeader.blockLength == 0L
-                        val transmission = if (isNewFile) {
+                        val transmission = if (checksumHeader.isNewFile) {
                             FilesTransmission(file.path, file.size, FilesTransmission.defaultBlockSize, FilesTransmission.defaultBlockFactor)
                         } else {
                             FilesTransmission(file.path, file.size, checksumHeader.blockLength, checksumHeader.blockLength * 10)
@@ -407,7 +406,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                             sendChecksumHeader(checksumHeader)
 
                             try {
-                                val checksumBytes = if (isNewFile) {
+                                val checksumBytes = if (checksumHeader.isNewFile) {
                                     skipMatchSendData(fileRepresentaions, file)
                                 } else {
                                     sendMatchesAndData(fileRepresentaions, checksum)
