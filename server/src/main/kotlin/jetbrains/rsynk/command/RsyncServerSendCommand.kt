@@ -17,18 +17,10 @@ import jetbrains.rsynk.options.RequestOptions
 import jetbrains.rsynk.protocol.RsynkServerStaticConfiguration
 import mu.KLogging
 import java.nio.ByteBuffer
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 
-
-private data class PreviousFileSentFileInfoCache(val mode: Int?,
-                                                 val user: User?,
-                                                 val group: Group?,
-                                                 val lastModified: Long?,
-                                                 val path: String,
-                                                 val sentUserNames: Set<User>,
-                                                 val sendGroupNames: Set<Group>)
-
-private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null, null, null, null, "", emptySet(), emptySet())
 
 class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : RsyncCommand {
 
@@ -317,7 +309,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     fileListsBlocks.blocksSize == 1 &&
                     filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
 
-                filesInTransition += expandAndSendStubDirs(fileListsBlocks,
+                filesInTransition += expandAndSendStubDirectories(fileListsBlocks,
                         RsynkServerStaticConfiguration.fileListPartitionLimit,
                         writer)
             }
@@ -413,7 +405,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                                 }
                                 checksumBytes
                             } catch (t: Throwable) {
-                                byteArrayOf(0) //TODO
+                                byteArrayOf() //TODO
                             }
                         }
 
@@ -431,8 +423,72 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
     }
 
-    private fun expandAndSendStubDirs(fileListsBlocks: FileListsBlocks, filesLimit: Int, writeIO: WriteIO): Int {
-        TODO()
+    private fun expandAndSendStubDirectories(fileListsBlocks: FileListsBlocks,
+                                             currentBlock: Int,
+                                             filesLimit: Int,
+                                             writeIO: WriteIO): Int {
+        if (fileListsBlocks.hasStubDirs) {
+
+            val stubDir = fileListsBlocks.popStubDir(currentBlock) ?: throw ProtocolException("Invalid stub directory block index: $currentBlock")
+            writeIO.writeByte(encodeFileListIndex(FileListsCode.offset.code - currentBlock))
+
+
+        }
+        TODO("You are here")
+    }
+
+    private fun expandStubDirectory(directory: FileInfo,
+                                    requestData: RequestData): List<FileInfo> {
+        val root = locateRootDirectoryPath(directory)
+
+        val list = ArrayList<FileInfo>()
+        Files.newDirectoryStream(directory.path).use {
+            it.forEach { directoryEntry ->
+
+                val relativePath = root.relativize(directoryEntry).normalize()
+                val fileInfo = fileInfoReader.getFileInfo(directoryEntry)
+
+                val element = when {
+                    requestData.options.preserveLinks && fileInfo.isSymlink -> {
+                        TODO()
+                    }
+
+                    requestData.options.preserveDevices && (fileInfo.isBlockDevice || fileInfo.isCharacterDevice) -> {
+                        TODO()
+                    }
+
+                    requestData.options.preserveSpecials && (fileInfo.isFIFO || fileInfo.isSocket) -> {
+                        TODO()
+                    }
+
+                    else -> {
+                        FileInfo(relativePath, relativePath.joinToString(separator = "/"), fileInfo.mode, fileInfo.size, fileInfo.lastModified, fileInfo.user, fileInfo.group)
+                    }
+                }
+                list.add(element)
+            }
+        }
+
+        return list
+    }
+
+
+    //TODO: move to FileInfo
+    //TODO: or to separate util
+    private fun locateRootDirectoryPath(fileInfo: FileInfo): Path {
+        val fs = fileInfo.path.fileSystem
+
+        val fullPath = fileInfo.path
+        val relativePath = fs.getPath(fileInfo.path.fileName.toString())
+        if (!fullPath.endsWith(relativePath)) {
+            throw IllegalArgumentException("$relativePath is not a subpath of $fullPath")
+        }
+
+        val result = fullPath.subpath(0, fullPath.nameCount - relativePath.nameCount)
+        if (fullPath.isAbsolute) {
+            return fullPath.root.resolve(result)
+        }
+        return result
     }
 
     private fun decodeFileListIndex(b: Byte): Int {
@@ -494,3 +550,14 @@ class FileSendingState {
     }
 
 }
+
+
+private data class PreviousFileSentFileInfoCache(val mode: Int?,
+                                                 val user: User?,
+                                                 val group: Group?,
+                                                 val lastModified: Long?,
+                                                 val path: String,
+                                                 val sentUserNames: Set<User>,
+                                                 val sendGroupNames: Set<Group>)
+
+private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null, null, null, null, "", emptySet(), emptySet())
