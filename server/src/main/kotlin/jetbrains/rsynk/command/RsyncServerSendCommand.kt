@@ -119,6 +119,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
             throw NotSupportedException("Multiple files requests not implemented yet")
         }
 
+        //TODO: implement initial expanding for more than one file!
         val paths = listOf(FileResolver.resolve(data.filePaths.single()))
 
         val fileList = FileListsBlocks(data.options.filesSelection is Option.FileSelection.Recurse)
