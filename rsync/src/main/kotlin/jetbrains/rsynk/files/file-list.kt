@@ -92,8 +92,6 @@ class FileListsBlocks(private val isRecursive: Boolean) {
         return blocks.removeAt(0)
     }
 
-    fun peekBlock(): FileListBlock? = blocks.firstOrNull()
-
     fun peekBlock(i: Int): FileListBlock? = blocks.getOrNull(i)
 
     fun isEmpty(): Boolean {

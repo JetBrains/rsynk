@@ -297,12 +297,11 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                           reader: ReadingIO,
                           writer: WriteIO) {
 
-
-        val firstBlock = fileListsBlocks.peekBlock() ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
+        var currentBlockIndex = 0
+        val firstBlock = fileListsBlocks.peekBlock(currentBlockIndex) ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
         var filesInTransition = firstBlock.files.size
         var eofSent = false
 
-        var currentBlock: FileListBlock? = firstBlock
         val state = FileSendingState()
 
         while (state.current != FileSendingState.Phase.Stop) {
@@ -310,9 +309,14 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     fileListsBlocks.blocksSize == 1 &&
                     filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
 
-                filesInTransition += expandAndSendStubDirectories(fileListsBlocks,
+                val expandResult = expandAndSendStubDirectories(fileListsBlocks,
+                        0,//TODO 1 if dot dir is expanded!
                         RsynkServerStaticConfiguration.fileListPartitionLimit,
+                        requestData,
                         writer)
+
+                filesInTransition += expandResult.filesSent
+                currentBlockIndex += expandResult.blocksSent
             }
 
             if (requestData.options.filesSelection is Option.FileSelection.Recurse
@@ -355,9 +359,9 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     val decodedItemFlags = itemFlag.decodeItemFlags()
 
                     if (ItemFlag.Transfer in decodedItemFlags) {
-                        val block = currentBlock
+                        val block = fileListsBlocks.peekBlock(currentBlockIndex)
                         if (block == null || block.files[index] == null) {
-                            currentBlock = fileListsBlocks.peekBlock(index)
+                            currentBlockIndex = index
                         }
 
                         block ?: throw ProtocolException("Sent block index does not exist on server")
@@ -370,12 +374,12 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         writer.writeChar(itemFlag)
                     } else if (state.current == FileSendingState.Phase.Transfer) {
 
-                        val fileFromCurrentBlock = currentBlock?.files?.get(index)
+                        val fileFromCurrentBlock = fileListsBlocks.peekBlock(currentBlockIndex)?.files?.get(index)
 
                         val file = if (fileFromCurrentBlock == null) {
-                            val newBlock = fileListsBlocks.peekBlock(index) ?: throw ProtocolException("Got invalid file list index $index")
-                            currentBlock = newBlock
-                            val fileFromNewBlock = newBlock.files[index] ?: throw ProtocolException("Got invalid file list index $index")
+                            currentBlockIndex = index
+                            val currentBlock = fileListsBlocks.peekBlock(currentBlockIndex) ?: throw ProtocolException("Got invalid file list index $index")
+                            val fileFromNewBlock = currentBlock.files[index] ?: throw ProtocolException("Got invalid file list index $index")
                             if (!fileFromNewBlock.isReqularFile) {
                                 throw ProtocolException("File with index $index exptected to be a regular file, but it's not")
                             }
@@ -425,17 +429,30 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     }
 
     private fun expandAndSendStubDirectories(fileListsBlocks: FileListsBlocks,
-                                             currentBlock: Int,
-                                             filesLimit: Int,
-                                             writeIO: WriteIO): Int {
-        if (fileListsBlocks.hasStubDirs) {
+                                             blockInTransmission: Int,
+                                             sentFilesLimit: Int,
+                                             requestData: RequestData,
+                                             writer: WriteIO): StubDirectoriesExpandingResult {
 
+        var filesSent = 0
+        var currentBlock = blockInTransmission
+
+        while (fileListsBlocks.hasStubDirs && filesSent < sentFilesLimit) {
             val stubDir = fileListsBlocks.popStubDir(currentBlock) ?: throw ProtocolException("Invalid stub directory block index: $currentBlock")
-            writeIO.writeByte(encodeFileListIndex(FileListsCode.offset.code - currentBlock))
+            writer.writeByte(encodeFileListIndex(FileListsCode.offset.code - currentBlock))
 
+            val expanded = expandStubDirectory(stubDir, requestData)
+            val block = fileListsBlocks.addFileBlock(stubDir, expanded)
 
+            block.files.forEach { _index, file ->
+                sendFileInfo(file, emptyPreviousFileCache, requestData.options, writer)
+                filesSent++
+            }
+            sendBlockEnd(writer)
+            currentBlock++
         }
-        TODO("You are here")
+
+        return StubDirectoriesExpandingResult(filesSent, currentBlock - blockInTransmission)
     }
 
     private fun expandStubDirectory(directory: FileInfo,
@@ -463,7 +480,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     }
 
                     else -> {
-                        FileInfo(relativePath, relativePath.joinToString(separator = "/"), fileInfo.mode, fileInfo.size, fileInfo.lastModified, fileInfo.user, fileInfo.group)
+                        FileInfo(relativePath, fileInfo.mode, fileInfo.size, fileInfo.lastModified, fileInfo.user, fileInfo.group)
                     }
                 }
                 list.add(element)
@@ -526,6 +543,10 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         TODO()
     }
 
+    private fun sendBlockEnd(writer: WriteIO) {
+        writer.writeByte(0)
+    }
+
 }
 
 
@@ -560,5 +581,8 @@ private data class PreviousFileSentFileInfoCache(val mode: Int?,
                                                  val path: String,
                                                  val sentUserNames: Set<User>,
                                                  val sendGroupNames: Set<Group>)
+
+private data class StubDirectoriesExpandingResult(val filesSent: Int,
+                                                  val blocksSent: Int)
 
 private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null, null, null, null, "", emptySet(), emptySet())
