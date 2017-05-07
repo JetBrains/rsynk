@@ -1,10 +1,10 @@
 package jetbrains.rsynk.files
 
-import sun.security.util.Length
 import java.nio.file.Path
 
 
 class TransmissionFileRepresentation : AutoCloseable {
+
     override fun close() {
         TODO()
     }

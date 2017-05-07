@@ -17,6 +17,7 @@ import mu.KLogging
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -400,25 +401,21 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                             FilesTransmission(file.path, file.size, checksumHeader.blockLength.toLong(), (checksumHeader.blockLength * 10).toLong())
                         }
 
-                        val checksumBytes = transmission.runWithOpenedFile { fileRepresentaions ->
+                        transmission.runWithOpenedFile { fileRepresentaions ->
 
                             sendFileIndexAndItemFlag(index, itemFlag, writer)
                             sendChecksumHeader(checksumHeader, writer)
 
                             try {
-                                val checksumBytes = if (checksumHeader.isNewFile) {
-                                    skipMatchAndSendData(fileRepresentaions, file)
+                                if (checksumHeader.isNewFile) {
+                                    skipMatchAndSendData(fileRepresentaions, file, writer)
                                 } else {
                                     sendMatchesAndData(fileRepresentaions, checksum)
                                 }
-                                checksumBytes
                             } catch (t: Throwable) {
                                 byteArrayOf() //TODO
                             }
                         }
-
-                        writer.writeBytes(ByteBuffer.wrap(checksumBytes))
-
 
                     } else {
                         throw ProtocolException("Received index $index in unexpected transferring phase ${state.current.name}")
@@ -556,13 +553,49 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     }
 
     private fun skipMatchAndSendData(fileRepresentation: TransmissionFileRepresentation,
-                                     fileInfo: FileInfo): ByteArray {
-        TODO()
+                                     fileInfo: FileInfo,
+                                     writer: WriteIO) {
+        val md5 = MessageDigest.getInstance("md5")
+        var bytesSend = 0
+
+        while(fileRepresentation.windowLength > 0) {
+
+            val bytes = fileRepresentation.bytes
+            val offset = fileRepresentation.offset
+            val windowLength = fileRepresentation.windowLength
+
+            sendData(bytes,
+                    offset,
+                    windowLength,
+                    writer)
+            bytesSend += windowLength
+
+            md5.update(bytes, offset, windowLength)
+            fileRepresentation.slide(windowLength)
+        }
+
+
     }
 
     private fun sendMatchesAndData(fileRepresentation: TransmissionFileRepresentation,
                                    checksum: Checksum): ByteArray {
         TODO()
+    }
+
+    private fun sendData(bytes: ByteArray,
+                         offset: Int,
+                         length: Int,
+                         writer: WriteIO) {
+
+        var currentOffset = offset
+        val endOffset = offset + length - 1
+
+        while(currentOffset <= endOffset) {
+            val chunkLength = Math.min(RsynkServerStaticConfiguration.chunkSize, endOffset - currentOffset + 1)
+            writer.writeInt(chunkLength)
+            writer.writeBytes(ByteBuffer.wrap(bytes, currentOffset, chunkLength))
+            currentOffset += chunkLength
+        }
     }
 
     private fun sendBlockEnd(writer: WriteIO) {
