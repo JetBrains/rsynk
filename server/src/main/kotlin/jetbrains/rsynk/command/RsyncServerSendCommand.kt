@@ -1,8 +1,6 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.data.Checksum
-import jetbrains.rsynk.data.ChecksumHeader
-import jetbrains.rsynk.data.VarintEncoder
+import jetbrains.rsynk.data.*
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.ProtocolException
@@ -394,7 +392,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         }
 
                         val checksumHeader = receiveChecksumHeader(reader)
-                        val checksum = receiveChecksum(checksumHeader)
+                        val checksum = receiveChecksum(checksumHeader, reader)
 
                         val transmission = if (checksumHeader.isNewFile) {
                             FilesTransmission(file.path, file.size, FilesTransmission.defaultBlockSize, FilesTransmission.defaultBlockFactor)
@@ -543,8 +541,18 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         writer.writeInt(header.remainder)
     }
 
-    private fun receiveChecksum(header: ChecksumHeader): Checksum {
-        TODO()
+    private fun receiveChecksum(header: ChecksumHeader,
+                                reader: ReadingIO): Checksum {
+        val checksum = Checksum(header)
+
+        for (chunkIndex in 0..header.chunkCount - 1) {
+            val rollingChecksum = RollingChecksumChunk(reader.readInt())
+            val longChecksum = LongChecksumChunk(reader.readBytes(header.digestLength))
+            checksum += ChecksumChunk(chunkIndex,
+                                      rollingChecksum,
+                                      longChecksum)
+        }
+        return checksum
     }
 
     private fun skipMatchAndSendData(fileRepresentation: TransmissionFileRepresentation,

@@ -41,4 +41,19 @@ data class ChecksumHeader(val chunkCount: Int,
     val isNewFile = blockLength == 0
 }
 
-data class Checksum(val header: ChecksumHeader/*, TODO*/)
+data class RollingChecksumChunk(val hash: Int)
+
+data class LongChecksumChunk(val hash: ByteArray)
+
+data class ChecksumChunk(val chunkIndex: Int,
+                         val rollingChecksumChunk: RollingChecksumChunk,
+                         val longChecksumChunk: LongChecksumChunk)
+
+data class Checksum(val header: ChecksumHeader) {
+
+    private val chunks = ArrayList<ChecksumChunk>()
+
+    operator fun plusAssign(chunk: ChecksumChunk) {
+        chunks.add(chunk)
+    }
+}
