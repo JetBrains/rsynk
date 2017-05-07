@@ -20,11 +20,14 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.function.Supplier
 
 
 class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : RsyncCommand {
 
     companion object : KLogging()
+
+    private val fileListIndexDecoder = FileListIndexDecoder()
 
     /**
      * Perform negotiation and send requested file.
@@ -327,7 +330,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                 eofSent = true
             }
 
-            val index = decodeFileListIndex(reader.readBytes(1).first())
+            val index = readFileListIndex(reader)
 
             when {
                 index == FileListsCode.done.code -> {
@@ -404,7 +407,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 
                             try {
                                 val checksumBytes = if (checksumHeader.isNewFile) {
-                                    skipMatchSendData(fileRepresentaions, file)
+                                    skipMatchAndSendData(fileRepresentaions, file)
                                 } else {
                                     sendMatchesAndData(fileRepresentaions, checksum)
                                 }
@@ -509,8 +512,8 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         return result
     }
 
-    private fun decodeFileListIndex(b: Byte): Int {
-        TODO()
+    private fun readFileListIndex(reader: ReadingIO): Int {
+        return fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
     }
 
     private fun encodeFileListIndex(index: Int): Byte {
@@ -533,8 +536,8 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         TODO()
     }
 
-    private fun skipMatchSendData(fileRepresentation: TransmissionFileRepresentation,
-                                  fileInfo: FileInfo): ByteArray {
+    private fun skipMatchAndSendData(fileRepresentation: TransmissionFileRepresentation,
+                                     fileInfo: FileInfo): ByteArray {
         TODO()
     }
 
