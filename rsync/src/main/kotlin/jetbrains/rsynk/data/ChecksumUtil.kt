@@ -34,11 +34,11 @@ object ChecksumUtil {
     }
 }
 
-data class ChecksumHeader(val blockLength: Long,
-                          val digestLength: Long,
-                          val remains: Long,
-                          val chunkCount: Int) {
-    val isNewFile = blockLength == 0L
+data class ChecksumHeader(val chunkCount: Int,
+                          val blockLength: Int,
+                          val digestLength: Int,
+                          val remainder: Int) {
+    val isNewFile = blockLength == 0
 }
 
 data class Checksum(val header: ChecksumHeader/*, TODO*/)
