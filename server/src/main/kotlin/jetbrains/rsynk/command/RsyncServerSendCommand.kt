@@ -393,19 +393,19 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                             fileFromCurrentBlock
                         }
 
-                        val checksumHeader = receiveChecksumHeader()
+                        val checksumHeader = receiveChecksumHeader(reader)
                         val checksum = receiveChecksum(checksumHeader)
 
                         val transmission = if (checksumHeader.isNewFile) {
                             FilesTransmission(file.path, file.size, FilesTransmission.defaultBlockSize, FilesTransmission.defaultBlockFactor)
                         } else {
-                            FilesTransmission(file.path, file.size, checksumHeader.blockLength, checksumHeader.blockLength * 10)
+                            FilesTransmission(file.path, file.size, checksumHeader.blockLength.toLong(), (checksumHeader.blockLength * 10).toLong())
                         }
 
                         val checksumBytes = transmission.runWithOpenedFile { fileRepresentaions ->
 
-                            sendFileIndexAndItemFlag(index, itemFlag)
-                            sendChecksumHeader(checksumHeader)
+                            sendFileIndexAndItemFlag(index, itemFlag, writer)
+                            sendChecksumHeader(checksumHeader, writer)
 
                             try {
                                 val checksumBytes = if (checksumHeader.isNewFile) {
@@ -522,19 +522,28 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
     }
 
-    private fun receiveChecksumHeader(): ChecksumHeader {
-        TODO()
+    private fun sendFileIndexAndItemFlag(index: Int, itemFlag: Char, writer: WriteIO) {
+        encodeAndSendFileListIndex(index, writer)
+        writer.writeChar(itemFlag)
     }
 
-    private fun sendChecksumHeader(header: ChecksumHeader) {
-        TODO()
+    private fun receiveChecksumHeader(reader: ReadingIO): ChecksumHeader {
+        val chunkCount = reader.readInt()
+        val blockLength = reader.readInt()
+        val digestLength = reader.readInt()
+        val remainder = reader.readInt()
+        return ChecksumHeader(chunkCount, blockLength, digestLength, remainder)
+    }
+
+    private fun sendChecksumHeader(header: ChecksumHeader,
+                                   writer: WriteIO) {
+        writer.writeInt(header.chunkCount)
+        writer.writeInt(header.blockLength)
+        writer.writeInt(header.digestLength)
+        writer.writeInt(header.remainder)
     }
 
     private fun receiveChecksum(header: ChecksumHeader): Checksum {
-        TODO()
-    }
-
-    private fun sendFileIndexAndItemFlag(index: Int, flag: Char) {
         TODO()
     }
 
@@ -575,7 +584,6 @@ class FileSendingState {
             Phase.Stop -> throw IllegalStateException("Cannot set next state after stop is set")
         }
     }
-
 }
 
 
