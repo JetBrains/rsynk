@@ -2,6 +2,7 @@ package jetbrains.rsynk.files
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 class FileListIndexDecoder {
@@ -58,3 +59,55 @@ class FileListIndexDecoder {
         }
     }
 }
+
+class FileListIndexEncoder {
+
+    private var lastPositive = 1
+    private var lastNegative = -1
+
+    fun encodeAndSend(index: Int, writer: Consumer<Byte>) {
+
+        if (index == FileListsCode.done.code) {
+            writer.accept(0)
+            return
+        }
+
+        val positiveIndexValue = Math.abs(index)
+
+        val diff = if (index >= 0) {
+            val diff = positiveIndexValue - lastPositive
+            lastPositive = positiveIndexValue
+            diff
+        } else {
+            val diff = positiveIndexValue - lastNegative
+            lastNegative = positiveIndexValue
+            writer.accept(0xFF)
+            diff
+        }
+
+        when {
+            diff in 1..(0xFE - 1) -> {
+                writer.accept(diff.toByte())
+            }
+
+            diff < 0 || diff > 0x7FFF -> {
+                writer.accept(0xFE)
+                writer.accept(positiveIndexValue.shr(24) or 0x80)
+                writer.accept(positiveIndexValue)
+                writer.accept(positiveIndexValue.shr(8))
+                writer.accept(positiveIndexValue.shr(16))
+            }
+
+            else -> {
+                writer.accept(0xFE)
+                writer.accept(diff.shr(8))
+                writer.accept(diff)
+            }
+        }
+    }
+
+    private fun Consumer<Byte>.accept(intValue: Int) {
+        accept(intValue.toByte())
+    }
+}
+

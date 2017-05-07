@@ -20,6 +20,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 
@@ -28,6 +29,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
     companion object : KLogging()
 
     private val fileListIndexDecoder = FileListIndexDecoder()
+    private val fileListIndexEncoder = FileListIndexEncoder()
 
     /**
      * Perform negotiation and send requested file.
@@ -313,7 +315,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
 
                 val expandResult = expandAndSendStubDirectories(fileListsBlocks,
-                        0,//TODO 1 if dot dir is expanded!
+                        0, //TODO 1 if dot dir is expanded!
                         RsynkServerStaticConfiguration.fileListPartitionLimit,
                         requestData,
                         writer)
@@ -326,11 +328,11 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     && !fileListsBlocks.hasStubDirs
                     && !eofSent) {
 
-                writer.writeByte(encodeFileListIndex(FileListsCode.eof.code))
+                encodeAndSendFileListIndex(FileListsCode.eof.code, writer)
                 eofSent = true
             }
 
-            val index = readFileListIndex(reader)
+            val index = decodeAndReadFileListIndex(reader)
 
             when {
                 index == FileListsCode.done.code -> {
@@ -342,14 +344,14 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         filesInTransition -= sentBlock?.files?.size ?: 0
 
                         if (fileListsBlocks.blocksSize == 0) {
-                            writer.writeByte(encodeFileListIndex(FileListsCode.done.code))
+                            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
                         }
                     }
 
                     if (requestData.options.filesSelection !is Option.FileSelection.Recurse || fileListsBlocks.isEmpty()) {
                         state.nextState()
                         if (state.current != FileSendingState.Phase.Stop) {
-                            writer.writeByte(encodeFileListIndex(FileListsCode.done.code))
+                            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
                         }
                     }
                 }
@@ -373,7 +375,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                             block.markFileDeleted(index)
                             filesInTransition--
                         }
-                        writer.writeByte(encodeFileListIndex(index))
+                        encodeAndSendFileListIndex(index, writer)
                         writer.writeChar(itemFlag)
                     } else if (state.current == FileSendingState.Phase.Transfer) {
 
@@ -442,7 +444,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 
         while (fileListsBlocks.hasStubDirs && filesSent < sentFilesLimit) {
             val stubDir = fileListsBlocks.popStubDir(currentBlock) ?: throw ProtocolException("Invalid stub directory block index: $currentBlock")
-            writer.writeByte(encodeFileListIndex(FileListsCode.offset.code - currentBlock))
+            encodeAndSendFileListIndex(FileListsCode.offset.code - currentBlock, writer)
 
             val expanded = expandStubDirectory(stubDir, requestData)
             val block = fileListsBlocks.addFileBlock(stubDir, expanded)
@@ -512,12 +514,12 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         return result
     }
 
-    private fun readFileListIndex(reader: ReadingIO): Int {
+    private fun decodeAndReadFileListIndex(reader: ReadingIO): Int {
         return fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
     }
 
-    private fun encodeFileListIndex(index: Int): Byte {
-        TODO()
+    private fun encodeAndSendFileListIndex(index: Int, writer: WriteIO) {
+        fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
     }
 
     private fun receiveChecksumHeader(): ChecksumHeader {
