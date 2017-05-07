@@ -408,7 +408,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 
                             try {
                                 if (checksumHeader.isNewFile) {
-                                    skipMatchAndSendData(fileRepresentaions, file, writer)
+                                    skipMatchingAndSendData(fileRepresentaions, file, writer)
                                 } else {
                                     sendMatchesAndData(fileRepresentaions, checksum)
                                 }
@@ -552,9 +552,9 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         return checksum
     }
 
-    private fun skipMatchAndSendData(fileRepresentation: TransmissionFileRepresentation,
-                                     fileInfo: FileInfo,
-                                     writer: WriteIO) {
+    private fun skipMatchingAndSendData(fileRepresentation: TransmissionFileRepresentation,
+                                        fileInfo: FileInfo,
+                                        writer: WriteIO) {
         val md5 = MessageDigest.getInstance("md5")
         var bytesSend = 0
 
