@@ -395,22 +395,22 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         val checksumHeader = receiveChecksumHeader(reader)
                         val checksum = receiveChecksum(checksumHeader, reader)
 
-                        val transmission = if (checksumHeader.isNewFile) {
-                            FilesTransmission(file.path, file.size, FilesTransmission.defaultBlockSize, FilesTransmission.defaultBlockFactor)
-                        } else {
-                            FilesTransmission(file.path, file.size, checksumHeader.blockLength.toLong(), (checksumHeader.blockLength * 10).toLong())
-                        }
+                        val blockSize = if (checksumHeader.isNewFile) FilesTransmission.defaultBlockSize else checksumHeader.blockLength
+                        val bufferSizeMultiplier = if (checksumHeader.isNewFile) 1 else 10
 
-                        transmission.runWithOpenedFile { fileRepresentaions ->
+                        FilesTransmission().runWithOpenedFile (file.path,
+                                file.size,
+                                blockSize,
+                                blockSize * bufferSizeMultiplier){ fileRepr ->
 
                             sendFileIndexAndItemFlag(index, itemFlag, writer)
                             sendChecksumHeader(checksumHeader, writer)
 
                             try {
                                 if (checksumHeader.isNewFile) {
-                                    skipMatchingAndSendData(fileRepresentaions, file, writer)
+                                    skipMatchingAndSendData(fileRepr, file, writer)
                                 } else {
-                                    sendMatchesAndData(fileRepresentaions, checksum)
+                                    sendMatchesAndData(fileRepr, checksum)
                                 }
                             } catch (t: Throwable) {
                                 byteArrayOf() //TODO
@@ -590,7 +590,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         var currentOffset = offset
         val endOffset = offset + length - 1
 
-        while(currentOffset <= endOffset) {
+        while (currentOffset <= endOffset) {
             val chunkLength = Math.min(RsynkServerStaticConfiguration.chunkSize, endOffset - currentOffset + 1)
             writer.writeInt(chunkLength)
             writer.writeBytes(ByteBuffer.wrap(bytes, currentOffset, chunkLength))
