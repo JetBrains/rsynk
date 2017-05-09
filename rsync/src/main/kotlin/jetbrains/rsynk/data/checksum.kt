@@ -1,5 +1,6 @@
 package jetbrains.rsynk.data
 
+import java.security.MessageDigest
 import java.util.*
 
 object ChecksumUtil {
@@ -13,25 +14,26 @@ object ChecksumUtil {
         return Math.abs(random.nextInt())
     }
 
-    fun rollingChecksum(data: CharArray, begin: Int, end: Int): Long {
-        var s1 = 0L
+    fun rollingChecksum(data: ByteArray, begin: Int, end: Int): Int {
+        var s1 = 0
         @Suppress("LoopToCallChain")
         for (i in begin..end) {
-            s1 += data[i].toLong()
+            s1 += data[i]
         }
-        var s2 = 0L
+        var s2 = 0
         var pointer = begin
         for (i in begin..(end - 4) step 4) {
             pointer += 4
-            s2 += 4 * (s1 + data[i].toLong()) +
-                    3 * data[i + 1].toLong() +
-                    2 * data[i + 2].toLong() +
-                    1 * data[i + 3].toLong()
+            s2 += 4 * (s1 + data[i]) +
+                    3 * data[i + 1] +
+                    2 * data[i + 2] +
+                    1 * data[i + 3]
         }
         for (i in pointer..end) {
             s2 += s1
         }
-        return (s1 and 0xFFFF + s2.ushr(16)) % 0xFFFFFFFF
+        TODO("make sure it's correct")
+        return (s1 and 0xFFFF or s2.ushr(16))
     }
 
     fun getFileDigestLength(fileSize: Long, blockLength: Int): Int {
@@ -52,7 +54,13 @@ object ChecksumUtil {
         return Math.log(x) / Math.log(2.0)
     }
 
-    fun longChecksum(data: CharArray, begin: Int, end: Int): Long {
+    fun newMessageDigestInstance() = MessageDigest.getInstance("md5")
+
+    fun rollBack(checksum: Int, blockLength: Int, value: Byte): Int {
+        TODO()
+    }
+
+    fun rollForward(checksum: Int, value: Byte): Int {
         TODO()
     }
 }
@@ -79,11 +87,20 @@ data class ChecksumChunk(
         val longChecksumChunk: LongChecksumChunk
 )
 
-class Checksum(private val header: ChecksumHeader) {
+class Checksum(val header: ChecksumHeader) {
 
     private val chunks = ArrayList<ChecksumChunk>()
 
     operator fun plusAssign(chunk: ChecksumChunk) {
         chunks.add(chunk)
+    }
+}
+
+class ChecksumMatcher(private val checksum: Checksum) {
+
+    fun getMatches(rollingChecksumChunk: Int,
+                   length: Int,
+                   preferredChunkIndex: Int): List<ChecksumChunk> {
+        TODO()
     }
 }

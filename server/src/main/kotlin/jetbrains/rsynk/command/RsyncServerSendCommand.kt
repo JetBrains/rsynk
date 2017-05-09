@@ -6,6 +6,7 @@ import jetbrains.rsynk.exitvalues.NotSupportedException
 import jetbrains.rsynk.exitvalues.ProtocolException
 import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
+import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.*
 import jetbrains.rsynk.io.ReadingIO
@@ -17,7 +18,6 @@ import mu.KLogging
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.security.MessageDigest
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -398,23 +398,27 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         val blockSize = if (checksumHeader.isNewFile) FilesTransmission.defaultBlockSize else checksumHeader.blockLength
                         val bufferSizeMultiplier = if (checksumHeader.isNewFile) 1 else 10
 
-                        FilesTransmission().runWithOpenedFile (file.path,
+                        FilesTransmission().runWithOpenedFile(file.path,
                                 file.size,
                                 blockSize,
-                                blockSize * bufferSizeMultiplier){ fileRepr ->
+                                blockSize * bufferSizeMultiplier) { fileRepr ->
 
                             sendFileIndexAndItemFlag(index, itemFlag, writer)
                             sendChecksumHeader(checksumHeader, writer)
 
-                            try {
+                            val longFileChecksum = try {
+
                                 if (checksumHeader.isNewFile) {
-                                    skipMatchingAndSendData(fileRepr, file, writer)
+                                    skipMatchesAndGetChecksum(fileRepr, file, writer)
                                 } else {
-                                    sendMatchesAndData(fileRepr, checksum)
+                                    sendMatchesAndGetChecksum(fileRepr, checksum, requestData.checksumSeed, writer)
                                 }
+
                             } catch (t: Throwable) {
                                 byteArrayOf() //TODO
                             }
+
+                            writer.writeBytes(ByteBuffer.wrap(longFileChecksum))
                         }
 
                     } else {
@@ -546,19 +550,19 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
             val rollingChecksum = RollingChecksumChunk(reader.readInt())
             val longChecksum = LongChecksumChunk(reader.readBytes(header.digestLength))
             checksum += ChecksumChunk(chunkIndex,
-                                      rollingChecksum,
-                                      longChecksum)
+                    rollingChecksum,
+                    longChecksum)
         }
         return checksum
     }
 
-    private fun skipMatchingAndSendData(fileRepresentation: TransmissionFileRepresentation,
-                                        fileInfo: FileInfo,
-                                        writer: WriteIO) {
-        val md5 = MessageDigest.getInstance("md5")
-        var bytesSend = 0
+    private fun skipMatchesAndGetChecksum(fileRepresentation: TransmissionFileRepresentation,
+                                          fileInfo: FileInfo,
+                                          writer: WriteIO): ByteArray {
+        val md = ChecksumUtil.newMessageDigestInstance()
+        var bytesSent = 0
 
-        while(fileRepresentation.windowLength > 0) {
+        while (fileRepresentation.windowLength > 0) {
 
             val bytes = fileRepresentation.bytes
             val offset = fileRepresentation.offset
@@ -568,18 +572,106 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     offset,
                     windowLength,
                     writer)
-            bytesSend += windowLength
+            bytesSent += windowLength
 
-            md5.update(bytes, offset, windowLength)
+            md.update(bytes, offset, windowLength)
             fileRepresentation.slide(windowLength)
         }
 
+        if (bytesSent.toLong() != fileInfo.size) {
+            logger.debug { "Sent $bytesSent bytes of ${fileInfo.size} file" }
+        }
 
+        return md.digest()
     }
 
-    private fun sendMatchesAndData(fileRepresentation: TransmissionFileRepresentation,
-                                   checksum: Checksum): ByteArray {
-        TODO()
+    private fun sendMatchesAndGetChecksum(fileRepresentation: TransmissionFileRepresentation,
+                                          checksum: Checksum,
+                                          checksumSeed: Int,
+                                          writer: WriteIO): ByteArray {
+
+        val fileChecksum = ChecksumUtil.newMessageDigestInstance()
+        val chunkChecksum = ChecksumUtil.newMessageDigestInstance()
+
+        fileRepresentation.setMarkOffsetRelativeltyToStart(0)
+
+        val smallestChunk = checksum.header.remainder - checksum.header.blockLength
+        val matcher = ChecksumMatcher(checksum)
+
+        var preferredIndex = 0
+        var currentLongChecksum: ByteArray? = null
+        var currentRollingChecksum = ChecksumUtil.rollingChecksum(fileRepresentation.bytes,
+                fileRepresentation.offset,
+                fileRepresentation.windowLength)
+
+        while (fileRepresentation.windowLength >= smallestChunk) {
+
+            val matches = matcher.getMatches(currentRollingChecksum, fileRepresentation.windowLength, preferredIndex)
+
+            findingMatchesLoop@ for (chunk in matches) {
+
+                val currentLongChecksumValue = currentLongChecksum
+                val currentLongChecksumNotNull = if (currentLongChecksumValue != null) {
+                    currentLongChecksumValue
+                } else {
+                    chunkChecksum.update(fileRepresentation.bytes, fileRepresentation.offset, fileRepresentation.windowLength)
+                    chunkChecksum.update(checksumSeed.toLittleEndianBytes())
+                    val new = Arrays.copyOf(chunkChecksum.digest(), chunk.longChecksumChunk.hash.size)
+                    currentLongChecksum = new
+                    new
+                }
+
+                if (Arrays.equals(currentLongChecksumNotNull, chunk.longChecksumChunk.hash)) {
+                    val bytesMarked = fileRepresentation.markedBytesCount
+                    sendData(fileRepresentation.bytes, fileRepresentation.offset, bytesMarked, writer)
+
+                    fileChecksum.update(fileRepresentation.bytes, fileRepresentation.markOffset, fileRepresentation.totalBytes)
+
+                    preferredIndex = chunk.chunkIndex + 1
+                    writer.writeInt(-1 * preferredIndex)
+
+                    fileRepresentation.setMarkOffsetRelativeltyToStart(fileRepresentation.windowLength)
+                    fileRepresentation.slide(fileRepresentation.windowLength - 1)
+
+                    currentRollingChecksum = ChecksumUtil.rollingChecksum(fileRepresentation.bytes,
+                            fileRepresentation.offset,
+                            fileRepresentation.windowLength)
+
+                    currentLongChecksum = null
+                    break@findingMatchesLoop
+                }
+            }
+
+            ChecksumUtil.rollBack(currentRollingChecksum,
+                    fileRepresentation.windowLength,
+                    fileRepresentation.bytes[fileRepresentation.offset])
+
+            if (fileRepresentation.totalBytes == fileRepresentation.bytes.size) {
+                sendData(fileRepresentation.bytes, fileRepresentation.getSmallestOffset(), fileRepresentation.totalBytes, writer)
+                fileChecksum.update(fileRepresentation.bytes,
+                        fileRepresentation.getSmallestOffset(),
+                        fileRepresentation.totalBytes)
+                fileRepresentation.setMarkOffsetRelativeltyToStart(fileRepresentation.windowLength)
+                fileRepresentation.slide(fileRepresentation.windowLength)
+            } else {
+                fileRepresentation.slide(1)
+            }
+
+            if (fileRepresentation.windowLength == checksum.header.blockLength) {
+                currentRollingChecksum = ChecksumUtil.rollForward(currentRollingChecksum,
+                        fileRepresentation.bytes[fileRepresentation.endOffset])
+            }
+        }
+
+        sendData(fileRepresentation.bytes,
+                fileRepresentation.getSmallestOffset(),
+                fileRepresentation.totalBytes,
+                writer)
+
+        fileChecksum.update(fileRepresentation.bytes, fileRepresentation.getSmallestOffset(), fileRepresentation.totalBytes)
+        writer.writeInt(0)
+
+        return fileChecksum.digest()
     }
 
     private fun sendData(bytes: ByteArray,
@@ -608,7 +700,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
 class FileSendingState {
 
     sealed class Phase(val name: String) {
-        object Transfer : Phase("tranfer")
+        object Transfer : Phase("transfer")
         object TearDownOne : Phase("tear-down-1")
         object TearDownTwo : Phase("tear-down-2")
         object Stop : Phase("stop")

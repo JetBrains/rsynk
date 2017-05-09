@@ -15,17 +15,28 @@ class TransmissionFileRepresentation(private val filePath: Path,
 
     companion object : KLogging()
 
+    val markedBytesCount: Int
+        get() = offset - getSmallestOffset()
+
+    val totalBytes: Int
+        get() = (fileSize - getSmallestOffset() + 1).toInt()
+
     var windowLength: Int = windowLength
         private set
 
     var offset: Int = 0
         private set
 
+    var markOffset = -1
+        private set
+
+    var endOffset: Int = 0
+        private set
+
     val bytes = ByteArray(bufferSize)
 
     private val input = Files.newInputStream(filePath)
     private var readOffset = -1
-    private var markOffset = -1
 
     init {
         if (fileSize == 0L) {
@@ -55,6 +66,11 @@ class TransmissionFileRepresentation(private val filePath: Path,
                 throw InvalidFileException("Cannot slide $filePath bytes: ${t.message}")
             }
         }
+    }
+
+
+    fun setMarkOffsetRelativeltyToStart(relativeOffset: Int) {
+        markOffset = offset + relativeOffset
     }
 
     private fun read(min: Int, max: Int) {
@@ -91,6 +107,8 @@ class TransmissionFileRepresentation(private val filePath: Path,
             markOffset -= shift
         }
     }
+
+    fun getSmallestOffset() = minOf(offset, maxOf(markOffset, 0))
 
     override fun close() {
         input.close()
