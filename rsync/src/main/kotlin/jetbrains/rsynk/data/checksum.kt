@@ -3,18 +3,9 @@ package jetbrains.rsynk.data
 import java.security.MessageDigest
 import java.util.*
 
-object ChecksumUtil {
+object RollingChecksum {
 
-    private val seed = System.currentTimeMillis()
-    private val minDigestLength = 10
-    private val maxDigestLength = 12
-
-    fun newSeed(): Int {
-        val random = Random(seed)
-        return Math.abs(random.nextInt())
-    }
-
-    fun rollingChecksum(data: ByteArray, begin: Int, end: Int): Int {
+    fun calculate(data: ByteArray, begin: Int, end: Int): Int {
         var s1 = 0
         @Suppress("LoopToCallChain")
         for (i in begin..end) {
@@ -36,6 +27,31 @@ object ChecksumUtil {
         return (s1 and 0xFFFF or s2.ushr(16))
     }
 
+    fun rollBack(checksum: Int, blockLength: Int, value: Byte): Int {
+        TODO()
+    }
+
+    fun rollForward(checksum: Int, value: Byte): Int {
+        TODO()
+    }
+
+}
+
+object LongChecksum {
+    fun newMessageDigestInstance() = MessageDigest.getInstance("md5")!!
+}
+
+object ChecksumUtil {
+
+    private val seed = System.currentTimeMillis()
+    private val minDigestLength = 10
+    private val maxDigestLength = 12
+
+    fun newSeed(): Int {
+        val random = Random(seed)
+        return Math.abs(random.nextInt())
+    }
+
     fun getFileDigestLength(fileSize: Long, blockLength: Int): Int {
 
         val digestLength = (10 + 2 * log2(fileSize.toDouble() - log2(blockLength.toDouble())).toInt() - 24) / 8
@@ -54,15 +70,6 @@ object ChecksumUtil {
         return Math.log(x) / Math.log(2.0)
     }
 
-    fun newMessageDigestInstance() = MessageDigest.getInstance("md5")
-
-    fun rollBack(checksum: Int, blockLength: Int, value: Byte): Int {
-        TODO()
-    }
-
-    fun rollForward(checksum: Int, value: Byte): Int {
-        TODO()
-    }
 }
 
 data class ChecksumHeader(val chunkCount: Int,
