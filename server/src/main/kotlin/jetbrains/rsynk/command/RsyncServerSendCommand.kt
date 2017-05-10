@@ -647,10 +647,13 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     fileRepresentation.bytes[fileRepresentation.offset])
 
             if (fileRepresentation.totalBytes == fileRepresentation.bytes.size) {
+
                 sendData(fileRepresentation.bytes, fileRepresentation.getSmallestOffset(), fileRepresentation.totalBytes, writer)
+
                 fileChecksum.update(fileRepresentation.bytes,
                         fileRepresentation.getSmallestOffset(),
                         fileRepresentation.totalBytes)
+
                 fileRepresentation.setMarkOffsetRelativeltyToStart(fileRepresentation.windowLength)
                 fileRepresentation.slide(fileRepresentation.windowLength)
             } else {

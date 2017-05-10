@@ -5,34 +5,53 @@ import java.util.*
 
 object RollingChecksum {
 
-    fun calculate(data: ByteArray, begin: Int, end: Int): Int {
+    fun calculate(bytes: ByteArray, offset: Int, length: Int): Int {
         var s1 = 0
-        @Suppress("LoopToCallChain")
-        for (i in begin..end) {
-            s1 += data[i]
-        }
         var s2 = 0
-        var pointer = begin
-        for (i in begin..(end - 4) step 4) {
-            pointer += 4
-            s2 += 4 * (s1 + data[i]) +
-                    3 * data[i + 1] +
-                    2 * data[i + 2] +
-                    1 * data[i + 3]
+        var index = 0
+
+        for (i in 0..(length - 4) step 4) {
+
+            s2 += 4 * (s1 + bytes[offset + i + 0]) +
+                  3 * bytes[offset + i + 1] +
+                  2 * bytes[offset + i + 2] +
+                  1 * bytes[offset + i + 3]
+
+            s1 += bytes[offset + i + 0] +
+                  bytes[offset + i + 1] +
+                  bytes[offset + i + 2] +
+                  bytes[offset + i + 3]
+
+            index += 4
         }
-        for (i in pointer..end) {
+        while (index < length) {
+            s1 += bytes[offset + index]
             s2 += s1
+            index++
         }
-        TODO("make sure it's correct")
-        return (s1 and 0xFFFF or s2.ushr(16))
+        return getInt(s1, s2)
     }
 
     fun rollBack(checksum: Int, blockLength: Int, value: Byte): Int {
-        TODO()
+        val lowestBytes = checksum.twoLowestBytes - value
+        val highestBytes = checksum.twoHighestBytes - blockLength * value
+        return getInt(lowestBytes, highestBytes)
     }
 
     fun rollForward(checksum: Int, value: Byte): Int {
-        TODO()
+        val lowestBytes = checksum.twoLowestBytes + value
+        val highestBytes = checksum.twoHighestBytes + lowestBytes
+        return getInt(lowestBytes, highestBytes)
+    }
+
+    private val Int.twoLowestBytes
+        get() = 0xFFFF and this
+
+    private val  Int.twoHighestBytes
+        get() = this ushr 16
+
+    private fun getInt(twoLowestBytes: Int, twoHighestBytes: Int): Int {
+        return (twoLowestBytes and 0xFFFF) or (twoHighestBytes shl 16)
     }
 
 }
