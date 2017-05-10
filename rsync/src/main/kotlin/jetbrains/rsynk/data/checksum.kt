@@ -100,11 +100,11 @@ data class ChecksumHeader(val chunkCount: Int,
 }
 
 data class RollingChecksumChunk(
-        val hash: Int
+        val checksum: Int
 )
 
 data class LongChecksumChunk(
-        val hash: ByteArray
+        val checksum: ByteArray
 )
 
 data class ChecksumChunk(

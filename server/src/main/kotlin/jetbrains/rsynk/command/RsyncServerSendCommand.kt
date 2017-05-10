@@ -616,12 +616,12 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                 } else {
                     chunkChecksum.update(fileRepresentation.bytes, fileRepresentation.offset, fileRepresentation.windowLength)
                     chunkChecksum.update(checksumSeed.toLittleEndianBytes())
-                    val new = Arrays.copyOf(chunkChecksum.digest(), chunk.longChecksumChunk.hash.size)
+                    val new = Arrays.copyOf(chunkChecksum.digest(), chunk.longChecksumChunk.checksum.size)
                     currentLongChecksum = new
                     new
                 }
 
-                if (Arrays.equals(currentLongChecksumNotNull, chunk.longChecksumChunk.hash)) {
+                if (Arrays.equals(currentLongChecksumNotNull, chunk.longChecksumChunk.checksum)) {
                     val bytesMarked = fileRepresentation.markedBytesCount
                     sendData(fileRepresentation.bytes, fileRepresentation.offset, bytesMarked, writer)
 
