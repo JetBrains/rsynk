@@ -60,35 +60,14 @@ object LongChecksum {
     fun newMessageDigestInstance() = MessageDigest.getInstance("md5")!!
 }
 
-object ChecksumUtil {
+object ChecksumSeedGenerator {
 
     private val seed = System.currentTimeMillis()
-    private val minDigestLength = 10
-    private val maxDigestLength = 12
 
     fun newSeed(): Int {
         val random = Random(seed)
         return Math.abs(random.nextInt())
     }
-
-    fun getFileDigestLength(fileSize: Long, blockLength: Int): Int {
-
-        val digestLength = (10 + 2 * log2(fileSize.toDouble() - log2(blockLength.toDouble())).toInt() - 24) / 8
-
-        if (digestLength < minDigestLength) {
-            return minDigestLength
-        }
-
-        if (digestLength > maxDigestLength) {
-            return maxDigestLength
-        }
-        return digestLength
-    }
-
-    private fun log2(x: Double): Double {
-        return Math.log(x) / Math.log(2.0)
-    }
-
 }
 
 data class ChecksumHeader(val chunkCount: Int,

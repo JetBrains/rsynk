@@ -1,7 +1,7 @@
 package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.RequestData
-import jetbrains.rsynk.data.ChecksumUtil
+import jetbrains.rsynk.data.ChecksumSeedGenerator
 import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RequestOptions
@@ -52,7 +52,7 @@ object RsyncRequestDataParser {
             }
         }
         val seedOption = options.firstOrNull { it is Option.ChecksumSeed }
-        val seed = (seedOption as? Option.ChecksumSeed)?.seed ?: ChecksumUtil.newSeed()
+        val seed = (seedOption as? Option.ChecksumSeed)?.seed ?: ChecksumSeedGenerator.newSeed()
         return RequestData(RequestOptions(options), files, seed)
     }
 
