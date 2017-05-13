@@ -3,7 +3,6 @@ package jetbrains.rsynk.files
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.extensions.use
 import mu.KLogging
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -66,8 +65,6 @@ class TransmissionFileRepresentation internal constructor(private val filePath: 
             }
             try {
                 readInput(bytesToRead, minOf(/*buf space available*/bytes.size - 1 - readOffset, /*remaining*/(fileSize - (readOffset + 1)).toInt()))
-            } catch (e: IOException) {
-                TODO()
             } catch (t: Throwable) {
                 throw InvalidFileException("Cannot slide $filePath bytes: ${t.message}")
             }
