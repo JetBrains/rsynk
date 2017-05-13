@@ -8,10 +8,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 
-class TransmissionFileRepresentation(private val filePath: Path,
-                                     private val fileSize: Long,
-                                     windowLength: Int,
-                                     bufferSize: Int) : AutoCloseable {
+class TransmissionFileRepresentation internal constructor(private val filePath: Path,
+                                                          private val fileSize: Long,
+                                                          private val windowLength: Int,
+                                                          bufferSize: Int) : AutoCloseable {
 
     companion object : KLogging()
 
@@ -19,10 +19,7 @@ class TransmissionFileRepresentation(private val filePath: Path,
         get() = offset - getSmallestOffset()
 
     val totalBytes: Int
-        get() = (fileSize - getSmallestOffset() + 1).toInt()
-
-    var windowLength: Int = windowLength
-        private set
+        get() = endOffset - getSmallestOffset() + 1
 
     var offset: Int = 0
         private set
@@ -30,18 +27,24 @@ class TransmissionFileRepresentation(private val filePath: Path,
     var markOffset = -1
         private set
 
-    var endOffset: Int = 0
+    var endOffset: Int = offset + windowLength - 1
         private set
 
     val bytes = ByteArray(bufferSize)
 
     private val input = Files.newInputStream(filePath)
     private var readOffset = -1
+    private var remainingBytes = fileSize
 
     init {
         if (fileSize == 0L) {
             throw IllegalArgumentException("File $filePath size is 0: transmission of empty files should be avoided")
         }
+
+        if (windowLength > bufferSize) {
+            throw IllegalArgumentException("Window size bust be less than or equal to buffer size")
+        }
+
         slide(0)
     }
 
@@ -50,30 +53,32 @@ class TransmissionFileRepresentation(private val filePath: Path,
         offset += on
 
         val prefetchedBytesCount = (readOffset - offset + 1)
-        val window = Math.min(windowLength, (fileSize - readOffset + prefetchedBytesCount).toInt())
-        val bytesToRead = window - prefetchedBytesCount
+        val currentWindow = Math.min(windowLength, (fileSize - (readOffset + 1) + prefetchedBytesCount).toInt())
+        val bytesToRead = currentWindow - prefetchedBytesCount
 
-        val inBufferAvailable = (bytes.size - 1 - readOffset)
         if (bytesToRead > 0) {
+            val inBufferAvailable = (bytes.size - 1 - readOffset)
             if (bytesToRead > inBufferAvailable) {
-                shrinkReadBytes()
+                shrinkReadBytesInBuffer()
             }
             try {
-                read(bytesToRead, Math.min(inBufferAvailable, (fileSize - readOffset).toInt()))
+                readInput(bytesToRead, minOf(/*buf space available*/bytes.size - 1 - readOffset, /*remaining*/(fileSize - (readOffset + 1)).toInt()))
             } catch (e: IOException) {
                 TODO()
             } catch (t: Throwable) {
                 throw InvalidFileException("Cannot slide $filePath bytes: ${t.message}")
             }
         }
+
+        endOffset = offset + currentWindow - 1
     }
 
 
-    fun setMarkOffsetRelativeltyToStart(relativeOffset: Int) {
+    fun setMarkOffsetRelativetlyToStart(relativeOffset: Int) {
         markOffset = offset + relativeOffset
     }
 
-    private fun read(min: Int, max: Int) {
+    private fun readInput(min: Int, max: Int) {
 
         var read = 0
 
@@ -85,16 +90,15 @@ class TransmissionFileRepresentation(private val filePath: Path,
             }
             read += bytesRead
             readOffset += read
-
-            val bytesRemain = fileSize - readOffset
-            if (bytesRemain < 0) {
-                logger.debug { "The amount of remained bytes is negative! ($bytesRemain)" }
+            remainingBytes -= read
+            if (remainingBytes < 0) {
+                logger.debug { "The amount of remained bytes is negative! ($remainingBytes)" }
             }
         }
     }
 
-    private fun shrinkReadBytes() {
-        val shift = minOf(offset, maxOf(markOffset, 0))
+    private fun shrinkReadBytesInBuffer() {
+        val shift = getSmallestOffset()
         val bytesMarked = offset - shift
         val bytesPrefetched = readOffset - offset + 1
 
@@ -103,12 +107,13 @@ class TransmissionFileRepresentation(private val filePath: Path,
 
         offset -= shift
         readOffset -= shift
+        endOffset -= shift
         if (markOffset >= 0) {
             markOffset -= shift
         }
     }
 
-    fun getSmallestOffset() = minOf(offset, maxOf(markOffset, 0))
+    fun getSmallestOffset() = if (markOffset >= 0) minOf(markOffset, offset) else offset
 
     override fun close() {
         input.close()

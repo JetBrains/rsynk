@@ -593,7 +593,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         val fileChecksum = LongChecksum.newMessageDigestInstance()
         val chunkChecksum = LongChecksum.newMessageDigestInstance()
 
-        fileRepresentation.setMarkOffsetRelativeltyToStart(0)
+        fileRepresentation.setMarkOffsetRelativetlyToStart(0)
 
         val smallestChunk = checksum.header.remainder - checksum.header.blockLength
         val matcher = ChecksumMatcher(checksum)
@@ -630,7 +630,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                     preferredIndex = chunk.chunkIndex + 1
                     writer.writeInt(-1 * preferredIndex)
 
-                    fileRepresentation.setMarkOffsetRelativeltyToStart(fileRepresentation.windowLength)
+                    fileRepresentation.setMarkOffsetRelativetlyToStart(fileRepresentation.windowLength)
                     fileRepresentation.slide(fileRepresentation.windowLength - 1)
 
                     currentRollingChecksum = RollingChecksum.calculate(fileRepresentation.bytes,
@@ -654,7 +654,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         fileRepresentation.getSmallestOffset(),
                         fileRepresentation.totalBytes)
 
-                fileRepresentation.setMarkOffsetRelativeltyToStart(fileRepresentation.windowLength)
+                fileRepresentation.setMarkOffsetRelativetlyToStart(fileRepresentation.windowLength)
                 fileRepresentation.slide(fileRepresentation.windowLength)
             } else {
                 fileRepresentation.slide(1)
