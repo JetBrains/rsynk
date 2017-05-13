@@ -10,7 +10,7 @@ import java.nio.file.Path
 
 class TransmissionFileRepresentation internal constructor(private val filePath: Path,
                                                           private val fileSize: Long,
-                                                          private val windowLength: Int,
+                                                          private val windowSize: Int,
                                                           bufferSize: Int) : AutoCloseable {
 
     companion object : KLogging()
@@ -21,13 +21,16 @@ class TransmissionFileRepresentation internal constructor(private val filePath: 
     val totalBytes: Int
         get() = endOffset - getSmallestOffset() + 1
 
+    val currentWindowLength: Int
+        get() = endOffset - offset + 1
+
     var offset: Int = 0
         private set
 
     var markOffset = -1
         private set
 
-    var endOffset: Int = offset + windowLength - 1
+    var endOffset: Int = offset + windowSize - 1
         private set
 
     val bytes = ByteArray(bufferSize)
@@ -41,7 +44,7 @@ class TransmissionFileRepresentation internal constructor(private val filePath: 
             throw IllegalArgumentException("File $filePath size is 0: transmission of empty files should be avoided")
         }
 
-        if (windowLength > bufferSize) {
+        if (windowSize > bufferSize) {
             throw IllegalArgumentException("Window size bust be less than or equal to buffer size")
         }
 
@@ -53,7 +56,7 @@ class TransmissionFileRepresentation internal constructor(private val filePath: 
         offset += on
 
         val prefetchedBytesCount = (readOffset - offset + 1)
-        val currentWindow = Math.min(windowLength, (fileSize - (readOffset + 1) + prefetchedBytesCount).toInt())
+        val currentWindow = Math.min(windowSize, (fileSize - (readOffset + 1) + prefetchedBytesCount).toInt())
         val bytesToRead = currentWindow - prefetchedBytesCount
 
         if (bytesToRead > 0) {
