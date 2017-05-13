@@ -84,7 +84,21 @@ data class RollingChecksumChunk(
 
 data class LongChecksumChunk(
         val checksum: ByteArray
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (other == null) {
+            return false
+        }
+        if(other !is LongChecksumChunk) {
+            return false
+        }
+        return Arrays.equals(this.checksum, other.checksum)
+    }
+
+    override fun hashCode(): Int {
+        return Arrays.hashCode(checksum) * 42
+    }
+}
 
 data class ChecksumChunk(
         val chunkIndex: Int,
