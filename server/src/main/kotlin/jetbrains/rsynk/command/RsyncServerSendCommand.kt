@@ -49,13 +49,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         sendFileList(requestData, filter, input, output)
     }
 
-    /**
-     * Writes server protocol version
-     * and reads protocol client's version.
-     *
-     * @throws {@code UnsupportedProtocolException} if client's protocol version
-     * either too old or too modern
-     */
+
     private fun exchangeProtocolVersions(input: ReadingIO, output: WriteIO) {
         output.writeInt(RsynkServerStaticConfiguration.serverProtocolVersion)
         output.flush()
@@ -70,27 +64,19 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
         }
     }
 
-    /**
-     * Writes server's compat flags.
-     */
     private fun writeCompatFlags(output: WriteIO) {
         val serverCompatFlags = RsynkServerStaticConfiguration.serverCompatFlags.encode()
         output.writeByte(serverCompatFlags)
         output.flush()
     }
 
-    /**
-     * Writes rolling checksum seed.
-     * */
+
     private fun writeChecksumSeed(checksumSeed: Int, output: WriteIO) {
         output.writeInt(checksumSeed)
         output.flush()
     }
 
 
-    /**
-     * Receives filter list
-     * */
     private fun receiveFilterList(input: ReadingIO): FilterList {
 
         var len = input.readInt()
