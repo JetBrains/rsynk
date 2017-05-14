@@ -119,12 +119,8 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                              filterList: FilterList/* TODO: filter files (but not dot dir!) */,
                              reader: ReadingIO,
                              writer: WriteIO) {
-        if (data.filePaths.size != 1) {
-            throw NotSupportedException("Multiple files requests not implemented yet")
-        }
 
-        //TODO: implement initial expanding for more than one file!
-        val paths = listOf(FileResolver.resolve(data.filePaths.single()))
+        val paths = data.filePaths.map { FileResolver.resolve(it) }
 
         val fileList = FileListsBlocks(data.options.filesSelection is Option.FileSelection.Recurse)
         val initialBlock = fileList.addFileBlock(null, paths.map { path -> fileInfoReader.getFileInfo(path) })
@@ -422,7 +418,7 @@ class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : Rsync
                         }
 
                     } else {
-                        throw ProtocolException("Received index $index in unexpected transferring phase ${state.current.name}")
+                        throw ProtocolException("Received index $index is unexpected in current transferring state ${state.current.name}")
                     }
                 }
                 else -> {
