@@ -12,11 +12,12 @@ class Rsynk(val port: Int,
             val nioWorkers: Int,
             val commandWorkers: Int,
             val idleConnectionTimeout: Int,
-            val serverKeys: KeyPairProvider) {
+            val serverKeys: KeyPairProvider) : AutoCloseable {
 
     private val server: SSHServer
 
     init {
+
         val sshSettings = sshSetting()
         val fileInfoReader = fileInfoReader()
 
@@ -27,9 +28,13 @@ class Rsynk(val port: Int,
         )
     }
 
-    fun start() = server.start()
+    fun startServer() {
+        server.start()
+    }
 
-    fun stop() = server.stop()
+    override fun close() {
+        server.stop()
+    }
 
 
     private fun fileInfoReader(): FileInfoReader {

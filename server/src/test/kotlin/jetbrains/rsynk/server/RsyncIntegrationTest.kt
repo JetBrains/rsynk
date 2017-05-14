@@ -15,11 +15,11 @@ class RsyncIntegrationTest {
 
         @BeforeClass
         @JvmStatic
-        fun startServer() = rsynk.start()
+        fun startServer() = rsynk.startServer()
 
         @BeforeClass
         @JvmStatic
-        fun stopServer() = rsynk.stop()
+        fun stopServer() = rsynk.close()
 
         val id = AtomicInteger(0)
     }
