@@ -64,7 +64,7 @@ class TransmissionFileRepresentation internal constructor(private val filePath: 
                 shrinkReadBytesInBuffer()
             }
             try {
-                readInput(bytesToRead, minOf(/*buf space available*/bytes.size - 1 - readOffset, /*remaining*/(fileSize - (readOffset + 1)).toInt()))
+                readInput(bytesToRead, minOf(/*buf space available*/(bytes.size - 1 - readOffset).toLong(), remainingBytes).toInt())
             } catch (t: Throwable) {
                 throw InvalidFileException("Cannot slide $filePath bytes: ${t.message}")
             }
