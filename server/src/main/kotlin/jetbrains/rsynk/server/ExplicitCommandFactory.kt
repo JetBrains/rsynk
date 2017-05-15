@@ -1,5 +1,6 @@
 package jetbrains.rsynk.server
 
+import jetbrains.rsynk.application.TrackingFilesProvider
 import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
@@ -17,12 +18,13 @@ import java.io.OutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-class ExplicitCommandFactory(settings: SSHSettings,
-                             fileInfoReader: FileInfoReader) : CommandFactory {
+internal class ExplicitCommandFactory(settings: SSHSettings,
+                                      fileInfoReader: FileInfoReader,
+                                      trackingFiles: TrackingFilesProvider) : CommandFactory {
 
     companion object : KLogging()
 
-    private val commands = AllCommandsResolver(fileInfoReader)
+    private val commands = AllCommandsResolver(fileInfoReader, trackingFiles)
     private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
         val newThread = Thread(runnable, "ssh-command")
         newThread.isDaemon = true
@@ -91,12 +93,12 @@ class ExplicitCommandFactory(settings: SSHSettings,
 
             private fun writeError(t: Throwable) {
                 val message = t.message
-                        if (message != null) {
-                            errorStream?.apply {
-                                write("$message\n".toByteArray())
-                                flush()
-                            }
-                        }
+                if (message != null) {
+                    errorStream?.apply {
+                        write("$message\n".toByteArray())
+                        flush()
+                    }
+                }
             }
 
             override fun destroy() {

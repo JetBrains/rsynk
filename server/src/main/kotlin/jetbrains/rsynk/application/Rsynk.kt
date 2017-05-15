@@ -3,7 +3,7 @@ package jetbrains.rsynk.application
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
 import jetbrains.rsynk.server.ExplicitCommandFactory
-import jetbrains.rsynk.server.SSHServer
+import jetbrains.rsynk.server.RsynkSshServer
 import jetbrains.rsynk.server.SSHSessionFactory
 import jetbrains.rsynk.server.SSHSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
@@ -14,31 +14,36 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
         fun newBuilder() = RsynkBuilder.default
     }
 
-    private val server: SSHServer
-    private val files = ArrayList<RsynkFile>()
+    private val server: RsynkSshServer
+    private val trackingFiles = ArrayList<RsynkFile>()
+    private val filesProvider = TrackingFilesProvider { trackingFiles }
 
     init {
         val sshSettings = sshSetting()
         val fileInfoReader = fileInfoReader()
 
-        server = SSHServer(
+        server = RsynkSshServer(
                 sshSettings,
-                ExplicitCommandFactory(sshSettings, fileInfoReader),
+                ExplicitCommandFactory(sshSettings, fileInfoReader, filesProvider),
                 SSHSessionFactory()
-        )
+                )
 
-        files.addAll(builder.files)
+        trackingFiles.addAll(builder.files)
 
         server.start()
     }
 
-    fun addFiles(files: List<RsynkFile>) {
-        this.files.addAll(files)
+    fun addTrackingFiles(files: List<RsynkFile>) {
+        this.trackingFiles.addAll(files)
     }
 
-    fun setFiles(files: List<RsynkFile>) {
-        this.files.clear()
-        addFiles(files)
+    fun addTrackingFile(file: RsynkFile) {
+        addTrackingFiles(listOf(file))
+    }
+
+    fun setTrackingFiles(files: List<RsynkFile>) {
+        this.trackingFiles.clear()
+        addTrackingFiles(files)
     }
 
     override fun close() {

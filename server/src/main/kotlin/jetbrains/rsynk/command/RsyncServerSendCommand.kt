@@ -1,5 +1,6 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.application.TrackingFilesProvider
 import jetbrains.rsynk.data.*
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
@@ -23,7 +24,8 @@ import java.util.function.Consumer
 import java.util.function.Supplier
 
 
-class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader) : RsyncCommand {
+internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader,
+                                      private val trackingFiles: TrackingFilesProvider) : RsyncCommand {
 
     companion object : KLogging()
 

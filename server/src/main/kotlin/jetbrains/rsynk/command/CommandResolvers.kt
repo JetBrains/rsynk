@@ -1,18 +1,20 @@
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.application.TrackingFilesProvider
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.options.RequestOptions
 import jetbrains.rsynk.server.RsyncRequestDataParser
 
 
-interface CommandsResolver {
+internal interface CommandsResolver {
     fun resolve(args: List<String>): Pair<Command, RequestData>?
 }
 
-class AllCommandsResolver(fileInfoReader: FileInfoReader) : CommandsResolver {
+internal class AllCommandsResolver(fileInfoReader: FileInfoReader,
+                                   trackingFiles: TrackingFilesProvider) : CommandsResolver {
 
     private val commandHolders = listOf(
-            RsyncCommandsResolver(fileInfoReader)
+            RsyncCommandsResolver(fileInfoReader, trackingFiles)
     )
 
     override fun resolve(args: List<String>): Pair<Command, RequestData> {
@@ -27,10 +29,11 @@ class AllCommandsResolver(fileInfoReader: FileInfoReader) : CommandsResolver {
 
 }
 
-class RsyncCommandsResolver(fileInfoReader: FileInfoReader) : CommandsResolver {
+internal class RsyncCommandsResolver(fileInfoReader: FileInfoReader,
+                                     trackingFiles: TrackingFilesProvider) : CommandsResolver {
 
     private val commands: Map<RsyncCommand, (RequestOptions) -> Boolean> = mapOf(
-            RsyncServerSendCommand(fileInfoReader) to { options ->
+            RsyncServerSendCommand(fileInfoReader, trackingFiles) to { options ->
                 options.server && options.sender && !options.daemon
             }
     )
