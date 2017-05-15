@@ -8,11 +8,11 @@ import jetbrains.rsynk.server.SSHSessionFactory
 import jetbrains.rsynk.server.SSHSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
-class Rsynk(val port: Int,
-            val nioWorkers: Int,
-            val commandWorkers: Int,
-            val idleConnectionTimeout: Int,
-            val serverKeys: KeyPairProvider) : AutoCloseable {
+class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoCloseable {
+
+    companion object Builder {
+        fun newBuilder() = RsynkBuilder.default
+    }
 
     private val server: SSHServer
 
@@ -26,9 +26,7 @@ class Rsynk(val port: Int,
                 ExplicitCommandFactory(sshSettings, fileInfoReader),
                 SSHSessionFactory()
         )
-    }
 
-    fun startServer() {
         server.start()
     }
 
@@ -41,17 +39,15 @@ class Rsynk(val port: Int,
         return FileInfoReader(UnixDefaultFileSystemInfo())
     }
 
-    private fun sshSetting(): SSHSettings {
-        val that: Rsynk = this
-        return object : SSHSettings {
-            override val port: Int = that.port
-            override val nioWorkers: Int = that.nioWorkers
-            override val commandWorkers: Int = that.commandWorkers
-            override val idleConnectionTimeout: Int = that.idleConnectionTimeout
-            override val maxAuthAttempts: Int = 3
-            override val serverKeys: KeyPairProvider = that.serverKeys
-            override val applicationNameNoSpaces: String = "Rsynk"
-        }
+    private fun sshSetting() = object : SSHSettings {
+        override val port: Int = builder.port
+        override val nioWorkers: Int = builder.nioWorkers
+        override val commandWorkers: Int = builder.commandWorkers
+        override val idleConnectionTimeout: Int = builder.idleConnectionTimeout
+        override val maxAuthAttempts: Int = builder.maxAuthAttempts
+        override val serverKeys: KeyPairProvider = builder.serverKeys
+        override val applicationNameNoSpaces: String = "rsynk"
     }
 }
+
 
