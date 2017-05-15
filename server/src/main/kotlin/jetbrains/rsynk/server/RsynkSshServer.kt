@@ -10,9 +10,9 @@ import org.apache.sshd.server.forward.RejectAllForwardingFilter
 import java.util.concurrent.Executors
 
 
-class SSHServer(private val sshSettings: SSHSettings,
-                private val explicitCommands: ExplicitCommandFactory,
-                private val sessionFactory: SSHSessionFactory) {
+internal class RsynkSshServer(private val sshSettings: SSHSettings,
+                              private val explicitCommands: ExplicitCommandFactory,
+                              private val sessionFactory: SSHSessionFactory) {
 
     companion object : KLogging()
 
