@@ -3,6 +3,7 @@ package jetbrains.rsynk.application
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 import java.io.File
 
+@SuppressWarnings("unused")
 class RsynkBuilder internal constructor(internal val port: Int,
                                         internal val nioWorkers: Int,
                                         internal val commandWorkers: Int,
@@ -54,7 +55,8 @@ class RsynkBuilder internal constructor(internal val port: Int,
     )
 }
 
-data class RsynkFileBoundaries(val offset: Long, val length: Long)
+data class RsynkFileBoundaries(val offset: Long,
+                               val length: Long)
 
 data class RsynkFile(val file: File,
                      val getBoundariesCallback: () -> RsynkFileBoundaries)
