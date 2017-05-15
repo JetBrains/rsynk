@@ -1,6 +1,8 @@
 package jetbrains.rsynk.server
 
 import jetbrains.rsynk.application.Rsynk
+import jetbrains.rsynk.application.RsynkFile
+import jetbrains.rsynk.application.RsynkFileBoundaries
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
@@ -10,12 +12,17 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class RsyncIntegrationTest {
     companion object {
-        @JvmStatic
-        val rsynk = Rsynk(IntegrationTestTools.findFreePort(), 1, 1, 100, IntegrationTestTools.getServerKey())
+        val port = IntegrationTestTools.findFreePort()
 
-        @BeforeClass
         @JvmStatic
-        fun startServer() = rsynk.startServer()
+        val rsynk = Rsynk.newBuilder()
+                .setPort(port)
+                .setNioWorkersNumber(1)
+                .setCommandWorkersNumber(1)
+                .setIdleConnectionTimeout(50000)
+                .setServerKeysProvider(IntegrationTestTools.getServerKey())
+                .build()
+
 
         @BeforeClass
         @JvmStatic
@@ -30,11 +37,14 @@ class RsyncIntegrationTest {
         val source = File(data, "from.txt")
         source.writeText(IntegrationTestTools.loremIpsum)
 
+        val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
+        rsynk.setFiles(listOf(rsynkFile))
+
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 
@@ -44,10 +54,13 @@ class RsyncIntegrationTest {
         val source = File(data, "from.txt")
         source.writeText(IntegrationTestTools.loremIpsum)
 
+        val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
+        rsynk.setFiles(listOf(rsynkFile))
+
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 
@@ -57,11 +70,14 @@ class RsyncIntegrationTest {
         val source = File(moduleRoot, "from.txt")
         source.writeText(IntegrationTestTools.loremIpsum)
 
+        val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
+        rsynk.setFiles(listOf(rsynkFile))
+
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
         destinationFile.writeText(IntegrationTestTools.loremIpsum.substring(0, IntegrationTestTools.loremIpsum.length / 2))
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynk.port, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 }

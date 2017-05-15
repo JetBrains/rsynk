@@ -13,14 +13,19 @@ import java.io.ByteArrayOutputStream
 class RsyncServerSenderSetupProtocolTest {
 
     companion object {
+
+        val port = IntegrationTestTools.findFreePort()
+
         @JvmStatic
-        val rsynk = Rsynk(IntegrationTestTools.findFreePort(), 1, 1, 100, IntegrationTestTools.getServerKey())
+        val rsynk = Rsynk.newBuilder()
+                .setPort(port)
+                .setNioWorkersNumber(1)
+                .setCommandWorkersNumber(1)
+                .setIdleConnectionTimeout(50000)
+                .setServerKeysProvider(IntegrationTestTools.getServerKey())
+                .build()
 
         val jsch = JSch()
-
-        @BeforeClass
-        @JvmStatic
-        fun startServer() = rsynk.startServer()
 
         @BeforeClass
         @JvmStatic
@@ -30,7 +35,7 @@ class RsyncServerSenderSetupProtocolTest {
 
     @Test
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_old_test() {
-        val session = jsch.getSession("voytovichs", "localhost", rsynk.port)
+        val session = jsch.getSession("voytovichs", "localhost", port)
         session.setConfig("StrictHostKeyChecking", "no")
         session.setTimeout(60000)
         session.setPassword("whatever".toByteArray())
@@ -58,7 +63,7 @@ class RsyncServerSenderSetupProtocolTest {
 
     @Test
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_new_test() {
-        val session = jsch.getSession("voytovichs", "localhost", rsynk.port)
+        val session = jsch.getSession("voytovichs", "localhost", port)
         session.setConfig("StrictHostKeyChecking", "no")
         session.setTimeout(60000)
         session.setPassword("whatever".toByteArray())

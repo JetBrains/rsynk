@@ -15,9 +15,9 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     private val server: SSHServer
+    private val files = ArrayList<RsynkFile>()
 
     init {
-
         val sshSettings = sshSetting()
         val fileInfoReader = fileInfoReader()
 
@@ -30,10 +30,18 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
         server.start()
     }
 
+    fun addFiles(files: List<RsynkFile>) {
+        this.files.addAll(files)
+    }
+
+    fun setFiles(files: List<RsynkFile>) {
+        this.files.clear()
+        addFiles(files)
+    }
+
     override fun close() {
         server.stop()
     }
-
 
     private fun fileInfoReader(): FileInfoReader {
         return FileInfoReader(UnixDefaultFileSystemInfo())
