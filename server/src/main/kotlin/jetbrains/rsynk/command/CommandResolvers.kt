@@ -1,7 +1,7 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.application.TrackingFilesProvider
 import jetbrains.rsynk.files.FileInfoReader
+import jetbrains.rsynk.files.TrackingFilesProvider
 import jetbrains.rsynk.options.RequestOptions
 import jetbrains.rsynk.server.RsyncRequestDataParser
 

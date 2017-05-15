@@ -3,7 +3,7 @@ package jetbrains.rsynk.files
 import java.io.File
 import java.nio.file.Path
 
-object FileResolver {
+class FileResolver(private val trackingFiles: TrackingFilesProvider) {
 
     private val wildcardsInPathPattern = Regex(".*[\\[*?].*")
 

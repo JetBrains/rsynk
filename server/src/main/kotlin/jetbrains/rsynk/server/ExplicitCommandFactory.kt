@@ -1,11 +1,11 @@
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.application.TrackingFilesProvider
 import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
 import jetbrains.rsynk.files.FileInfoReader
+import jetbrains.rsynk.files.TrackingFilesProvider
 import jetbrains.rsynk.io.BasicReadingIO
 import jetbrains.rsynk.io.BufferedWriter
 import mu.KLogging

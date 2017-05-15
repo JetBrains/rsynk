@@ -1,5 +1,6 @@
 package jetbrains.rsynk.files
 
+import java.io.File
 import java.nio.file.Path
 
 data class User(
@@ -88,5 +89,11 @@ data class FileInfo(
     val isDotDir = path.nameCount == 1 && path.endsWith(".")
     val isNotDotDir = !isDotDir
 }
+
+data class RsynkFileBoundaries(val offset: Long,
+                               val length: Long)
+
+data class RsynkFile(val file: File,
+                     val getBoundariesCallback: () -> RsynkFileBoundaries)
 
 
