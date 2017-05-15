@@ -290,9 +290,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         var filesInTransition = firstBlock.files.size
         var eofSent = false
 
-        val state = FileSendingState()
+        val state = FilesSendingState()
 
-        while (state.current != FileSendingState.Phase.Stop) {
+        while (state.current != FilesSendingState.State.Stop) {
             if (fileListsBlocks.hasStubDirs &&
                     fileListsBlocks.blocksSize == 1 &&
                     filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
@@ -333,7 +333,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
                     if (requestData.options.filesSelection !is Option.FileSelection.Recurse || fileListsBlocks.isEmpty()) {
                         state.nextState()
-                        if (state.current != FileSendingState.Phase.Stop) {
+                        if (state.current != FilesSendingState.State.Stop) {
                             encodeAndSendFileListIndex(FileListsCode.done.code, writer)
                         }
                     }
@@ -360,7 +360,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                         }
                         encodeAndSendFileListIndex(index, writer)
                         writer.writeChar(itemFlag)
-                    } else if (state.current == FileSendingState.Phase.Transfer) {
+                    } else if (state.current == FilesSendingState.State.Transfer) {
 
                         val fileFromCurrentBlock = fileListsBlocks.peekBlock(currentBlockIndex)?.files?.get(index)
 
@@ -684,24 +684,24 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 }
 
 
-class FileSendingState {
+class FilesSendingState {
 
-    sealed class Phase(val name: String) {
-        object Transfer : Phase("transfer")
-        object TearDownOne : Phase("tear-down-1")
-        object TearDownTwo : Phase("tear-down-2")
-        object Stop : Phase("stop")
+    sealed class State(val name: String) {
+        object Transfer : State("transfer")
+        object TearDownOne : State("tear-down-1")
+        object TearDownTwo : State("tear-down-2")
+        object Stop : State("stop")
     }
 
-    var current: Phase = Phase.Transfer
+    var current: State = State.Transfer
         private set
 
     fun nextState() {
         when (current) {
-            Phase.Transfer -> Phase.TearDownOne
-            Phase.TearDownOne -> Phase.TearDownTwo
-            Phase.TearDownTwo -> Phase.Stop
-            Phase.Stop -> throw IllegalStateException("Cannot set next state after stop is set")
+            State.Transfer -> State.TearDownOne
+            State.TearDownOne -> State.TearDownTwo
+            State.TearDownTwo -> State.Stop
+            State.Stop -> throw IllegalStateException("State iterator exhausted (`Stop` was already set)")
         }
     }
 }
