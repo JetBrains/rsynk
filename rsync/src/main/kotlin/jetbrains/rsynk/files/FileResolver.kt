@@ -4,12 +4,17 @@ import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.Paths
 
 class FileResolver(private val fileInfoReader: FileInfoReader,
                    trackingFilesProvider: TrackingFilesProvider) {
 
     companion object {
+
         private val wildcardsInPathPattern = Regex(".*[\\[*?].*")
+
+        private val dotDir = RsynkFileInfoWithBoundaries(RsynkFile(File("."), { RsynkFileBoundaries(0, 0) }),
+                FileInfo(Paths.get(File(".").toURI()), 0, 0L, 0L, User("nobody", 65534), Group("nobody", 65534)))
     }
 
     private val trackingFiles: Map<Path, RsynkFile>
@@ -26,10 +31,14 @@ class FileResolver(private val fileInfoReader: FileInfoReader,
         }
 
         return paths.map {
-            val path = fileToPath(File(it))
-            val trackingFile = trackingFiles[path] ?: throw InvalidFileException("File $path is missing among files tracking by rsynk")
-            val fileInfo = fileInfoReader.getFileInfo(path)
-            RsynkFileInfoWithBoundaries(trackingFile, fileInfo)
+            if (it == ".") { //TODO: avoid dot dir here, drop it
+                dotDir
+            } else {
+                val path = fileToPath(File(it))
+                val trackingFile = trackingFiles[path] ?: throw InvalidFileException("File $path is missing among files tracked by rsynk")
+                val fileInfo = fileInfoReader.getFileInfo(path)
+                RsynkFileInfoWithBoundaries(trackingFile, fileInfo)
+            }
         }
     }
 
