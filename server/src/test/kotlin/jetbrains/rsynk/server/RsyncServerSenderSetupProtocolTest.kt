@@ -4,8 +4,8 @@ import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
 import jetbrains.rsynk.application.Rsynk
 import org.apache.sshd.common.util.io.IoUtils
+import org.junit.AfterClass
 import org.junit.Assert
-import org.junit.BeforeClass
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 
@@ -27,7 +27,7 @@ class RsyncServerSenderSetupProtocolTest {
 
         val jsch = JSch()
 
-        @BeforeClass
+        @AfterClass
         @JvmStatic
         fun stopServer() = rsynk.close()
 

@@ -3,8 +3,8 @@ package jetbrains.rsynk.server
 import jetbrains.rsynk.application.Rsynk
 import jetbrains.rsynk.application.RsynkFile
 import jetbrains.rsynk.application.RsynkFileBoundaries
+import org.junit.AfterClass
 import org.junit.Assert
-import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
@@ -24,7 +24,7 @@ class RsyncIntegrationTest {
                 .build()
 
 
-        @BeforeClass
+        @AfterClass
         @JvmStatic
         fun stopServer() = rsynk.close()
 
