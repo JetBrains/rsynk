@@ -27,6 +27,8 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
                 SSHSessionFactory()
         )
 
+        files.addAll(builder.files)
+
         server.start()
     }
 
