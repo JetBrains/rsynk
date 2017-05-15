@@ -1,8 +1,8 @@
 package jetbrains.rsynk.server
 
 import jetbrains.rsynk.application.Rsynk
-import jetbrains.rsynk.application.RsynkFile
-import jetbrains.rsynk.application.RsynkFileBoundaries
+import jetbrains.rsynk.files.RsynkFile
+import jetbrains.rsynk.files.RsynkFileBoundaries
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
