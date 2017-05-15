@@ -1,6 +1,5 @@
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.application.TrackingFilesProvider
 import jetbrains.rsynk.data.*
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
@@ -108,10 +107,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                              reader: ReadingIO,
                              writer: WriteIO) {
 
-        val paths = data.filePaths.map { FileResolver.resolve(it) }
+        val files = FileResolver(fileInfoReader, trackingFiles).resolve(data.filePaths)
 
         val fileList = FileListsBlocks(data.options.filesSelection is Option.FileSelection.Recurse)
-        val initialBlock = fileList.addFileBlock(null, paths.map { path -> fileInfoReader.getFileInfo(path) })
+        val initialBlock = fileList.addFileBlock(null, files.map { it.info }) //TODO: implement file boundaries restriction!
 
         var prevFileCache = emptyPreviousFileCache
         initialBlock.files.forEach { _, file ->
