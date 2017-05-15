@@ -10,7 +10,7 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 
 @Suppress("UsePropertyAccessSyntax")
-class RsyncServerSenderSetupProtocolTest {
+class ErrorCodesIntegrationTest {
 
     companion object {
 
@@ -87,5 +87,37 @@ class RsyncServerSenderSetupProtocolTest {
         Assert.assertTrue("Reported error '$reportedError' doesn't contain expected message",
                 reportedError.toLowerCase().contains("client protocol version must be no more than"))
         Assert.assertEquals(2 /* protocol incompatibility code */, channel.exitStatus)
+    }
+
+    @Test
+    fun request_not_tracked_file_test() {
+        val session = jsch.getSession("voytovichs", "localhost", port)
+        session.setConfig("StrictHostKeyChecking", "no")
+        session.setTimeout(60000)
+        session.setPassword("whatever".toByteArray())
+        session.connect()
+        val channel = session.openChannel("exec") as ChannelExec
+
+        channel.setCommand("rsync --server --sender . not/existing/path")
+        channel.connect()
+
+        val output = channel.outputStream
+
+        output.write(byteArrayOf(31, 0, 0, 0))
+        output.flush()
+
+        output.write(byteArrayOf(0, 0, 0, 0))
+        output.flush()
+
+        val bos = ByteArrayOutputStream()
+        IoUtils.copy(channel.errStream, bos)
+        val reportedError = String(bos.toByteArray())
+
+        channel.disconnect()
+        session.disconnect()
+
+        Assert.assertTrue("Reported error '$reportedError' doesn't contain expected message",
+                reportedError.contains("File not/existing/path is missing among files tracked by rsynk"))
+        Assert.assertEquals(3 /* files selection error code */, channel.exitStatus)
     }
 }
