@@ -7,7 +7,8 @@ It does work like rsync daemon on a remote computer: allows you to connect to re
 ### What it is not ###
 This is not a jvm rsync re-implementation. You cannot use it as jvm rsync client, only as a server
 
-**Rsynk** allows you to choose files which will be served dynamically, providing a callback to your application
+**Rsynk** allows you to choose tracked files dynamically, providing a an API to your application:
+
 ```kotlin
 val rsynk = Rsynk.newBuilder().apply {
                   port = 22
@@ -16,21 +17,28 @@ val rsynk = Rsynk.newBuilder().apply {
                   commandWorkersNumber = 1
                   }.build() //starts the server
                   
-rsynk.addFiles(getNewlyCreatedUsersDataFiles())
+rsynk.addTrackingFiles(getNewlyCreatedUsersDataFiles())
 
 ...
 
-rsync.setFiles(emptyList()) //delete all previously added files without having server downtime
+rsync.setTrackingFiles(emptyList()) //delete all previously added files without having server downtime
 
 ...
 
-rsynk.addFiles(getLastUserDataFile) //start over to serve a file
+rsynk.addTrackingFile(getLastUserDataFile()) //start over to serve a file
 
 ```                
 
-Also **rsynk** makes possible to serve only a part of a file (i.e. a consistent part which is correct in terms of current application state)
+Also **rsynk** makes possible to track only a part (currently continious) of a file (i.e. a consistent part which is correct in terms of current application state)
 
-//code example
-
+```kotlin
+val logData = File("app/data/logs/users.log")
+val rsynkFile = RsynkFile(logData, RsynkFileBoundaries { // this callback will be invoked for each request 
+  val lowerBound = 0                                     // asking for users.log file
+  val upperBound = getLastWritePosition(logData)         // making protection from partly serialized data possible
+  RsynkFilesBoundaries(lowerBound, upperBound)
+})
+rsynk.addTrackingFile(rsynkFile)
+```
 
 Consider work in progress
