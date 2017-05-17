@@ -17,13 +17,13 @@ class ErrorCodesIntegrationTest {
         val port = IntegrationTestTools.findFreePort()
 
         @JvmStatic
-        val rsynk = Rsynk.newBuilder()
-                .setPort(port)
-                .setNioWorkersNumber(1)
-                .setCommandWorkersNumber(1)
-                .setIdleConnectionTimeout(50000)
-                .setServerKeysProvider(IntegrationTestTools.getServerKey())
-                .build()
+        val rsynk = Rsynk.newBuilder().apply {
+            port = port
+            nioWorkers = 1
+            commandWorkers = 1
+            idleConnectionTimeout = 30000
+            serverKeysProvider = IntegrationTestTools.getServerKey()
+        }.build()
 
         val jsch = JSch()
 

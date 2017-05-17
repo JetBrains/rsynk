@@ -62,7 +62,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
         override val commandWorkers: Int = builder.commandWorkers
         override val idleConnectionTimeout: Int = builder.idleConnectionTimeout
         override val maxAuthAttempts: Int = builder.maxAuthAttempts
-        override val serverKeys: KeyPairProvider = builder.serverKeys
+        override val serverKeys: KeyPairProvider = builder.serverKeysProvider
         override val applicationNameNoSpaces: String = "rsynk"
     }
 }
