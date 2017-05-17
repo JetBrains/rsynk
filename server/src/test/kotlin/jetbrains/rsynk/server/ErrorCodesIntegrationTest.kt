@@ -14,11 +14,11 @@ class ErrorCodesIntegrationTest {
 
     companion object {
 
-        val port = IntegrationTestTools.findFreePort()
+        val freePort = IntegrationTestTools.findFreePort()
 
         @JvmStatic
         val rsynk = Rsynk.newBuilder().apply {
-            port = port
+            port = freePort
             nioWorkers = 1
             commandWorkers = 1
             idleConnectionTimeout = 30000
@@ -35,7 +35,7 @@ class ErrorCodesIntegrationTest {
 
     @Test
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_old_test() {
-        val session = jsch.getSession("voytovichs", "localhost", port)
+        val session = jsch.getSession("voytovichs", "localhost", freePort)
         session.setConfig("StrictHostKeyChecking", "no")
         session.setTimeout(60000)
         session.setPassword("whatever".toByteArray())
@@ -63,7 +63,7 @@ class ErrorCodesIntegrationTest {
 
     @Test
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_new_test() {
-        val session = jsch.getSession("voytovichs", "localhost", port)
+        val session = jsch.getSession("voytovichs", "localhost", freePort)
         session.setConfig("StrictHostKeyChecking", "no")
         session.setTimeout(60000)
         session.setPassword("whatever".toByteArray())
@@ -91,7 +91,7 @@ class ErrorCodesIntegrationTest {
 
     @Test
     fun request_not_tracked_file_test() {
-        val session = jsch.getSession("voytovichs", "localhost", port)
+        val session = jsch.getSession("voytovichs", "localhost", freePort)
         session.setConfig("StrictHostKeyChecking", "no")
         session.setTimeout(60000)
         session.setPassword("whatever".toByteArray())

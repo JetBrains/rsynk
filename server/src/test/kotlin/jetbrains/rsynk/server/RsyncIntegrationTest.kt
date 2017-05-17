@@ -12,11 +12,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class RsyncIntegrationTest {
     companion object {
-        val port = IntegrationTestTools.findFreePort()
+        val freePort = IntegrationTestTools.findFreePort()
 
         @JvmStatic
         val rsynk = Rsynk.newBuilder().apply {
-            port = port
+            port = freePort
             nioWorkers = 1
             commandWorkers = 1
             idleConnectionTimeout = 30000
@@ -43,7 +43,7 @@ class RsyncIntegrationTest {
         val destinationFile = File(destinationDir, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, port, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 
@@ -59,7 +59,7 @@ class RsyncIntegrationTest {
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, port, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 
@@ -76,7 +76,7 @@ class RsyncIntegrationTest {
         val destinationFile = File(destinationDir, "to.txt")
         destinationFile.writeText(IntegrationTestTools.loremIpsum.substring(0, IntegrationTestTools.loremIpsum.length / 2))
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, port, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 }
