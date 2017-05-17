@@ -33,9 +33,12 @@ Also **rsynk** makes possible to track only a part (currently continious) of a f
 
 ```kotlin
 val logData = File("app/data/logs/users.log")
-val rsynkFile = RsynkFile(logData, RsynkFileBoundaries { // this callback will be invoked for each request 
-  val lowerBound = 0                                     // asking for users.log file
-  val upperBound = getLastWritePosition(logData)         // making protection from partly serialized data possible
+val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
+  // this callback will be invoked for each request 
+  // asking for users.log file
+  // making protection from partly serialized data possible
+  val lowerBound = 0                                   
+  val upperBound = getLastWritePosition(logData)         
   RsynkFilesBoundaries(lowerBound, upperBound)
 })
 rsynk.addTrackingFile(rsynkFile)
