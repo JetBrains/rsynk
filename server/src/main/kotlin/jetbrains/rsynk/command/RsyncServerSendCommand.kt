@@ -326,7 +326,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                 eofSent = true
             }
 
-            val index = decodeAndReadFileListIndex(reader)
+            val index = decodeAndReadFileListIndex(reader, writer)
 
             when {
                 index == FileListsCode.done.code -> {
@@ -508,12 +508,14 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return result
     }
 
-    private fun decodeAndReadFileListIndex(reader: ReadingIO): Int {
+    private fun decodeAndReadFileListIndex(reader: ReadingIO, writeIO: WriteIO): Int {
+        writeIO.flush()
         return fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
     }
 
     private fun encodeAndSendFileListIndex(index: Int, writer: WriteIO) {
         fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
+        writer.flush()
     }
 
     private fun sendFileIndexAndItemFlag(index: Int, itemFlag: Char, writer: WriteIO) {
