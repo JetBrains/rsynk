@@ -109,7 +109,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         val files = FileResolver(fileInfoReader, trackingFiles).resolve(data.filePaths)
 
-        val fileList = FileListsBlocks(data.options.filesSelection is Option.FileSelection.Recurse)
+        if(data.options.filesSelection is Option.FileSelection.Recurse) {
+            throw NotSupportedException("Recursive mode is not yet supported")
+        }
+
+        val fileList = FileListsBlocks(false)
         val initialBlock = fileList.addFileBlock(null, files.map { it.info }) //TODO: implement file boundaries restriction!
 
         var prevFileCache = emptyPreviousFileCache

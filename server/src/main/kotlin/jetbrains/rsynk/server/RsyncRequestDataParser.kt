@@ -40,7 +40,6 @@ object RsyncRequestDataParser {
                             if (arg != ".") {
                                 throw ArgsParingException("'.' argument expected after options list, got $arg")
                             }
-                            files.add(arg)
                             nextArgType = ArgumentType.FILE
                         }
                     }
