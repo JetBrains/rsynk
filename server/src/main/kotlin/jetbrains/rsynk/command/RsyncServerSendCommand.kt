@@ -205,7 +205,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         if (commonPrefixLength > 0) {
             flags += TransmitFlag.SameName
         }
-        if (commonPrefixLength > Byte.MAX_VALUE_UNSIGNED) {
+        if (suffix.size > Byte.MAX_VALUE_UNSIGNED) {
             flags += TransmitFlag.SameLongName
         }
 
