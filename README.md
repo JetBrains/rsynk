@@ -15,23 +15,23 @@ val rsynk = Rsynk.newBuilder().apply {
                   idleConnectionTimeout = 30000
                   nioWorkersNumber = 1
                   commandWorkersNumber = 1
-                  }.build() //starts the server
+                  }.build()
                   
 rsynk.addTrackingFiles(getNewlyCreatedUsersDataFiles())
 ...
 rsync.setTrackingFiles(emptyList()) //delete all previously added files without having server downtime
 ...
-rsynk.addTrackingFile(getLastUserDataFile()) //start over to serve a file
+rsynk.addTrackingFile(getLastUserDataFile()) // track a new file, 0 downtime
 ```                
 
-Also **rsynk** makes possible to track only a part (currently continious) of a file (i.e. a consistent part which is correct in terms of current application state)
+Also **rsynk** makes possible to track only a part (currently continious) of a file (i.e. a consistent part which is correct in terms of your application current state)
 
 ```kotlin
 val logData = File("app/data/logs/users.log")
 val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
   // this callback will be invoked for each request 
   // asking for users.log file
-  // making protection from partly serialized data possible
+  // so you can define correct boundaries from your application
   val lowerBound = 0                                   
   val upperBound = getLastWritePosition(logData)         
   RsynkFilesBoundaries(lowerBound, upperBound)
