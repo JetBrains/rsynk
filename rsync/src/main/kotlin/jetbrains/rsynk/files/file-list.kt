@@ -63,15 +63,14 @@ class FileListsBlocks(private val isRecursive: Boolean) {
                     }
         }
 
-        val startIndex = nextDirIndex + 1 // preserve index for root (even if it's null)
+        val startIndex = nextDirIndex
         val lastIndex = startIndex + fileList.size
 
-        val map = TreeMap<Int, FileInfo>()
-        val blockSize = (startIndex..lastIndex).zip(fileList.sorted()).toMap(map)        //TODO prune duplicates
-        val size = fileList
-                .filter { it.isSymlink || it.isReqularFile }
-                .foldRight(0, { file, sum: Long -> sum + file.size })
-        val block = FileListBlock(root, blockSize, startIndex, lastIndex, size)
+        val indexToFile = TreeMap<Int, FileInfo>()
+        (startIndex..lastIndex).zip(fileList.sorted()).toMap(indexToFile)        //TODO prune duplicates
+
+        val filesSize = fileList.filter { it.isSymlink || it.isReqularFile }.fold(0L, { sum, file -> sum + file.size })
+        val block = FileListBlock(root, indexToFile, startIndex, lastIndex, filesSize)
         blocks.add(block)
 
         nextDirIndex = lastIndex + 1
