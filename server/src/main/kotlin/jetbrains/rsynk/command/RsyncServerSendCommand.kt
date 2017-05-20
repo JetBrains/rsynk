@@ -123,7 +123,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     file.user,
                     file.group,
                     file.lastModified,
-                    file.path.toUri().path,
+                    file.path.fileName.toString(),
                     prevFileCache.sentUserNames + file.user,
                     prevFileCache.sendGroupNames + file.group)
         }
@@ -198,9 +198,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             flags += TransmitFlag.SameLastModifiedTime
         }
 
-        val pathBytes = f.path.toUri().path.toByteArray()
-        val commonPrefixLength = (pathBytes zip cache.path.toByteArray()).takeWhile { it.first == it.second }.size
-        val suffix = Arrays.copyOfRange(pathBytes, commonPrefixLength, pathBytes.size)
+        val fileNameBytes = f.path.fileName.toString().toByteArray()
+        val commonPrefixLength = (fileNameBytes zip cache.fileNameBytes.toByteArray()).takeWhile { it.first == it.second }.size
+        val suffix = Arrays.copyOfRange(fileNameBytes, commonPrefixLength, fileNameBytes.size)
 
         if (commonPrefixLength > 0) {
             flags += TransmitFlag.SameName
@@ -722,7 +722,7 @@ private data class PreviousFileSentFileInfoCache(val mode: Int?,
                                                  val user: User?,
                                                  val group: Group?,
                                                  val lastModified: Long?,
-                                                 val path: String,
+                                                 val fileNameBytes: String,
                                                  val sentUserNames: Set<User>,
                                                  val sendGroupNames: Set<Group>)
 
