@@ -7,8 +7,8 @@ import java.util.function.Supplier
 
 class FileListIndexDecoder {
 
-    private var lastPositive = 1
-    private var lastNegative = -1
+    private var lastPositive = -1
+    private var lastNegative = 1
 
     fun readAndDecode(reader: Supplier<Byte>): Int {
 
