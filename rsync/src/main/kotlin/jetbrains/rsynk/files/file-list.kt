@@ -19,7 +19,7 @@ data class FileListBlock(val rootDirectory: FileInfo?,
     //TODO: mark as sent and not deleted?
     fun markFileDeleted(index: Int) {
         if (index !in begin..end) {
-            throw IndexOutOfBoundsException("Requested index $index is out of segment bounds [$begin, $end]")
+            throw IndexOutOfBoundsException("Requested index $index is out of block bounds [$begin, $end]")
         }
         deletedFiles += index
     }

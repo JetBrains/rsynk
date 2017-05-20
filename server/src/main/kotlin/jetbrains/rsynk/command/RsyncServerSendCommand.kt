@@ -165,6 +165,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         if (f.isBlockDevice || f.isCharacterDevice || f.isSocket || f.isFIFO) {
             // TODO set or discard TransmitFlag.SameRdevMajor
+            throw InvalidFileException("${f.path} is not a regular file, only regular files are supported")
         }
 
         if (f.mode == cache.mode) {
