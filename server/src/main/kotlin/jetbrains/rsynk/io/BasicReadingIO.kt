@@ -14,7 +14,12 @@ class BasicReadingIO(private val input: InputStream) : ReadingIO {
         val buf = ByteArray(len)
 
         val read = input.read(buf)
-        if (read <= 0 || read != len) {
+
+        if (read == -1) {
+            throw IOException("Cannot read $len bytes: EOF received")
+        }
+
+        if (read != len) {
             throw IOException("Cannot read requested amount of data: only $read bytes of $len were read")
         }
 
