@@ -172,22 +172,26 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             flags += TransmitFlag.SameMode
         }
 
-        if (options.preserveUser && f.user == cache.user) {
+        if (options.preserveUser && f.user != cache.user) {
+            if (!f.user.isRoot &&
+                    !options.numericIds &&
+                    options.filesSelection is Option.FileSelection.Recurse &&
+                    f.user in cache.sentUserNames) {
+                flags += TransmitFlag.UserNameFollows
+            }
+        } else {
             flags += TransmitFlag.SameUserId
-        } else if (!f.user.isRoot &&
-                !options.numericIds &&
-                options.filesSelection is Option.FileSelection.Recurse &&
-                f.user in cache.sentUserNames) {
-            flags += TransmitFlag.UserNameFollows
         }
 
-        if (options.preserveGroup && f.group == cache.group) {
+        if (options.preserveGroup && f.group != cache.group) {
+            if (!f.group.isRoot &&
+                    !options.numericIds &&
+                    options.filesSelection is Option.FileSelection.Recurse &&
+                    f.group in cache.sendGroupNames) {
+                flags += TransmitFlag.GroupNameFollows
+            }
+        } else {
             flags += TransmitFlag.SameGroupId
-        } else if (!f.group.isRoot &&
-                !options.numericIds &&
-                options.filesSelection is Option.FileSelection.Recurse &&
-                f.group in cache.sendGroupNames) {
-            flags += TransmitFlag.GroupNameFollows
         }
 
         if (f.lastModified == cache.lastModified) {
