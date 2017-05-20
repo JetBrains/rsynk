@@ -201,15 +201,16 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         if (commonPrefixLength > 0) {
             flags += TransmitFlag.SameName
         }
-        if (suffix.size > Byte.MAX_VALUE_UNSIGNED) {
+        if (commonPrefixLength > Byte.MAX_VALUE_UNSIGNED) {
             flags += TransmitFlag.SameLongName
-        }
-        if (flags.isEmpty() && !f.isDirectory) {
-            flags += TransmitFlag.TopDirectory
         }
 
         val encodedFlags = flags.encode()
-        if (flags.isEmpty() || encodedFlags and 0xFF00 != 0) {
+        if (encodedFlags == 0 && !f.isDirectory) {
+            flags += TransmitFlag.TopDirectory
+        }
+
+        if (encodedFlags == 0 || encodedFlags and 0xFF00 != 0) {
             flags += TransmitFlag.ExtendedFlags
             output.writeChar(encodedFlags.toChar())
         } else {
@@ -217,7 +218,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         if (TransmitFlag.SameName in flags) {
-            output.writeByte(Math.min(commonPrefixLength, Byte.MAX_VALUE_UNSIGNED).toByte())
+            output.writeByte(commonPrefixLength.toByte())
         }
 
         if (TransmitFlag.SameLongName in flags) {
@@ -253,8 +254,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         if (options.preserveDevices || options.preserveSpecials) {
             //TODO send device info if this is a device or special
+            throw InvalidFileException("${f.path} is not a regular file, only regular files are supported")
         } else if (options.preserveLinks) {
             //TODO send target if this is a symlink
+            throw InvalidFileException("${f.path} is not a regular file, only regular files are supported")
         }
     }
 
