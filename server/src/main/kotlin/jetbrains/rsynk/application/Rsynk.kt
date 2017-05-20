@@ -9,6 +9,7 @@ import jetbrains.rsynk.server.RsynkSshServer
 import jetbrains.rsynk.server.SSHSessionFactory
 import jetbrains.rsynk.server.SSHSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
+import java.util.*
 
 class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoCloseable {
 
@@ -35,17 +36,19 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
         server.start()
     }
 
-    fun addTrackingFiles(files: List<RsynkFile>) {
+    fun addTrackingFiles(files: List<RsynkFile>): Rsynk {
         this.trackingFiles.addAll(files)
+        return this
     }
 
     fun addTrackingFile(file: RsynkFile) {
         addTrackingFiles(listOf(file))
     }
 
-    fun setTrackingFiles(files: List<RsynkFile>) {
+    fun setTrackingFiles(files: List<RsynkFile>): Rsynk {
         this.trackingFiles.clear()
         addTrackingFiles(files)
+        return this
     }
 
     override fun close() {
