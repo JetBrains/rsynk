@@ -23,6 +23,7 @@ sealed class Option {
     object PreserveSpecials : Option()
     object PreserveUser : Option()
     object ProtectArgs : Option()
+    object PruneEmptyDirectories : Option()
 
     sealed class FileSelection : Option() {
         /**

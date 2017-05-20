@@ -30,6 +30,7 @@ class RequestOptions(val options: Set<Option>) {
     val preserveSpecials: Boolean = Option.PreserveSpecials in options
     val preserveUser: Boolean = Option.PreserveUser in options
     val protectArgs: Boolean = Option.ProtectArgs in options
+    val pruneEmptyDirectories: Boolean = Option.PruneEmptyDirectories in options
     val relativeNames: Boolean = Option.RelativePaths in options
     val saveFlist: Boolean = Option.FListIOErrorSafety in options
     val shellCommand: Boolean = Option.ShellCommand in options

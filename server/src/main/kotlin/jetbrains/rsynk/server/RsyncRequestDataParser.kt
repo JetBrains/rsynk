@@ -86,6 +86,8 @@ object RsyncRequestDataParser {
                 'g' -> Option.PreserveGroup
                 'L' -> Option.SymlinkTimeSetting
                 'l' -> Option.PreserveLinks
+                'm' -> Option.PruneEmptyDirectories
+                'M' -> Option.PruneEmptyDirectories
                 'o' -> Option.PreserveUser
                 'r' -> Option.FileSelection.Recurse
                 'R' -> Option.RelativePaths
@@ -117,6 +119,7 @@ object RsyncRequestDataParser {
             "one-file-system" -> Option.OneFileSystem
             "owner" -> Option.PreserveUser
             "protect-args" -> Option.ProtectArgs
+            "prune-empty-dirs" -> Option.PruneEmptyDirectories
             "specials" -> Option.PreserveSpecials
 
             else -> {

@@ -46,7 +46,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writeCompatFlags(output)
         writeChecksumSeed(requestData.checksumSeed, output)
 
-        val filter = receiveFilterList(input)
+        val filter = if (requestData.options.pruneEmptyDirectories || requestData.options.delete) {
+            receiveFilterList(input)
+        } else {
+            null
+        }
         sendFileList(requestData, filter, input, output)
     }
 
@@ -80,15 +84,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun receiveFilterList(input: ReadingIO): FilterList {
 
-        var len = input.readInt()
-
-        /* It's not clear why client writes those 4 bytes.
-         * Rsync uses it's 'safe_read' int early communication stages
-         * which deals with circular buffer. It's probably data remained
-         * in buffer. Ignore it unless we figure out the byte is missing. */
-        if (len > 1024 * 5) {
-            len = input.readInt()
-        }
+        val len = input.readInt()
 
         while (len != 0) {
             throw NotSupportedException("Filter list is not supported")
@@ -103,7 +99,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
     private fun sendFileList(data: RequestData,
-                             filterList: FilterList/* TODO: filter files (but not dot dir!) */,
+                             filterList: FilterList?/* TODO: filter files (but not dot dir!) */,
                              reader: ReadingIO,
                              writer: WriteIO) {
 
