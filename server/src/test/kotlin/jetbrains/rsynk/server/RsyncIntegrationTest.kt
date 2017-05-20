@@ -48,6 +48,36 @@ class RsyncIntegrationTest {
     }
 
     @Test
+    fun files_from_same_directory_with_common_prefix_test() {
+        val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+        val sourceFile1 = File(dataDirectory, "source-file-1.txt")
+        sourceFile1.writeText(IntegrationTestTools.loremIpsum)
+        val sourceFile2 = File(dataDirectory, "source-file-2.txt")
+        sourceFile2.writeText(IntegrationTestTools.loremIpsum)
+
+        rsynk.setTrackingFiles(
+                listOf(RsynkFile(sourceFile1, { RsynkFileBoundaries(0, sourceFile1.length()) }),
+                        RsynkFile(sourceFile2, { RsynkFileBoundaries(0, sourceFile2.length()) }))
+        )
+
+        val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+
+        RsyncCommand.sync("localhost:${dataDirectory.absolutePath}/", destinationDir.absolutePath, freePort, 10, "rv")
+
+        listOf(
+                File(destinationDir, sourceFile1.name),
+                File(destinationDir, sourceFile2.name)
+        ).forEach { downloadedFile ->
+            Assert.assertTrue("${downloadedFile.name} was no downloaded", downloadedFile.isFile)
+            Assert.assertEquals("${downloadedFile.name} content is not identical to source",
+                    IntegrationTestTools.loremIpsum,
+                    downloadedFile.readText())
+        }
+
+
+    }
+
+    @Test
     fun file_transfer_to_non_existing_file_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val source = File(data, "from.txt")
