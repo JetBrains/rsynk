@@ -16,7 +16,7 @@ class BasicReadingIO(private val input: InputStream) : ReadingIO {
         val read = input.read(buf)
 
         if (read == -1) {
-            throw IOException("Cannot read $len bytes: EOF received")
+            throw IOException("Cannot read $len byte(s): EOF received")
         }
 
         if (read != len) {
