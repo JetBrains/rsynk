@@ -11,6 +11,11 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'kotlin'
