@@ -1,24 +1,39 @@
-group 'org.jetbrains.rsynk'
-version '0.1.0-SNAPSHOT'
-
 buildscript {
     ext.kotlin_version = '1.1.1'
 
-    repositories {
-        mavenCentral()
-    }
+    repositories { jcenter() }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
+
+plugins {
+    id "com.github.hierynomus.license" version "0.13.1"
+}
+
+group 'org.jetbrains.rsynk'
+version '0.1.0-SNAPSHOT'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '3.5'
 }
 
 subprojects {
+    apply plugin: 'license'
     apply plugin: 'java'
     apply plugin: 'kotlin'
+
+    license {
+        header rootProject.file('copyright.ftl')
+        strictCheck true
+        ext.inceptionYear = 2016
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        ext.owner = 'JetBrains s.r.o.'
+        include "**/*.kt"
+        mapping {
+            kt = 'JAVADOC_STYLE'
+        }
+    }
 
     repositories {
         mavenCentral()
