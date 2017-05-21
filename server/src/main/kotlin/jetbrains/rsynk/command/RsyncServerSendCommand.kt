@@ -61,19 +61,18 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writeCompatFlags(output)
         writeChecksumSeed(requestData.checksumSeed, output)
 
-        val filter = if (requestData.options.pruneEmptyDirectories || requestData.options.delete) {
-            receiveFilterList(input)
-        } else {
-            null
-        }
+        val filter = receiveFilterList(input)
         sendFileList(requestData, filter, input, output)
     }
 
 
     private fun exchangeProtocolVersions(input: ReadingIO, output: WriteIO) {
+
+        val clientProtocolVersion = input.readInt()
+
         output.writeInt(RsynkServerStaticConfiguration.serverProtocolVersion)
         output.flush()
-        val clientProtocolVersion = input.readInt()
+
         if (clientProtocolVersion < RsynkServerStaticConfiguration.clientProtocolVersionMin) {
             throw UnsupportedProtocolException("Client protocol version must be at least " +
                     RsynkServerStaticConfiguration.clientProtocolVersionMin)
