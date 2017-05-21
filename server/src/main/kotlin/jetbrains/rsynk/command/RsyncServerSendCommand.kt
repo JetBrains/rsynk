@@ -24,6 +24,7 @@ import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.*
+import jetbrains.rsynk.io.AutoFlushingWriter
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
@@ -73,7 +74,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
 
         val filter = receiveFilterList(input)
-        sendFileList(requestData, filter, input, output)
+        sendFileList(requestData, filter, input, AutoFlushingWriter(output))
     }
 
 
@@ -177,7 +178,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         sendFiles(fileList, data, reader, writer)
     }
 
-    private fun sendFileInfo(f: FileInfo, cache: PreviousFileSentFileInfoCache, options: RequestOptions, output: WriteIO) {
+    private fun sendFileInfo(f: FileInfo,
+                             cache: PreviousFileSentFileInfoCache,
+                             options: RequestOptions,
+                             output: WriteIO) {
         var flags: Set<TransmitFlag> = HashSet()
 
         if (f.isDirectory) {
