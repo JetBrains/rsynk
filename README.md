@@ -7,7 +7,8 @@
 ## SSH server that serves rsync reading request ##  
 
 ### What it is ###
-It does work like rsync daemon on a remote computer: allows you to connect to remote machine and download files. Hovewer it works via ssh, not via rsync protocol 
+In your application running in a JVM, it works like an [rsync](https://rsync.samba.org) daemon on a remote
+computer: it allows you to connect to remote machine and download files. Hovewer it works via ssh, not via rsync protocol.
 
 ### What it is not ###
 This is not a jvm rsync re-implementation. You cannot use it as jvm rsync client, only as a server
