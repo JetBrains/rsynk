@@ -21,7 +21,7 @@ sealed class CompatFlag(val value: Int) {
     object SymlincTimes : CompatFlag(2)
     object SymlinkIconv : CompatFlag(4)
     object SafeFileList : CompatFlag(8)
-    object AvoidXattrOptimization : CompatFlag(16)
+    object AvoidFileAttributesOptimization : CompatFlag(16)
     object FixChecksumSeed : CompatFlag(32)
 }
 
@@ -35,7 +35,7 @@ fun Byte.decodeCompatFlags(): Set<CompatFlag> {
             CompatFlag.SymlincTimes,
             CompatFlag.SymlinkIconv,
             CompatFlag.SafeFileList,
-            CompatFlag.AvoidXattrOptimization,
+            CompatFlag.AvoidFileAttributesOptimization,
             CompatFlag.FixChecksumSeed)
             .filter { flag -> thisIntValue.and(flag.value) == flag.value }
             .toSet()

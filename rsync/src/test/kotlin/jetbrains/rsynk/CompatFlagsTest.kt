@@ -62,7 +62,7 @@ class CompatFlagsTest {
                 CompatFlag.SymlincTimes,
                 CompatFlag.SymlinkIconv,
                 CompatFlag.SafeFileList,
-                CompatFlag.AvoidXattrOptimization,
+                CompatFlag.AvoidFileAttributesOptimization,
                 CompatFlag.FixChecksumSeed)
         val allFlagsText = allFlags.map { flag -> flag.javaClass.name }
         CompatFlag::class.nestedClasses.forEach { nestedClass ->
