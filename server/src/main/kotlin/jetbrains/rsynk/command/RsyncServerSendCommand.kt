@@ -177,6 +177,14 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
             return
         }
+
+        val message = reader.readInt()
+        messageInterpreter.decode(message).let {
+            if (it !is RsyncMessage.Data) {
+                throw ProtocolException("Expected Data message, received: $it")
+            }
+        }
+
         sendFiles(fileList, data, reader, writer)
     }
 
