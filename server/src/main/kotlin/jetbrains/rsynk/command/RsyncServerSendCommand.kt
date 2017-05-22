@@ -72,7 +72,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
         }
         //TODO: make client messages encoding more (than this) abstract
-        output.writeInt(117440513/*that's a message to client*/)
+        output.writeInt(117440552/*that's a message to client*/)
 
         val filter = receiveFilterList(input)
         sendFileList(requestData, filter, input, AutoFlushingWriter(output))
@@ -151,7 +151,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     prevFileCache.sendGroupNames + file.group)
         }
 
-        //msg
+        //Successfully sent files metadata
         writer.writeByte(0.toByte())
 
         if (data.options.preserveUser && !data.options.numericIds && data.options.filesSelection is Option.FileSelection.Recurse) {
@@ -169,7 +169,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
             writer.writeBytes(VarintEncoder.varlong(0, 1))
         }
-        writer.flush()
 
         if (initialBlock.files.isEmpty()) {
             if (data.options.filesSelection is Option.FileSelection.Recurse) {
