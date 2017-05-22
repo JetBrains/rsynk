@@ -85,4 +85,17 @@ class BufferedWriterTest {
         Assert.assertEquals(8, result.size)
         Assert.assertArrayEquals(byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8), result)
     }
+
+    @Test
+    fun write_int_byte_and_bytes_test() {
+        val bos = ByteArrayOutputStream()
+        val writer = BufferedWriter(bos, 100)
+
+        writer.writeInt(31)
+        writer.writeByte(42)
+        writer.writeInt(1865987517)
+        writer.writeBytes(ByteBuffer.wrap(byteArrayOf(1, 0, 0, 7)))
+        writer.flush()
+        Assert.assertArrayEquals(byteArrayOf(31, 0, 0, 0, 42, -67, -75, 56, 111, 1, 0, 0, 7), bos.toByteArray())
+    }
 }
