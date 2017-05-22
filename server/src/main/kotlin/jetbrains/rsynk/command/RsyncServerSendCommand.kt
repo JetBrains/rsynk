@@ -72,7 +72,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
         }
         //TODO: make client messages encoding more (than this) abstract
-        output.writeInt(117440512/*that's a message to client*/)
+        output.writeInt(117440513/*that's a message to client*/)
 
         val filter = receiveFilterList(input)
         sendFileList(requestData, filter, input, AutoFlushingWriter(output))
