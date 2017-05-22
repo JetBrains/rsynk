@@ -150,6 +150,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     prevFileCache.sentUserNames + file.user,
                     prevFileCache.sendGroupNames + file.group)
         }
+
+        //msg
         writer.writeByte(0.toByte())
 
         if (data.options.preserveUser && !data.options.numericIds && data.options.filesSelection is Option.FileSelection.Recurse) {
@@ -264,6 +266,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             output.writeBytes(VarintEncoder.varlong(f.lastModified, 4))
         }
 
+        //missed thing flist.c line 569
+
         if (TransmitFlag.SameMode !in flags) {
             output.writeInt(f.mode)
         }
@@ -289,6 +293,13 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             //TODO send target if this is a symlink
             throw InvalidFileException("${f.path} is not a regular file, only regular files are supported")
         }
+
+        /* TODO:
+        if (alwaysChecksum) {
+            send partly prepared checksum
+                    flist.c 638
+        }
+        */
     }
 
     private fun sendUserId(uid: Int, writer: WriteIO) {
