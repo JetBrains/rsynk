@@ -381,9 +381,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                         val sentBlock = fileListsBlocks.popBlock()
                         filesInTransition -= sentBlock?.files?.size ?: 0
 
-                        if (fileListsBlocks.blocksSize == 0) {
-                            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
-                        }
+                        encodeAndSendFileListIndex(FileListsCode.done.code, writer)
                     }
 
                     if (requestData.options.filesSelection !is Option.FileSelection.Recurse || fileListsBlocks.isEmpty()) {
@@ -754,12 +752,13 @@ class FilesSendingState {
         private set
 
     fun nextState() {
-        when (current) {
+       val newState = when (current) {
             State.Transfer -> State.TearDownOne
             State.TearDownOne -> State.TearDownTwo
             State.TearDownTwo -> State.Stop
             State.Stop -> throw IllegalStateException("State iterator exhausted (`Stop` was already set)")
         }
+        current = newState
     }
 }
 
