@@ -399,7 +399,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     }
                     val decodedItemFlags = itemFlag.decodeItemFlags()
 
-                    if (ItemFlag.Transfer in decodedItemFlags) {
+                    if (ItemFlag.Transfer !in decodedItemFlags) {
                         val block = fileListsBlocks.peekBlock(currentBlockIndex)
                         if (block == null || block.files[index] == null) {
                             currentBlockIndex = index
