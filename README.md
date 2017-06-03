@@ -4,7 +4,7 @@
 ![Repository Size](https://reposs.herokuapp.com/?path=JetBrains/rsynk)
 ![Pure Kotlin](https://img.shields.io/badge/100%25-kotlin-orange.svg)
 
-## SSH server that serves rsync reading request ##  
+## SSH server that accepts rsync read request ##  
 
 ### What it is ###
 In your application running in a JVM, it works like an [rsync](https://rsync.samba.org) daemon on a remote
