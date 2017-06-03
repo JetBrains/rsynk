@@ -5,7 +5,7 @@ import os
 def get_path(dir_path, file_name, create=False, backup=False):
 	file_path = "{0}/{1}".format(dir_path, file_name)
 	if create:	
-		if backup:
+		if os.path.isfile(file_path) and backup:
 			os.rename(file_path, "{0}.backup".format(file_path))
 	
 		with open(file_path, "w+"):
