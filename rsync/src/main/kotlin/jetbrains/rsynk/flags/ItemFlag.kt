@@ -35,7 +35,7 @@ sealed class ItemFlag(val code: Int) {
 }
 
 object ItemFlagsValidator {
-    fun isFlagSupported(f: Int): Boolean = true
+    fun isFlagSupported(flags: Set<ItemFlag>): Boolean = true
 }
 
 fun Char.decodeItemFlags(): Set<ItemFlag> {
@@ -58,4 +58,8 @@ fun Char.decodeItemFlags(): Set<ItemFlag> {
             ItemFlag.Transfer)
             .filter { flag -> thisIntValue and flag.code != 0 }
             .toSet()
+}
+//TODO make separate encoder/decoder
+fun Set<ItemFlag>.encode(): Int {
+    return this.fold(0, { value, flag -> value.or(flag.code) })
 }

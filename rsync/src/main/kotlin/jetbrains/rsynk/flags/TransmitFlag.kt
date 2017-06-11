@@ -33,7 +33,7 @@ sealed class TransmitFlag(val value: Int) {
     object IoErrorEndList : TransmitFlag(4096)
     object ModNsec : TransmitFlag(8192)
 }
-
+//TODO make separate encoder/decoder
 fun Set<TransmitFlag>.encode(): Int {
     return this.fold(0, { value, flag -> value.or(flag.value) })
 }

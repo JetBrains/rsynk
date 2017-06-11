@@ -28,7 +28,7 @@ sealed class CompatFlag(val value: Int) {
 fun Set<CompatFlag>.encode(): Byte {
     return this.fold(0, { value, flag -> value.or(flag.value) }).toByte()
 }
-
+//TODO make separate encoder/decoder
 fun Byte.decodeCompatFlags(): Set<CompatFlag> {
     val thisIntValue = this.toInt()
     return listOf(CompatFlag.IncRecurse,
