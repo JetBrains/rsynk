@@ -341,61 +341,32 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writer.writeBytes(ByteBuffer.wrap(nameBytes))
     }
 
-    private fun sendFiles(fileListsBlocks: FileListsBlocks,
+    private fun sendFiles(blocks: FileListsBlocks,
                           requestData: RequestData,
                           reader: ReadingIO,
                           writer: WriteIO) {
 
-        var currentBlockIndex = 0
-        val firstBlock = fileListsBlocks.peekBlock(currentBlockIndex) ?: throw InvalidFileException("Sending empty file list blocks is not allowed")
-        var filesInTransition = firstBlock.files.size
         var eofSent = false
 
         val state = FilesSendingState()
 
-        while (state.current != FilesSendingState.State.Stop) {
-            if (fileListsBlocks.hasStubDirs &&
-                    fileListsBlocks.blocksSize == 1 &&
-                    filesInTransition < RsynkServerStaticConfiguration.fileListPartitionLimit / 2) {
-
-                val expandResult = expandAndSendStubDirectories(fileListsBlocks,
-                        0, //TODO 1 if dot dir is expanded!
-                        RsynkServerStaticConfiguration.fileListPartitionLimit,
-                        requestData,
-                        writer)
-
-                filesInTransition += expandResult.filesSent
-                currentBlockIndex += expandResult.blocksSent
-            }
-
-            if (requestData.options.filesSelection is Option.FileSelection.Recurse
-                    && !fileListsBlocks.hasStubDirs
-                    && !eofSent) {
-
-                encodeAndSendFileListIndex(FileListsCode.eof.code, writer)
-                eofSent = true
-            }
+        stateLoop@ while (state.current != FilesSendingState.State.Stop) {
 
             val index = decodeAndReadFileListIndex(reader, writer)
+            val iflags = if (index == FileListsCode.done.code) {
+                emptySet() // don't read flags if index is done
+            } else {
+                reader.readChar().decodeItemFlags()
+            }
+            if (!ItemFlagsValidator.isFlagSupported(iflags)) {
+                throw NotSupportedException("Received not supported item flag ($iflags)")
+            }
 
             when {
                 index == FileListsCode.done.code -> {
-
-                    if (requestData.options.filesSelection is Option.FileSelection.Recurse &&
-                            fileListsBlocks.isNotEmpty()) {
-
-                        val sentBlock = fileListsBlocks.popBlock()
-                        filesInTransition -= sentBlock?.files?.size ?: 0
-
-                        encodeAndSendFileListIndex(FileListsCode.done.code, writer)
-                    }
-
-                    if (requestData.options.filesSelection !is Option.FileSelection.Recurse || fileListsBlocks.isEmpty()) {
-                        state.nextState()
-                        if (state.current != FilesSendingState.State.Stop) {
-                            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
-                        }
-                    }
+                    state.nextState()
+                    encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+                    continue@stateLoop
                 }
 
                 index >= 0 -> {
@@ -404,75 +375,68 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                         throw NotSupportedException("It's time to implement extra file list sending (sender.c line 234)")
                     }
 
-                    val itemFlag = reader.readChar()
-                    val decodedItemFlags = itemFlag.decodeItemFlags()
-
-                    if (!ItemFlagsValidator.isFlagSupported(decodedItemFlags)) {
-                        throw NotSupportedException("Received not supported item flag ($itemFlag)")
-                    }
-
-                    if (ItemFlag.Transfer !in decodedItemFlags) {
-                        val block = fileListsBlocks.peekBlock(currentBlockIndex)
-                        if (block == null || block.files[index] == null) {
-                            currentBlockIndex = index
-                        }
-
-                        block ?: throw ProtocolException("Sent block index does not exist on server")
-
-                        if (index != block.begin) {
-                            block.markFileDeleted(index)
-                            filesInTransition--
-                        }
-                        encodeAndSendFileListIndex(index, writer)
-                        writer.writeChar(itemFlag)
-                    } else if (state.current == FilesSendingState.State.Transfer) {
-
-                        val fileFromCurrentBlock = fileListsBlocks.peekBlock(currentBlockIndex)?.files?.get(index)
-
-                        val file = if (fileFromCurrentBlock == null) {
-                            currentBlockIndex = index
-                            val currentBlock = fileListsBlocks.peekBlock(currentBlockIndex) ?: throw ProtocolException("Got invalid file list index $index")
-                            val fileFromNewBlock = currentBlock.files[index] ?: throw ProtocolException("Got invalid file list index $index")
-                            if (!fileFromNewBlock.isReqularFile) {
-                                throw ProtocolException("File with index $index exptected to be a regular file, but it's not")
-                            }
-                            fileFromNewBlock
-                        } else {
-                            fileFromCurrentBlock
-                        }
-
-                        val checksumHeader = receiveChecksumHeader(reader)
-                        val checksum = receiveChecksum(checksumHeader, reader)
-
-                        val blockSize = if (checksumHeader.isNewFile) FilesTransmission.defaultBlockSize else checksumHeader.blockLength
-                        val bufferSizeMultiplier = if (checksumHeader.isNewFile) 1 else 10
-
-                        FilesTransmission().runWithOpenedFile(file.path,
-                                file.size,
-                                blockSize,
-                                blockSize * bufferSizeMultiplier) { fileRepr ->
-
-                            sendFileIndexAndItemFlag(index, itemFlag, writer)
-                            sendChecksumHeader(checksumHeader, writer)
-
-                            val longFileChecksum = try {
-
-                                if (checksumHeader.isNewFile) {
-                                    skipMatchesAndGetChecksum(fileRepr, file, writer)
-                                } else {
-                                    sendMatchesAndGetChecksum(fileRepr, checksum, requestData.checksumSeed, writer)
-                                }
-
-                            } catch (t: Throwable) {
-                                byteArrayOf() //TODO
-                            }
-
-                            writer.writeBytes(ByteBuffer.wrap(longFileChecksum))
-                        }
-
+                    val file = /*if (index - block.begin >= 0) {
+                        block.files[index - block.begin]
                     } else {
-                        throw ProtocolException("Received index $index is unexpected in current transferring state ${state.current.name}")
+                        //blocks.peekBlock(block.parent.files(index))
+                        throw UnsupportedOperationException("Store parent index in blocks")
+                    }*/ // <---- correct code for future
+                            blocks.popBlock()!!.files[-1]!!
+
+                    if (ItemFlag.Transfer !in iflags) {
+                        fileListIndexEncoder.encodeAndSend(index, Consumer<Byte>{ b -> writer.writeByte(b) })
+                        writer.writeBytes(VarintEncoder.varint(iflags.encode()))
+                        /*
+                        * TODO: stats
+                        * */
+                        if (ItemFlag.BasicTypeFollows in iflags) {
+                            throw NotSupportedException("It's time to support fnamecpm_type (sender.c line 177)")
+                        }
+
+                        if (ItemFlag.XNameFollows in iflags) {
+                            throw NotSupportedException("It's time to support xname (sender.c line 179)")
+                        }
+
+                        if (requestData.options.preserveXattrs) {
+                            throw NotSupportedException("It's time to support sending xattr request (sender.c line 183)")
+                        }
+
+                        if (ItemFlag.IsNew in iflags) {
+                            // TODO: update statistic (sender.c line 273)
+                        }
+                       continue@stateLoop
                     }
+
+                    val checksumHeader = receiveChecksumHeader(reader)
+                    val checksum = receiveChecksum(checksumHeader, reader)
+                    fileListIndexEncoder.encodeAndSend(index, Consumer<Byte>{ b -> writer.writeByte(b) })
+                    writer.writeBytes(VarintEncoder.varint(iflags.encode()))
+
+                    sendChecksumHeader(checksumHeader, writer)
+
+
+                    val blockSize = if (checksumHeader.isNewFile) FilesTransmission.defaultBlockSize else checksumHeader.blockLength
+                    val bufferSizeMultiplier = if (checksumHeader.isNewFile) 1 else 10
+                    FilesTransmission().runWithOpenedFile(file.path,
+                            file.size,
+                            blockSize,
+                            blockSize * bufferSizeMultiplier) { fileRepr ->
+
+                        val calculatedChacksum = try {
+
+                            if (checksumHeader.isNewFile) {
+                                skipMatchesAndGetChecksum(fileRepr, file, writer)
+                            } else {
+                                sendMatchesAndGetChecksum(fileRepr, checksum, requestData.checksumSeed, writer)
+                            }
+
+                        } catch (t: Throwable) {
+                            byteArrayOf() //TODO
+                        }
+
+                        writer.writeBytes(ByteBuffer.wrap(calculatedChacksum))
+                    }
+
                 }
                 else -> {
                     throw ProtocolException("Invalid index $index")
@@ -564,7 +528,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun decodeAndReadFileListIndex(reader: ReadingIO, writeIO: WriteIO): Int {
         writeIO.flush()
-        val index =  fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
+        val index = fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
         if (index == FileListsCode.done.code || index >= 0) {
             return index
         }

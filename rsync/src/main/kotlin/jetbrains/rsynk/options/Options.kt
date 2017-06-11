@@ -37,6 +37,7 @@ sealed class Option {
     object PreserveLinks : Option()
     object PreserveSpecials : Option()
     object PreserveUser : Option()
+    object PreserveXattrs: Option()
     object ProtectArgs : Option()
     object PruneEmptyDirectories : Option()
 
