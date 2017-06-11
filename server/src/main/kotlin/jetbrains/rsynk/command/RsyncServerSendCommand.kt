@@ -405,10 +405,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     }
 
                     val itemFlag = reader.readChar()
-                    if (!ItemFlagsValidator.isFlagSupported(itemFlag.toInt())) {
+                    val decodedItemFlags = itemFlag.decodeItemFlags()
+
+                    if (!ItemFlagsValidator.isFlagSupported(decodedItemFlags)) {
                         throw NotSupportedException("Received not supported item flag ($itemFlag)")
                     }
-                    val decodedItemFlags = itemFlag.decodeItemFlags()
 
                     if (ItemFlag.Transfer !in decodedItemFlags) {
                         val block = fileListsBlocks.peekBlock(currentBlockIndex)
