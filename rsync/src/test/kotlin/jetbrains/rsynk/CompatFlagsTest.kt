@@ -59,7 +59,7 @@ class CompatFlagsTest {
 
     private fun getAllFlags(): Set<CompatFlag> {
         val allFlags = setOf(CompatFlag.IncRecurse,
-                CompatFlag.SymlincTimes,
+                CompatFlag.SymlinkTimes,
                 CompatFlag.SymlinkIconv,
                 CompatFlag.SafeFileList,
                 CompatFlag.AvoidFileAttributesOptimization,

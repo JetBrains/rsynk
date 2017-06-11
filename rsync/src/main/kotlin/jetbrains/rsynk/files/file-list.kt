@@ -20,6 +20,7 @@ import java.util.*
 sealed class FileListsCode(val code: Int) {
     object done : FileListsCode(-1)
     object eof : FileListsCode(-2)
+    object delStats : FileListsCode(-3)
     object offset : FileListsCode(-101)
 }
 

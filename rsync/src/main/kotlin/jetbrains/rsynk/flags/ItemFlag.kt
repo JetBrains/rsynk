@@ -56,6 +56,6 @@ fun Char.decodeItemFlags(): Set<ItemFlag> {
             ItemFlag.IsNew,
             ItemFlag.LocalChange,
             ItemFlag.Transfer)
-            .filter { flag -> thisIntValue and flag.code == flag.code }
+            .filter { flag -> thisIntValue and flag.code != 0 }
             .toSet()
 }

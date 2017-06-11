@@ -62,7 +62,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                          output: WriteIO,
                          error: WriteIO) {
         exchangeProtocolVersions(input, output)
-        writeCompatFlags(output)
+        writeCompatFlags(requestData.options, output)
         writeChecksumSeed(requestData.checksumSeed, output)
 
         val message = input.readInt()
@@ -72,7 +72,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
         }
         //TODO: make client messages encoding more (than this) abstract
-        output.writeInt(117440552/*that's a message to client*/)
+        output.writeInt(117440534/*that's a message to client*/)
 
         val filter = receiveFilterList(input)
         sendFileList(requestData, filter, input, AutoFlushingWriter(output))
@@ -96,9 +96,15 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
     }
 
-    private fun writeCompatFlags(output: WriteIO) {
-        val serverCompatFlags = RsynkServerStaticConfiguration.serverCompatFlags.encode()
-        output.writeByte(serverCompatFlags)
+    private fun writeCompatFlags(options: RequestOptions, output: WriteIO) {
+        val cf = HashSet<CompatFlag>()
+        cf.addAll(RsynkServerStaticConfiguration.serverCompatFlags)
+        // TODO: merge static and dynamic compat flags setup
+        if (options.checksumSeedOrderFix) {
+            cf += CompatFlag.FixChecksumSeed
+        }
+        val encoded = cf.encode()
+        output.writeByte(encoded)
         output.flush()
     }
 
@@ -393,6 +399,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                 }
 
                 index >= 0 -> {
+
+                    if (RsynkServerStaticConfiguration.serverCompatFlags.contains(CompatFlag.IncRecurse)) {
+                        throw NotSupportedException("It's time to implement extra file list sending (sender.c line 234)")
+                    }
+
                     val itemFlag = reader.readChar()
                     if (!ItemFlagsValidator.isFlagSupported(itemFlag.toInt())) {
                         throw NotSupportedException("Received not supported item flag ($itemFlag)")
@@ -552,7 +563,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun decodeAndReadFileListIndex(reader: ReadingIO, writeIO: WriteIO): Int {
         writeIO.flush()
-        return fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
+        val index =  fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
+        if (index == FileListsCode.done.code || index >= 0) {
+            return index
+        }
+        throw UnsupportedOperationException("It's time to implement deletion statistic reading and sending (rsync.c line 326)")
     }
 
     private fun encodeAndSendFileListIndex(index: Int, writer: WriteIO) {
@@ -752,7 +767,7 @@ class FilesSendingState {
         private set
 
     fun nextState() {
-       val newState = when (current) {
+        val newState = when (current) {
             State.Transfer -> State.TearDownOne
             State.TearDownOne -> State.TearDownTwo
             State.TearDownTwo -> State.Stop
