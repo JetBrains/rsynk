@@ -21,8 +21,12 @@ object RsynkServerStaticConfiguration {
     val clientProtocolVersionMin = 31
     val serverProtocolVersion = 31
     val clientProtocolVersionMax = 31
-    val serverCompatFlags: Set<CompatFlag> = setOf(CompatFlag.AvoidFileAttributesOptimization,
-            CompatFlag.FixChecksumSeed)
+
+    val serverCompatFlags: Set<CompatFlag> = setOf(CompatFlag.SymlinkTimes,
+            CompatFlag.SymlinkIconv,
+            CompatFlag.SafeFileList,
+            CompatFlag.AvoidFileAttributesOptimization)
+
     val fileListPartitionLimit = 1024
     val chunkSize = 8 * 1024
 }

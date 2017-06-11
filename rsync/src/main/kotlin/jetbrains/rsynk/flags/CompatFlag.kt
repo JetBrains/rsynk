@@ -18,7 +18,7 @@ package jetbrains.rsynk.flags
 
 sealed class CompatFlag(val value: Int) {
     object IncRecurse : CompatFlag(1)
-    object SymlincTimes : CompatFlag(2)
+    object SymlinkTimes : CompatFlag(2)
     object SymlinkIconv : CompatFlag(4)
     object SafeFileList : CompatFlag(8)
     object AvoidFileAttributesOptimization : CompatFlag(16)
@@ -32,7 +32,7 @@ fun Set<CompatFlag>.encode(): Byte {
 fun Byte.decodeCompatFlags(): Set<CompatFlag> {
     val thisIntValue = this.toInt()
     return listOf(CompatFlag.IncRecurse,
-            CompatFlag.SymlincTimes,
+            CompatFlag.SymlinkTimes,
             CompatFlag.SymlinkIconv,
             CompatFlag.SafeFileList,
             CompatFlag.AvoidFileAttributesOptimization,
