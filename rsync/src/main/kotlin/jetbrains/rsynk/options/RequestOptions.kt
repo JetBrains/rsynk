@@ -44,6 +44,7 @@ class RequestOptions(val options: Set<Option>) {
     val preserveLinks: Boolean = Option.PreserveLinks in options
     val preserveSpecials: Boolean = Option.PreserveSpecials in options
     val preserveUser: Boolean = Option.PreserveUser in options
+    val preserveXattrs: Boolean = Option.PreserveXattrs in options
     val protectArgs: Boolean = Option.ProtectArgs in options
     val pruneEmptyDirectories: Boolean = Option.PruneEmptyDirectories in options
     val relativeNames: Boolean = Option.RelativePaths in options

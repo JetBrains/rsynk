@@ -24,6 +24,11 @@ object VarintEncoder {
 
     private fun Long.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(this).array()
 
+    fun shortint(i: Int): ByteBuffer {
+        val bytes = i.toLittleEndianBytes()
+        return ByteBuffer.wrap(byteArrayOf(bytes[0], bytes[1]))
+    }
+
     fun varint(i: Int): ByteBuffer {
         return write_var_number(i.toLittleEndianBytes(), 1)
     }

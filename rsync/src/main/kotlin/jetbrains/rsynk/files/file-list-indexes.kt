@@ -77,8 +77,8 @@ class FileListIndexDecoder {
 
 class FileListIndexEncoder {
 
-    private var lastPositive = 1
-    private var lastNegative = -1
+    private var lastPositive = -1
+    private var lastNegative = 1
 
     fun encodeAndSend(index: Int, writer: Consumer<Byte>) {
 
@@ -94,6 +94,7 @@ class FileListIndexEncoder {
             lastPositive = positiveIndexValue
             diff
         } else {
+            //TODO: test this condition
             val diff = positiveIndexValue - lastNegative
             lastNegative = positiveIndexValue
             writer.accept(0xFF)

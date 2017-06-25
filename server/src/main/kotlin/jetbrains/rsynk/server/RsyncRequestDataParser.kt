@@ -109,6 +109,7 @@ object RsyncRequestDataParser {
                 's' -> Option.ProtectArgs
                 'v' -> Option.VerboseMode
                 'x' -> Option.OneFileSystem
+                'X' -> Option.PreserveXattrs
                 'z' -> Option.Compress
 
                 else -> throw ArgsParingException("Unknown short named option '$c' ($o)")
@@ -136,6 +137,7 @@ object RsyncRequestDataParser {
             "protect-args" -> Option.ProtectArgs
             "prune-empty-dirs" -> Option.PruneEmptyDirectories
             "specials" -> Option.PreserveSpecials
+            "xattrs" -> Option.PreserveXattrs
 
             else -> {
                 //special cases where == isn't enough
