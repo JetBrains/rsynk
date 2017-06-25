@@ -24,13 +24,10 @@ import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.*
-import jetbrains.rsynk.io.AutoFlushingWriter
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RequestOptions
-import jetbrains.rsynk.protocol.RsyncMessage
-import jetbrains.rsynk.protocol.RsyncMessageInterpreter
 import jetbrains.rsynk.protocol.RsynkServerStaticConfiguration
 import mu.KLogging
 import java.nio.ByteBuffer
@@ -48,7 +45,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private val fileListIndexDecoder = FileListIndexDecoder()
     private val fileListIndexEncoder = FileListIndexEncoder()
-    private val messageInterpreter = RsyncMessageInterpreter()
 
     /**
      * Perform negotiation and send requested file.
@@ -66,16 +62,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writeChecksumSeed(requestData.checksumSeed, output)
 
         val message = input.readInt()
-        messageInterpreter.decode(message).let {
-            if (it !is RsyncMessage.Data) {
-                throw ProtocolException("Expected Data message, received: $it")
-            }
-        }
         //TODO: make client messages encoding more (than this) abstract
         output.writeInt(117440534/*that's a message to client*/)
 
         val filter = receiveFilterList(input)
-        sendFileList(requestData, filter, input, AutoFlushingWriter(output))//TODO: continue to use auto flushing writer?
+        sendFileList(requestData, filter, input, output)
     }
 
 
@@ -185,12 +176,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         val message = reader.readInt()
-        messageInterpreter.decode(message).let {
-            if (it !is RsyncMessage.Data) {
-                throw ProtocolException("Expected Data message, received: $it")
-            }
-        }
-
         sendFiles(fileList, data, reader, writer)
     }
 

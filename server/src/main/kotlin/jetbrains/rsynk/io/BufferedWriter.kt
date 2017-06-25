@@ -20,10 +20,14 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicLong
 
-class BufferedWriter(private val output: OutputStream,
-                     bufferSize: Int = 1024 * 10) : WriteIO {
+open class BufferedWriter(private val output: OutputStream,
+                          bufferSize: Int = 1024 * 10) : WriteIO {
 
-    val buffer: ByteBuffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
+    protected val buffer: ByteBuffer = ByteBuffer
+            .allocate(bufferSize)
+            .order(ByteOrder.LITTLE_ENDIAN) //TODO capacity to settings
+
+    private val written = AtomicLong(0)
 
     override fun writeChar(c: Char) {
         if (buffer.remaining() < 2) {
@@ -75,8 +79,6 @@ class BufferedWriter(private val output: OutputStream,
             buffer.clear()
         }
     }
-
-    val written = AtomicLong(0)
 
     override val writtenBytes: Long
         get() = written.get()

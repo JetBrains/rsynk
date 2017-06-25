@@ -23,6 +23,7 @@ import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.TrackingFilesProvider
 import jetbrains.rsynk.io.BasicReadingIO
 import jetbrains.rsynk.io.BufferedWriter
+import jetbrains.rsynk.io.TaggingBufferedWriter
 import mu.KLogging
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -90,7 +91,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                         command.execute(
                                 requestData,
                                 BasicReadingIO(stdin),
-                                BufferedWriter(stdout),
+                                TaggingBufferedWriter(stdout, 8 * 1024),
                                 BufferedWriter(stderr)
                         )
                         exit(RsyncExitCodes.Success)
