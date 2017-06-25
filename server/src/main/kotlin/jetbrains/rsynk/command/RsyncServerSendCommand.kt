@@ -422,7 +422,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             blockSize,
                             blockSize * bufferSizeMultiplier) { fileRepr ->
 
-                        val calculatedChacksum = try {
+                        val calculatedChecksum = try {
 
                             if (checksumHeader.isNewFile) {
                                 skipMatchesAndGetChecksum(fileRepr, file, writer)
@@ -434,7 +434,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             byteArrayOf() //TODO
                         }
 
-                        writer.writeBytes(ByteBuffer.wrap(calculatedChacksum))
+                        writer.writeBytes(ByteBuffer.wrap(calculatedChecksum))
                     }
 
                 }
