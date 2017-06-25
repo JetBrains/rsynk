@@ -75,7 +75,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         output.writeInt(117440534/*that's a message to client*/)
 
         val filter = receiveFilterList(input)
-        sendFileList(requestData, filter, input, AutoFlushingWriter(output))
+        sendFileList(requestData, filter, input, AutoFlushingWriter(output))//TODO: continue to use auto flushing writer?
     }
 
 
@@ -346,11 +346,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                           reader: ReadingIO,
                           writer: WriteIO) {
 
-        var eofSent = false
 
-        val state = FilesSendingState()
+        val state = TransferState()
 
-        stateLoop@ while (state.current != FilesSendingState.State.Stop) {
+        stateLoop@ while (state.current != TransferState.State.Stop) {
 
             val index = decodeAndReadFileListIndex(reader, writer)
             val iflags = if (index == FileListsCode.done.code) {
@@ -410,10 +409,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     val checksumHeader = receiveChecksumHeader(reader)
                     val checksum = receiveChecksum(checksumHeader, reader)
                     fileListIndexEncoder.encodeAndSend(index, Consumer<Byte>{ b -> writer.writeByte(b) })
-                    writer.writeBytes(VarintEncoder.varint(iflags.encode()))
+                    writer.writeBytes(VarintEncoder.shortint(iflags.encode()))
 
                     sendChecksumHeader(checksumHeader, writer)
 
+                    //TODO set compression
 
                     val blockSize = if (checksumHeader.isNewFile) FilesTransmission.defaultBlockSize else checksumHeader.blockLength
                     val bufferSizeMultiplier = if (checksumHeader.isNewFile) 1 else 10
@@ -719,7 +719,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 }
 
 
-class FilesSendingState {
+class TransferState {
 
     sealed class State(val name: String) {
         object Transfer : State("transfer")
