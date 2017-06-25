@@ -39,7 +39,7 @@ val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
   // asking for users.log file
   // so you can define correct boundaries from your application
   val lowerBound = 0                                   
-  val upperBound = getLastWritePosition(logData)         
+  val upperBound = getLastWritePosition(logData) // an example of method you can provide         
   RsynkFilesBoundaries(lowerBound, upperBound)
 })
 rsynk.addTrackingFile(rsynkFile)
