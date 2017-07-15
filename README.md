@@ -15,22 +15,22 @@ This is notrsync re-implementation. Unlike server, client functionality is not a
 The goal is to make rsync server that allows rich files and their content manipulations. That means rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
 
 ### Supported rsync versions ###
-Required mimimal client version is 3.1.0 (released September 28th, 2013)
+Required mimimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/)
 
 ### Example ###
 **Rsynk** is able to manage tracked files dynamically:
 
 ```kotlin
 val rsynk = Rsynk.newBuilder().apply {
-                  port = 22
-                  idleConnectionTimeout = 30000
-                  nioWorkersNumber = 1
-                  commandWorkersNumber = 1
+                      port = 22
+                      idleConnectionTimeout = 30000
+                      nioWorkersNumber = 1
+                      commandWorkersNumber = 1
                   }.build()
                   
-rsynk.addTrackingFiles( ... ) 
+rsynk.addTrackingFiles(...) 
 ...
-rsync.setTrackingFiles( ... )
+rsync.setTrackingFiles(...)
 ```                
 
 It is possible to track only a part of a file (i.e. a consistent part which is correct in terms of your application current state)
@@ -49,7 +49,7 @@ val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
 rsynk.addTrackingFile(rsynkFile)
 ```
 
-### Building from Source
+### Building project
 [Gradle](http://www.gradle.org) is used to build and test. JDK 1.8 and [Kotlin](http://kotlinlang.org)
 1.1.1 are required. To build the project, run:
 
