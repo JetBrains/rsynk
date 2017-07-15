@@ -14,6 +14,9 @@ This is notrsync re-implementation. Unlike server, client functionality is not a
 ### Goals ###
 The goal is to make rsync server that allows rich files and their content manipulations. That means rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
 
+### Supported rsync versions ###
+Required mimimal client version is 3.1.0 (released September 28th, 2013)
+
 ### Example ###
 **Rsynk** is able to manage tracked files dynamically:
 
