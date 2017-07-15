@@ -18,7 +18,7 @@ The goal is to make rsync server that allows rich files and their content manipu
 Required mimimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/)
 
 ### Example ###
-**Rsynk** is able to manage tracked files dynamically:
+**Rsynk** is able to dynamically choose which files to track:
 
 ```kotlin
 val rsynk = Rsynk.newBuilder().apply {
@@ -29,21 +29,19 @@ val rsynk = Rsynk.newBuilder().apply {
                   }.build()
                   
 rsynk.addTrackingFiles(...) 
-...
+// or
 rsync.setTrackingFiles(...)
 ```                
 
-It is possible to track only a part of a file (i.e. a consistent part which is correct in terms of your application current state)
+It's also possible to track only a certin part of file (i.e. a consistent part which is correct in terms of your application current state)
 
 ```kotlin
-val logData = File("app/data/logs/users.log")
+val usersLog = File("app/data/logs/users.log")
 val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
-
-  // this callback will be invoked for each request 
+  // this lambda will be invoked for each request 
   // boundaries are as dynamic as it possible
-
   val lowerBound = 0                                   
-  val upperBound = getLastWritePosition(logData) // an example of method you can provide         
+  val upperBound = getLastSerializedChunkPosition(usersLog) // an example of dynamic bound
   RsynkFilesBoundaries(lowerBound, upperBound)
 })
 rsynk.addTrackingFile(rsynkFile)
