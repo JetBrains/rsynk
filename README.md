@@ -4,15 +4,18 @@
 ![Repository Size](https://reposs.herokuapp.com/?path=JetBrains/rsynk)
 ![Pure Kotlin](https://img.shields.io/badge/100%25-kotlin-orange.svg)
 
-## SSH server that accepts rsync read request ##  
+Consider work in progress. It's not yet ready to use.
 
 ### What it is ###
-In your application running in a JVM, it works like an [rsync](https://rsync.samba.org) daemon on a remote
-computer: it allows you to connect to remote machine and download files. Hovewer it works via ssh, not via rsync protocol.
+An embeddable ssh server for [rsync clinet](https://rsync.samba.org).
 
 ### What it is not ###
-This is not a jvm rsync re-implementation. You cannot use it as jvm rsync client, only as a server
+This is notrsync re-implementation. Unlike server, client functionality is not an aim of this project.
 
+### Goals ###
+The goal is to make rsync server that allows rich files and their content manipulations. That means rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
+
+### Example ###
 **Rsynk** lets you to choose tracked files dynamically, providing an API to your application:
 
 ```kotlin
@@ -44,8 +47,6 @@ val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
 })
 rsynk.addTrackingFile(rsynkFile)
 ```
-
-Consider work in progress
 
 ### Building from Source
 [Gradle](http://www.gradle.org) is used to build and test. JDK 1.8 and [Kotlin](http://kotlinlang.org)
