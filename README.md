@@ -9,7 +9,7 @@ Consider work in progress. It's not yet ready to use.
 An embeddable ssh server for [rsync clinet](https://rsync.samba.org).
 
 ### What it is not ###
-This is notrsync re-implementation. Unlike server, client functionality is not an aim of project.
+This is not and rsync re-implementation. Unlike server, client functionality is not an aim of project.
 
 ### Goals ###
 The goal is to make rsync server that allows rich files and their content manipulations. That means rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
@@ -41,7 +41,7 @@ val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
   // this lambda will be invoked for each request 
   // boundaries are as dynamic as it possible
   val lowerBound = 0                                   
-  val upperBound = getLastSerializedChunkPosition(usersLog) // an example of dynamic bound
+  val upperBound = getLastSerializedChunkPosition(usersLog)
   RsynkFilesBoundaries(lowerBound, upperBound)
 })
 rsynk.addTrackingFile(rsynkFile)
