@@ -15,21 +15,17 @@
  */
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.io.ReadingIO
-import jetbrains.rsynk.io.WriteIO
-import jetbrains.rsynk.options.RequestOptions
+import java.io.InputStream
+import java.io.OutputStream
 
 interface Command {
-    fun execute(requestData: RequestData,
-                input: ReadingIO,
-                output: WriteIO,
-                error: WriteIO)
+    fun execute(args: List<String>,
+                stdIn: InputStream,
+                stdOut: OutputStream,
+                stdErr: OutputStream)
 }
 
-data class RequestData(
-        val options: RequestOptions,
-        val filePaths: List<String>,
-        val checksumSeed: Int
-)
-
 interface RsyncCommand : Command
+
+
+

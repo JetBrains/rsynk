@@ -18,35 +18,27 @@ package jetbrains.rsynk.files
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
 import java.io.File
-import java.nio.file.Path
 
 class FileResolver(private val fileInfoReader: FileInfoReader,
-                   trackingFilesProvider: TrackingFilesProvider) {
+                   private val trackedFilesProvider: TrackedFilesProvider) {
 
     companion object {
         private val wildcardsInPathPattern = Regex(".*[\\[*?].*")
     }
 
-    private val trackingFiles: Map<Path, RsynkFile>
-
-    init {
-        trackingFiles = trackingFilesProvider.getTrackkngFiles().map { Pair(fileToPath(it.file), it) }.toMap()
-    }
-
-    fun resolve(paths: List<String>): List<RsynkFileInfoWithBoundaries> {
+    fun resolve(paths: List<String>): List<RsynkFileWithInfo> {
 
         if (paths.any { wildcardsInPathPattern.matches(it) }) {
             throw NotSupportedException("Received files list ${paths.joinToString(separator = ", ")} " +
                     "has at least one file with wildcard (paths expanding is not supported)")
         }
 
+        val trackedFiles = trackedFilesProvider.getTrackedFiles().map { it.file.absolutePath to it }.toMap()
         return paths.map {
-            val path = fileToPath(File(it))
-            val trackingFile = trackingFiles[path] ?: throw InvalidFileException("File $path is missing among files tracked by rsynk")
-            val fileInfo = fileInfoReader.getFileInfo(path)
-            RsynkFileInfoWithBoundaries(trackingFile, fileInfo)
+            val path = File(it).absolutePath
+            val trackedFile = trackedFiles[path] ?: throw InvalidFileException("File $path is missing among files tracked by rsynk")
+            val fileInfo = fileInfoReader.getFileInfo(trackedFile.file)
+            RsynkFileWithInfo(trackedFile, fileInfo)
         }
     }
-
-    private fun fileToPath(file: File): Path = file.toPath().normalize()
 }

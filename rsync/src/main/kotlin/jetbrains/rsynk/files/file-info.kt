@@ -111,9 +111,9 @@ data class RsynkFileBoundaries(val offset: Long,
 data class RsynkFile(val file: File,
                      val getBoundariesCallback: () -> RsynkFileBoundaries)
 
-data class RsynkFileInfoWithBoundaries(val rsynkFile: RsynkFile,
-                                       val info: FileInfo): Comparable<RsynkFileInfoWithBoundaries> {
-    override fun compareTo(other: RsynkFileInfoWithBoundaries): Int {
+data class RsynkFileWithInfo(val rsynkFile: RsynkFile,
+                             val info: FileInfo): Comparable<RsynkFileWithInfo> {
+    override fun compareTo(other: RsynkFileWithInfo): Int {
         return info.compareTo(other.info)
     }
 }

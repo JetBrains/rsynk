@@ -27,10 +27,9 @@ class RsynkBuilder internal constructor(var port: Int,
                                         internal val files: List<RsynkFile>) {
     companion object {
         internal val default = RsynkBuilder(
-                port = 22,
-                nioWorkers = 1,
+                port = 22, nioWorkers = 1,
                 commandWorkers = 1,
-                idleConnectionTimeout = 50 * 1000,
+                idleConnectionTimeout = 60 * 1000,
                 serverKeysProvider = KeyPairProvider { emptyList() },
                 maxAuthAttempts = 2,
                 files = emptyList())
