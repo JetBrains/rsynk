@@ -15,6 +15,6 @@
  */
 package jetbrains.rsynk.request
 
-data class RsyncRequest(
-        val filePaths: List<String>
+data class RsyncServerSendRequest(
+        val files: List<String>
 )

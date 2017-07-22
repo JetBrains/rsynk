@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server
+package jetbrains.rsynk.request
 
 import jetbrains.rsynk.exitvalues.ArgsParingException
-import jetbrains.rsynk.request.RsyncRequest
 import java.util.*
 
 
-internal object RsyncRequestParser {
+internal object RsyncServerSendRequestParser {
 
     private enum class RsyncArgumentKind { rsync, option, file }
 
-    fun parse(args: List<String>): RsyncRequest {
+    fun parse(args: List<String>): RsyncServerSendRequest {
 
         val files = ArrayList<String>()
 
@@ -55,7 +54,7 @@ internal object RsyncRequestParser {
                 }
             }
         }
-        return RsyncRequest(files)
+        return RsyncServerSendRequest(files)
     }
 
     private fun String.isShortOption(): Boolean {

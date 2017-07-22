@@ -16,7 +16,7 @@
 package jetbrains.rsynk.server.unit
 
 import jetbrains.rsynk.exitvalues.ArgsParingException
-import jetbrains.rsynk.server.RsyncRequestParser
+import jetbrains.rsynk.request.RsyncServerSendRequestParser
 import org.junit.Assert
 import org.junit.Test
 
@@ -24,26 +24,26 @@ class RsyncRequestFileListParserTest {
 
     @Test
     fun no_files_test() {
-        val data = RsyncRequestParser.parse(listOf("rsync", "--server", "--sender", "-LCd", "."))
-        Assert.assertTrue(data.filePaths.isEmpty())
+        val data = RsyncServerSendRequestParser.parse(listOf("rsync", "--server", "--sender", "-LCd", "."))
+        Assert.assertTrue(data.files.isEmpty())
     }
 
     @Test
     fun parse_files_test() {
-        val data = RsyncRequestParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/first/file", "path/to/second-file"))
-        Assert.assertEquals(data.filePaths.joinToString(), 2, data.filePaths.size)
-        Assert.assertTrue(data.filePaths.contains("/path/to/first/file"))
-        Assert.assertTrue(data.filePaths.contains("path/to/second-file"))
+        val data = RsyncServerSendRequestParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/first/file", "path/to/second-file"))
+        Assert.assertEquals(data.files.joinToString(), 2, data.files.size)
+        Assert.assertTrue(data.files.contains("/path/to/first/file"))
+        Assert.assertTrue(data.files.contains("path/to/second-file"))
     }
 
     @Test
     fun parse_pre_release_info_test() {
-        val data = RsyncRequestParser.parse(listOf("rsync", "--server", "--sender", "-Le31.100002C", ".", "/path/to/first/file"))
-        Assert.assertEquals(data.filePaths.joinToString(), 1, data.filePaths.size)
+        val data = RsyncServerSendRequestParser.parse(listOf("rsync", "--server", "--sender", "-Le31.100002C", ".", "/path/to/first/file"))
+        Assert.assertEquals(data.files.joinToString(), 1, data.files.size)
     }
 
     @Test(expected = ArgsParingException::class)
     fun parse_non_rsync_command_test() {
-        RsyncRequestParser.parse(listOf("--server", "-e.sd", "."))
+        RsyncServerSendRequestParser.parse(listOf("--server", "-e.sd", "."))
     }
 }
