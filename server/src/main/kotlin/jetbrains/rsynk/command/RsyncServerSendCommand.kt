@@ -14,7 +14,7 @@ internal class RsyncServerSendCommand(fileInfoReader: FileInfoReader,
     }
 
     override fun matchArguments(args: List<String>): Boolean {
-        if (args.size < 4) {
+        if (args.size < 3) {
             return false
         }
         if (args.any { it == "--daemon" || it == "daemon" }) {
