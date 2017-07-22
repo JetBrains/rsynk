@@ -17,7 +17,7 @@ package jetbrains.rsynk.server
 
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
-interface SSHSettings {
+interface SshServerSettings {
     val port: Int
     val nioWorkers: Int
     val commandWorkers: Int

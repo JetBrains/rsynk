@@ -22,7 +22,7 @@ import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
 import jetbrains.rsynk.server.ExplicitCommandFactory
 import jetbrains.rsynk.server.RsynkSshServer
 import jetbrains.rsynk.server.SSHSessionFactory
-import jetbrains.rsynk.server.SSHSettings
+import jetbrains.rsynk.server.SshServerSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 import java.util.*
 
@@ -79,7 +79,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
         return FileInfoReader(UnixDefaultFileSystemInfo())
     }
 
-    private fun sshSetting() = object : SSHSettings {
+    private fun sshSetting() = object : SshServerSettings {
         override val port: Int = builder.port
         override val nioWorkers: Int = builder.nioWorkers
         override val commandWorkers: Int = builder.commandWorkers

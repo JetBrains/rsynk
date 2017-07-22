@@ -31,7 +31,7 @@ import java.io.OutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-internal class ExplicitCommandFactory(settings: SSHSettings,
+internal class ExplicitCommandFactory(settings: SshServerSettings,
                                       fileInfoReader: FileInfoReader,
                                       trackedFiles: TrackedFilesProvider
 ) : CommandFactory {
