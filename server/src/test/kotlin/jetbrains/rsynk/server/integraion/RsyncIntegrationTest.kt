@@ -54,7 +54,7 @@ class RsyncIntegrationTest {
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.setTrackingFiles(listOf(rsynkFile))
+        rsynk.setTrackedFiles(listOf(rsynkFile))
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
@@ -70,7 +70,7 @@ class RsyncIntegrationTest {
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.setTrackingFiles(listOf(rsynkFile))
+        rsynk.setTrackedFiles(listOf(rsynkFile))
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
@@ -88,7 +88,7 @@ class RsyncIntegrationTest {
         val sourceFile2 = File(dataDirectory, "source-file-2.txt")
         sourceFile2.writeText(IntegrationTestTools.loremIpsum)
 
-        rsynk.setTrackingFiles(
+        rsynk.setTrackedFiles(
                 listOf(RsynkFile(sourceFile1, { RsynkFileBoundaries(0, sourceFile1.length()) }),
                         RsynkFile(sourceFile2, { RsynkFileBoundaries(0, sourceFile2.length()) }))
         )
@@ -117,7 +117,7 @@ class RsyncIntegrationTest {
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.setTrackingFiles(listOf(rsynkFile))
+        rsynk.setTrackedFiles(listOf(rsynkFile))
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
@@ -133,7 +133,7 @@ class RsyncIntegrationTest {
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.addTrackingFile(rsynkFile)
+        rsynk.trackFile(rsynkFile)
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")

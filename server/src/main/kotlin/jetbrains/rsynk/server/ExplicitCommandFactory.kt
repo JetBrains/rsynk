@@ -17,10 +17,10 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
+import jetbrains.rsynk.exitvalues.RsyncException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
-import jetbrains.rsynk.exitvalues.RsynkException
-import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.TrackedFilesStorage
+import jetbrains.rsynk.settings.RsyncSettings
 import jetbrains.rsynk.settings.SshServerSettings
 import mu.KLogging
 import org.apache.sshd.server.Command
@@ -32,16 +32,16 @@ import java.io.OutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-internal class ExplicitCommandFactory(settings: SshServerSettings,
-                                      fileInfoReader: FileInfoReader,
-                                      trackedFiles: TrackedFilesStorage
+internal class ExplicitCommandFactory(trackedFiles: TrackedFilesStorage,
+                                      sshSettings: SshServerSettings,
+                                      rsyncSettings: RsyncSettings
 ) : CommandFactory {
 
     companion object : KLogging()
 
-    private val commands = AllCommandsResolver(fileInfoReader, trackedFiles)
+    private val commands = AllCommandsResolver(trackedFiles, rsyncSettings)
 
-    private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
+    private val threadPool = Executors.newFixedThreadPool(sshSettings.commandWorkers, threadFactory@ { runnable ->
         val newThread = Thread(runnable, "ssh-command")
         newThread.isDaemon = true
         return@threadFactory newThread
@@ -55,7 +55,6 @@ internal class ExplicitCommandFactory(settings: SshServerSettings,
         var inputStream: InputStream? = null
         var outputStream: OutputStream? = null
         var errorStream: OutputStream? = null
-
 
         return object : Command {
             override fun start(env: Environment) {
@@ -92,7 +91,7 @@ internal class ExplicitCommandFactory(settings: SshServerSettings,
                         )
 
                         exit(RsyncExitCodes.Success)
-                    } catch (e: RsynkException) {
+                    } catch (e: RsyncException) {
                         logger.info { "Command $args failed: with $e (${e.message})" }
                         writeError(e)
                         exit(e.exitCode)

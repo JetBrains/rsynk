@@ -15,15 +15,16 @@
  */
 package jetbrains.rsynk.application
 
-import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.RsynkFile
 import jetbrains.rsynk.files.TrackedFilesStorage
-import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
+import jetbrains.rsynk.files.mkdirs
 import jetbrains.rsynk.server.ExplicitCommandFactory
 import jetbrains.rsynk.server.RsynkSshServer
 import jetbrains.rsynk.server.SSHSessionFactory
+import jetbrains.rsynk.settings.RsyncSettings
 import jetbrains.rsynk.settings.SshServerSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
+import java.io.File
 import java.util.*
 
 class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoCloseable {
@@ -33,53 +34,14 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     private val server: RsynkSshServer
-    private val trackedFiles = ArrayList<RsynkFile>()
+    private val trackedFiles = HashMap<String, RsynkFile>()
+
     private val filesProvider = object : TrackedFilesStorage {
-        override fun getTrackedFiles(): List<RsynkFile> {
-            return trackedFiles
-        }
-
+        override fun getTrackedFile(path: String): RsynkFile? = trackedFiles[path]
+        override fun getTrackedFiles(): List<RsynkFile> = trackedFiles.values.toList()
     }
 
-    init {
-        val sshSettings = sshSetting()
-        val fileInfoReader = fileInfoReader()
-
-        server = RsynkSshServer(
-                sshSettings,
-                ExplicitCommandFactory(sshSettings, fileInfoReader, filesProvider),
-                SSHSessionFactory()
-        )
-
-        trackedFiles.addAll(builder.files)
-
-        server.start()
-    }
-
-    fun addTrackingFiles(files: List<RsynkFile>): Rsynk {
-        this.trackedFiles.addAll(files)
-        return this
-    }
-
-    fun addTrackingFile(file: RsynkFile) {
-        addTrackingFiles(listOf(file))
-    }
-
-    fun setTrackingFiles(files: List<RsynkFile>): Rsynk {
-        this.trackedFiles.clear()
-        addTrackingFiles(files)
-        return this
-    }
-
-    override fun close() {
-        server.stop()
-    }
-
-    private fun fileInfoReader(): FileInfoReader {
-        return FileInfoReader(UnixDefaultFileSystemInfo())
-    }
-
-    private fun sshSetting() = object : SshServerSettings {
+    private val sshSettings = object : SshServerSettings {
         override val port: Int = builder.port
         override val nioWorkers: Int = builder.nioWorkers
         override val commandWorkers: Int = builder.commandWorkers
@@ -87,6 +49,55 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
         override val maxAuthAttempts: Int = builder.maxAuthAttempts
         override val serverKeys: KeyPairProvider = builder.serverKeysProvider
         override val applicationNameNoSpaces: String = "rsynk"
+    }
+
+    private val rsyncSettings = object : RsyncSettings {
+        override val rsyncPath: String = builder.rsyncPath
+        override val tempDirectory: File
+            get() {
+                val tmpDir = File(builder.tempDirectoryPath)
+                try {
+                    mkdirs(tmpDir)
+                } catch (t: Throwable) {
+                    throw IllegalArgumentException("Cannot initialize tmp directory: ${t.message}", t)
+                }
+                return tmpDir
+            }
+    }
+
+    init {
+        server = RsynkSshServer(
+                sshSettings,
+                ExplicitCommandFactory(filesProvider, sshSettings, rsyncSettings),
+                SSHSessionFactory()
+        )
+
+        builder.files.forEach {
+            trackedFiles.put(it.file.absolutePath, it)
+        }
+
+        server.start()
+    }
+
+    fun trackFiles(files: List<RsynkFile>): Rsynk {
+        files.forEach {
+            this.trackedFiles.put(it.file.absolutePath, it)
+        }
+        return this
+    }
+
+    fun trackFile(file: RsynkFile) {
+        trackFiles(listOf(file))
+    }
+
+    fun setTrackedFiles(files: List<RsynkFile>): Rsynk {
+        this.trackedFiles.clear()
+        trackFiles(files)
+        return this
+    }
+
+    override fun close() {
+        server.stop()
     }
 }
 

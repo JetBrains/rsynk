@@ -15,19 +15,19 @@
  */
 package jetbrains.rsynk.command
 
-import jetbrains.rsynk.files.FileInfoReader
-import jetbrains.rsynk.files.TrackedFilesProvider
+import jetbrains.rsynk.files.TrackedFilesStorage
+import jetbrains.rsynk.settings.RsyncSettings
 
 
 internal interface CommandsResolver {
     fun resolve(args: List<String>): Command
 }
 
-internal class AllCommandsResolver(fileInfoReader: FileInfoReader,
-                                   trackedFiles: TrackedFilesProvider
+internal class AllCommandsResolver(trackedFiles: TrackedFilesStorage,
+                                   rsyncSettings: RsyncSettings
 ) : CommandsResolver {
 
-    private val rsyncCommandsResolver = RsyncCommandsResolver(fileInfoReader, trackedFiles)
+    private val rsyncCommandsResolver = RsyncCommandsResolver(trackedFiles, rsyncSettings)
 
     override fun resolve(args: List<String>): Command {
 
@@ -43,12 +43,12 @@ internal class AllCommandsResolver(fileInfoReader: FileInfoReader,
 
 }
 
-internal class RsyncCommandsResolver(fileInfoReader: FileInfoReader,
-                                     trackedFiles: TrackedFilesProvider
+internal class RsyncCommandsResolver(trackedFiles: TrackedFilesStorage,
+                                     rsyncSettings: RsyncSettings
 ) : CommandsResolver {
 
     private val commands: List<RsyncCommand> = listOf(
-            RsyncServerSendCommand(fileInfoReader, trackedFiles)
+            RsyncServerSendCommand(trackedFiles, rsyncSettings)
     )
 
     override fun resolve(args: List<String>): Command {

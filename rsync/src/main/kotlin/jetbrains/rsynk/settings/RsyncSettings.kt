@@ -1,6 +1,8 @@
 package jetbrains.rsynk.settings
 
+import java.io.File
+
 interface RsyncSettings {
     val rsyncPath: String
-    val tempFilesDirectoryPath: String
+    val tempDirectory: File
 }

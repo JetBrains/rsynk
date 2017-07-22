@@ -17,28 +17,22 @@ package jetbrains.rsynk.files
 
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
-import java.io.File
 
-class FileResolver(private val fileInfoReader: FileInfoReader,
-                   private val trackedFilesProvider: TrackedFilesProvider) {
+class FileResolver(private val trackedFilesStorage: TrackedFilesStorage) {
 
     companion object {
         private val wildcardsInPathPattern = Regex(".*[\\[*?].*")
     }
 
-    fun resolve(paths: List<String>): List<RsynkFileWithInfo> {
+    fun resolve(paths: List<String>): List<RsynkFile> {
 
         if (paths.any { wildcardsInPathPattern.matches(it) }) {
             throw NotSupportedException("Received files list ${paths.joinToString(separator = ", ")} " +
                     "has at least one file with wildcard (paths expanding is not supported)")
         }
 
-        val trackedFiles = trackedFilesProvider.getTrackedFiles().map { it.file.absolutePath to it }.toMap()
         return paths.map {
-            val path = File(it).absolutePath
-            val trackedFile = trackedFiles[path] ?: throw InvalidFileException("File $path is missing among files tracked by rsynk")
-            val fileInfo = fileInfoReader.getFileInfo(trackedFile.file)
-            RsynkFileWithInfo(trackedFile, fileInfo)
+            trackedFilesStorage.getTrackedFile(it) ?: throw InvalidFileException("File $it is missing among files tracked by rsynk")
         }
     }
 }

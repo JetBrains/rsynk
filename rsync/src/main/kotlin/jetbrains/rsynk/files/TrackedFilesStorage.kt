@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.files
 
-interface TrackedFilesProvider {
+interface TrackedFilesStorage {
     fun getTrackedFiles(): List<RsynkFile>
+    fun getTrackedFile(path: String): RsynkFile?
 }

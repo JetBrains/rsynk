@@ -17,16 +17,20 @@ package jetbrains.rsynk.server.unit
 
 import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
-import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.RsynkFile
-import jetbrains.rsynk.files.TrackedFilesProvider
-import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
+import jetbrains.rsynk.files.TrackedFilesStorage
+import jetbrains.rsynk.settings.RsyncSettings
 import org.junit.Test
+import java.io.File
 
 class CommandsResolverTest {
 
-    private val rsyncCommandsHolder = AllCommandsResolver(FileInfoReader(UnixDefaultFileSystemInfo()), object : TrackedFilesProvider {
+    private val rsyncCommandsHolder = AllCommandsResolver(object : TrackedFilesStorage {
+        override fun getTrackedFile(path: String): RsynkFile? = null
         override fun getTrackedFiles(): List<RsynkFile> = emptyList()
+    }, object: RsyncSettings {
+        override val rsyncPath: String = "rsync"
+        override val tempDirectory: File = File(System.getProperty("java.io.tmpdir"))
     })
 
     @Test(expected = CommandNotFoundException::class)
