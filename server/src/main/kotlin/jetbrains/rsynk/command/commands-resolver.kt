@@ -24,7 +24,8 @@ internal interface CommandsResolver {
 }
 
 internal class AllCommandsResolver(fileInfoReader: FileInfoReader,
-                                   trackedFiles: TrackedFilesProvider) : CommandsResolver {
+                                   trackedFiles: TrackedFilesProvider
+) : CommandsResolver {
 
     private val rsyncCommandsResolver = RsyncCommandsResolver(fileInfoReader, trackedFiles)
 
@@ -43,44 +44,23 @@ internal class AllCommandsResolver(fileInfoReader: FileInfoReader,
 }
 
 internal class RsyncCommandsResolver(fileInfoReader: FileInfoReader,
-                                     trackedFiles: TrackedFilesProvider) : CommandsResolver {
+                                     trackedFiles: TrackedFilesProvider
+) : CommandsResolver {
 
-    private interface RsyncCommandArgsPredicate {
-        fun match(args: List<String>): Boolean
-    }
-
-    private data class RsyncCommandAndArgsPredicate(
-            val command: RsyncCommand,
-            val predicate: RsyncCommandArgsPredicate
-    )
-
-    private val commands: List<RsyncCommandAndArgsPredicate> = listOf(
-            RsyncCommandAndArgsPredicate(
-                    RsyncServerSendCommand(fileInfoReader, trackedFiles),
-                    object : RsyncCommandArgsPredicate {
-                        override fun match(args: List<String>): Boolean {
-                            if (args.size < 4) {
-                                return false
-                            }
-                            if (args.any { it == "--daemon" || it == "daemon" }) {
-                                return false
-                            }
-                            return args[1] == "--server" && args[2] == "--sender"
-                        }
-                    }
-            )
+    private val commands: List<RsyncCommand> = listOf(
+            RsyncServerSendCommand(fileInfoReader, trackedFiles)
     )
 
     override fun resolve(args: List<String>): Command {
 
-        val matchedCommands = commands.filter { it.predicate.match(args) }
+        val matchedCommands = commands.filter { it.matchArguments(args) }
 
         if (matchedCommands.isEmpty() || matchedCommands.size > 1) {
             throw CommandNotFoundException("Zero or more than one command match given args "
                     + args.joinToString(prefix = "[", postfix = "]", separator = ", "))
         }
 
-        return matchedCommands[0].command
+        return matchedCommands[0]
     }
 }
 

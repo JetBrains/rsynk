@@ -25,7 +25,9 @@ interface Command {
                 stdErr: OutputStream)
 }
 
-interface RsyncCommand : Command
+interface RsyncCommand : Command {
+    fun matchArguments(args: List<String>): Boolean
+}
 
 
 

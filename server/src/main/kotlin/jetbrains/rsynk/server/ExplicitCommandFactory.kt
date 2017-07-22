@@ -33,7 +33,8 @@ import java.util.concurrent.Future
 
 internal class ExplicitCommandFactory(settings: SSHSettings,
                                       fileInfoReader: FileInfoReader,
-                                      trackedFiles: TrackedFilesProvider) : CommandFactory {
+                                      trackedFiles: TrackedFilesProvider
+) : CommandFactory {
 
     companion object : KLogging()
 
