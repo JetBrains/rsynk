@@ -34,7 +34,7 @@ class RsyncIntegrationTest {
             port = freePort
             nioWorkers = 1
             commandWorkers = 1
-            idleConnectionTimeout = 100 * 1000 * 30000
+            idleConnectionTimeout = 60 * 1000
             serverKeysProvider = IntegrationTestTools.getServerKey()
         }.build()
 
@@ -48,7 +48,7 @@ class RsyncIntegrationTest {
     @Test
     fun file_transfer_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-        val source = File(data, "from.txt")//File("/Users/jetbrains/Code/rsynk/protocol-testing/hoho/from.txt")
+        val source = File(data, "from.txt")
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
