@@ -20,7 +20,8 @@ import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
 import jetbrains.rsynk.files.FileInfoReader
-import jetbrains.rsynk.files.TrackedFilesProvider
+import jetbrains.rsynk.files.TrackedFilesStorage
+import jetbrains.rsynk.settings.SshServerSettings
 import mu.KLogging
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -33,7 +34,7 @@ import java.util.concurrent.Future
 
 internal class ExplicitCommandFactory(settings: SshServerSettings,
                                       fileInfoReader: FileInfoReader,
-                                      trackedFiles: TrackedFilesProvider
+                                      trackedFiles: TrackedFilesStorage
 ) : CommandFactory {
 
     companion object : KLogging()

@@ -17,12 +17,12 @@ package jetbrains.rsynk.application
 
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.RsynkFile
-import jetbrains.rsynk.files.TrackedFilesProvider
+import jetbrains.rsynk.files.TrackedFilesStorage
 import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
 import jetbrains.rsynk.server.ExplicitCommandFactory
 import jetbrains.rsynk.server.RsynkSshServer
 import jetbrains.rsynk.server.SSHSessionFactory
-import jetbrains.rsynk.server.SshServerSettings
+import jetbrains.rsynk.settings.SshServerSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 import java.util.*
 
@@ -34,7 +34,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
 
     private val server: RsynkSshServer
     private val trackedFiles = ArrayList<RsynkFile>()
-    private val filesProvider = object : TrackedFilesProvider {
+    private val filesProvider = object : TrackedFilesStorage {
         override fun getTrackedFiles(): List<RsynkFile> {
             return trackedFiles
         }

@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.server
 
+import jetbrains.rsynk.settings.SshServerSettings
 import mu.KLogging
 import org.apache.sshd.common.compression.BuiltinCompressions
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory
