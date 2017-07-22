@@ -17,13 +17,11 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
+import jetbrains.rsynk.exitvalues.RsyncException
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
-import jetbrains.rsynk.exitvalues.RsynkException
-import jetbrains.rsynk.files.FileInfoReader
-import jetbrains.rsynk.files.TrackingFilesProvider
-import jetbrains.rsynk.io.BasicReadingIO
-import jetbrains.rsynk.io.BufferedWriter
-import jetbrains.rsynk.io.TaggingBufferedWriter
+import jetbrains.rsynk.files.TrackedFilesStorage
+import jetbrains.rsynk.settings.RsyncSettings
+import jetbrains.rsynk.settings.SshServerSettings
 import mu.KLogging
 import org.apache.sshd.server.Command
 import org.apache.sshd.server.CommandFactory
@@ -34,14 +32,16 @@ import java.io.OutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
-internal class ExplicitCommandFactory(settings: SSHSettings,
-                                      fileInfoReader: FileInfoReader,
-                                      trackingFiles: TrackingFilesProvider) : CommandFactory {
+internal class ExplicitCommandFactory(trackedFiles: TrackedFilesStorage,
+                                      sshSettings: SshServerSettings,
+                                      rsyncSettings: RsyncSettings
+) : CommandFactory {
 
     companion object : KLogging()
 
-    private val commands = AllCommandsResolver(fileInfoReader, trackingFiles)
-    private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
+    private val commands = AllCommandsResolver(trackedFiles, rsyncSettings)
+
+    private val threadPool = Executors.newFixedThreadPool(sshSettings.commandWorkers, threadFactory@ { runnable ->
         val newThread = Thread(runnable, "ssh-command")
         newThread.isDaemon = true
         return@threadFactory newThread
@@ -56,16 +56,11 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
         var outputStream: OutputStream? = null
         var errorStream: OutputStream? = null
 
-
         return object : Command {
             override fun start(env: Environment) {
                 val args = cmd.split(" ")
 
-                if (args.isEmpty()) {
-                    exit(RsyncExitCodes.RsyncProtocolDataStreamError, "No command received\n")
-                }
-
-                val (command, requestData) = try {
+                val command = try {
                     commands.resolve(args)
                 } catch(e: CommandNotFoundException) {
                     exit(RsyncExitCodes.RsyncProtocolDataStreamError, "Unknown command: ${e.message}\n")
@@ -89,18 +84,19 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                 runningCommand = threadPool.submit {
                     try {
                         command.execute(
-                                requestData,
-                                BasicReadingIO(stdin),
-                                TaggingBufferedWriter(stdout, 8 * 1024),
-                                BufferedWriter(stderr)
+                                args,
+                                stdin,
+                                stdout,
+                                stderr
                         )
+
                         exit(RsyncExitCodes.Success)
-                    } catch (e: RsynkException) {
+                    } catch (e: RsyncException) {
                         logger.info { "Command $args failed: with $e (${e.message})" }
                         writeError(e)
                         exit(e.exitCode)
                     } catch(t: Throwable) {
-                        logger.error("Command $args failed: ${t.message}", t)
+                        logger.error(t, { "Command $args failed: ${t.message}" })
                         writeError(t)
                         exit(RsyncExitCodes.RsyncProtocolDataStreamError)
                     }
@@ -109,6 +105,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
 
             private fun writeError(t: Throwable) {
                 val message = t.message
+
                 if (message != null) {
                     errorStream?.apply {
                         write("$message\n".toByteArray())
@@ -121,7 +118,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                 try {
                     runningCommand?.cancel(true)
                 } catch (t: Throwable) {
-                    logger.error("cannot cancel running command: ${t.message}", t)
+                    logger.error(t, { "Cannot cancel running command: ${t.message}" })
                 }
             }
 

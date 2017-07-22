@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.server
 
+import jetbrains.rsynk.settings.SshServerSettings
 import mu.KLogging
 import org.apache.sshd.common.compression.BuiltinCompressions
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory
@@ -25,7 +26,7 @@ import org.apache.sshd.server.forward.RejectAllForwardingFilter
 import java.util.concurrent.Executors
 
 
-internal class RsynkSshServer(private val sshSettings: SSHSettings,
+internal class RsynkSshServer(private val sshServerSettings: SshServerSettings,
                               private val explicitCommands: ExplicitCommandFactory,
                               private val sessionFactory: SSHSessionFactory) {
 
@@ -33,7 +34,7 @@ internal class RsynkSshServer(private val sshSettings: SSHSettings,
 
     private val sshd = SshServer.setUpDefaultServer()
 
-    private val nioChannelExecutor = Executors.newFixedThreadPool(sshSettings.nioWorkers, threadFactory@ { runnable ->
+    private val nioChannelExecutor = Executors.newFixedThreadPool(sshServerSettings.nioWorkers, threadFactory@ { runnable ->
         val thread = Thread(runnable, "sshd-nio")
         thread.isDaemon = true
         return@threadFactory thread
@@ -41,17 +42,17 @@ internal class RsynkSshServer(private val sshSettings: SSHSettings,
 
 
     private fun configure() {
-        sshd.port = sshSettings.port
-        sshd.nioWorkers = sshSettings.nioWorkers
-        sshd.properties.put(SshServer.SERVER_IDENTIFICATION, sshSettings.applicationNameNoSpaces)
-        sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, sshSettings.maxAuthAttempts.toString())
-        sshd.properties.put(SshServer.IDLE_TIMEOUT, sshSettings.idleConnectionTimeout.toString())
+        sshd.port = sshServerSettings.port
+        sshd.nioWorkers = sshServerSettings.nioWorkers
+        sshd.properties.put(SshServer.SERVER_IDENTIFICATION, sshServerSettings.applicationNameNoSpaces)
+        sshd.properties.put(SshServer.MAX_AUTH_REQUESTS, sshServerSettings.maxAuthAttempts.toString())
+        sshd.properties.put(SshServer.IDLE_TIMEOUT, sshServerSettings.idleConnectionTimeout.toString())
 
         sshd.commandFactory = explicitCommands
         sshd.sessionFactory = sessionFactory.createSessionFactory(sshd)
         sshd.addSessionListener(sessionFactory.createSessionListener())
 
-        sshd.keyPairProvider = sshSettings.serverKeys
+        sshd.keyPairProvider = sshServerSettings.serverKeys
         sshd.publickeyAuthenticator = PublickeyAuthenticator { username, publicKey, server -> true }
         sshd.passwordAuthenticator = PasswordAuthenticator { username, password, server -> true }
 
@@ -63,11 +64,11 @@ internal class RsynkSshServer(private val sshSettings: SSHSettings,
     fun start() {
         configure()
         logger.info("Starting sshd server:\n" +
-                " port=${sshSettings.port},\n" +
-                " nio-workers=${sshSettings.nioWorkers},\n" +
-                " command-workers=${sshSettings.commandWorkers},\n" +
-                " idle-connection-timeout=${sshSettings.idleConnectionTimeout},\n" +
-                " max-auth-requests=${sshSettings.maxAuthAttempts}\n")
+                " port=${sshServerSettings.port},\n" +
+                " nio-workers=${sshServerSettings.nioWorkers},\n" +
+                " command-workers=${sshServerSettings.commandWorkers},\n" +
+                " idle-connection-timeout=${sshServerSettings.idleConnectionTimeout},\n" +
+                " max-auth-requests=${sshServerSettings.maxAuthAttempts}\n")
         sshd.start()
     }
 

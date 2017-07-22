@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server
+package jetbrains.rsynk.server.integraion
 
 import jetbrains.rsynk.application.Rsynk
 import jetbrains.rsynk.files.RsynkFile
 import jetbrains.rsynk.files.RsynkFileBoundaries
+import jetbrains.rsynk.server.IntegrationTestTools
+import jetbrains.rsynk.server.RsyncCommand
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
@@ -36,7 +38,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
@@ -54,7 +56,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(0, 20)
         })
 
@@ -72,7 +74,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(10, 30)
         })
 
@@ -90,7 +92,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(0, 10)
         })
 
@@ -98,7 +100,7 @@ class FileBoundariesIntegrationTest {
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 10), destinationFile.readText())
 
 
-        rsynk.setTrackingFiles(emptyList()).addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.setTrackedFiles(emptyList()).trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(10, 20)
         })
 

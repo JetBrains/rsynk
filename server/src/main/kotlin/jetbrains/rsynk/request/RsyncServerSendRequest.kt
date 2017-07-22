@@ -13,23 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.extensions
+package jetbrains.rsynk.request
 
-inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
-    var closed = false
-    try {
-        return block(this)
-    } catch (e: Exception) {
-        closed = true
-        try {
-            close()
-        } catch (closeException: Exception) {
-            e.addSuppressed(closeException)
-        }
-        throw e
-    } finally {
-        if (!closed) {
-            close()
-        }
-    }
-}
+data class RsyncServerSendRequest(
+        val files: List<String>
+)

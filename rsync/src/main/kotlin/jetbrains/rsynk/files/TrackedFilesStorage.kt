@@ -13,20 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.io
+package jetbrains.rsynk.files
 
-import java.nio.ByteBuffer
-
-interface WriteIO {
-    fun writeChar(c: Char)
-
-    fun writeInt(i: Int)
-
-    fun writeByte(b: Byte)
-
-    fun writeBytes(bytes: ByteBuffer)
-
-    val writtenBytes: Long
-
-    fun flush()
+interface TrackedFilesStorage {
+    fun getTrackedFiles(): List<RsynkFile>
+    fun getTrackedFile(path: String): RsynkFile?
 }

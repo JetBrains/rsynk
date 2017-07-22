@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server
+package jetbrains.rsynk.server.integraion
 
 import jetbrains.rsynk.application.Rsynk
 import jetbrains.rsynk.files.RsynkFile
 import jetbrains.rsynk.files.RsynkFileBoundaries
+import jetbrains.rsynk.server.IntegrationTestTools
+import jetbrains.rsynk.server.RsyncCommand
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
@@ -34,7 +36,7 @@ class RsyncIntegrationTest {
             port = freePort
             nioWorkers = 1
             commandWorkers = 1
-            idleConnectionTimeout = 100 * 1000 * 30000
+            idleConnectionTimeout = 60 * 1000
             serverKeysProvider = IntegrationTestTools.getServerKey()
         }.build()
 
@@ -48,11 +50,11 @@ class RsyncIntegrationTest {
     @Test
     fun file_transfer_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-        val source = File(data, "from.txt")//File("/Users/jetbrains/Code/rsynk/protocol-testing/hoho/from.txt")
+        val source = File(data, "from.txt")
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.setTrackingFiles(listOf(rsynkFile))
+        rsynk.setTrackedFiles(listOf(rsynkFile))
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
@@ -68,7 +70,7 @@ class RsyncIntegrationTest {
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.setTrackingFiles(listOf(rsynkFile))
+        rsynk.setTrackedFiles(listOf(rsynkFile))
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
@@ -86,7 +88,7 @@ class RsyncIntegrationTest {
         val sourceFile2 = File(dataDirectory, "source-file-2.txt")
         sourceFile2.writeText(IntegrationTestTools.loremIpsum)
 
-        rsynk.setTrackingFiles(
+        rsynk.setTrackedFiles(
                 listOf(RsynkFile(sourceFile1, { RsynkFileBoundaries(0, sourceFile1.length()) }),
                         RsynkFile(sourceFile2, { RsynkFileBoundaries(0, sourceFile2.length()) }))
         )
@@ -115,7 +117,7 @@ class RsyncIntegrationTest {
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.setTrackingFiles(listOf(rsynkFile))
+        rsynk.setTrackedFiles(listOf(rsynkFile))
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
@@ -131,7 +133,7 @@ class RsyncIntegrationTest {
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
-        rsynk.addTrackingFile(rsynkFile)
+        rsynk.trackFile(rsynkFile)
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")

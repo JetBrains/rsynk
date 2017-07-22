@@ -20,22 +20,22 @@ import jetbrains.rsynk.exitvalues.RsyncExitCodes.RequestActionNotSupported
 import jetbrains.rsynk.exitvalues.RsyncExitCodes.RsyncProtocolDataStreamError
 import jetbrains.rsynk.exitvalues.RsyncExitCodes.SelectInputFilesError
 
-open class RsynkException(message: String, val exitCode: Int) : RuntimeException(message)
+open class RsyncException(message: String, val exitCode: Int) : RuntimeException(message)
 
 class ProtocolException(message: String, exitCode: Int = RsyncProtocolDataStreamError) :
-        RsynkException(message, exitCode)
+        RsyncException(message, exitCode)
 
 class ArgsParingException(message: String, exitCode: Int = RsyncProtocolDataStreamError) :
-        RsynkException(message, exitCode)
+        RsyncException(message, exitCode)
 
 class UnsupportedProtocolException(message: String) :
-        RsynkException(message, ProtocolIncompatibility)
+        RsyncException(message, ProtocolIncompatibility)
 
 class ModuleNotFoundException(message: String) :
-        RsynkException(message, SelectInputFilesError)
+        RsyncException(message, SelectInputFilesError)
 
 class InvalidFileException(message: String) :
-        RsynkException(message, SelectInputFilesError)
+        RsyncException(message, SelectInputFilesError)
 
 class NotSupportedException(message: String) :
-        RsynkException(message, RequestActionNotSupported)
+        RsyncException(message, RequestActionNotSupported)

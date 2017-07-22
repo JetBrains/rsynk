@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.files
+package jetbrains.rsynk.command
 
-import java.nio.file.Files
-import java.nio.file.Path
+import java.io.InputStream
+import java.io.OutputStream
 
-class FilterList {
-
-    //TODO
-    fun include(file: Path): Boolean {
-        if (Files.isDirectory(file)) {
-            throw IllegalArgumentException("Use 'includeDir' method for directories")
-        }
-        return true
-    }
-
-    //TODO
-    fun includeDir(dir: Path): Boolean {
-        if (!Files.isDirectory(dir)) {
-            throw IllegalArgumentException("Use 'include' method for files")
-        }
-        return true
-    }
+interface Command {
+    fun execute(args: List<String>,
+                stdIn: InputStream,
+                stdOut: OutputStream,
+                stdErr: OutputStream)
 }
+
+interface RsyncCommand : Command {
+    fun matchArguments(args: List<String>): Boolean
+}
+
+
+

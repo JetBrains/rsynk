@@ -24,15 +24,18 @@ class RsynkBuilder internal constructor(var port: Int,
                                         var idleConnectionTimeout: Int,
                                         var serverKeysProvider: KeyPairProvider,
                                         var maxAuthAttempts: Int,
+                                        var rsyncPath: String,
+                                        var tempDirectoryPath: String,
                                         internal val files: List<RsynkFile>) {
     companion object {
         internal val default = RsynkBuilder(
-                port = 22,
-                nioWorkers = 1,
+                port = 22, nioWorkers = 1,
                 commandWorkers = 1,
-                idleConnectionTimeout = 50 * 1000,
+                idleConnectionTimeout = 60 * 1000,
                 serverKeysProvider = KeyPairProvider { emptyList() },
                 maxAuthAttempts = 2,
+                rsyncPath = "rsync",
+                tempDirectoryPath = System.getProperty("java.io.tmpdir"),
                 files = emptyList())
     }
 

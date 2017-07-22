@@ -15,7 +15,6 @@
  */
 package jetbrains.rsynk.files
 
-import java.io.File
 import java.nio.file.Path
 
 data class User(
@@ -105,15 +104,9 @@ data class FileInfo(
     val isNotDotDir = !isDotDir
 }
 
-data class RsynkFileBoundaries(val offset: Long,
-                               val length: Long)
-
-data class RsynkFile(val file: File,
-                     val getBoundariesCallback: () -> RsynkFileBoundaries)
-
-data class RsynkFileInfoWithBoundaries(val rsynkFile: RsynkFile,
-                                       val info: FileInfo): Comparable<RsynkFileInfoWithBoundaries> {
-    override fun compareTo(other: RsynkFileInfoWithBoundaries): Int {
+data class RsynkFileWithInfo(val rsynkFile: RsynkFile,
+                             val info: FileInfo): Comparable<RsynkFileWithInfo> {
+    override fun compareTo(other: RsynkFileWithInfo): Int {
         return info.compareTo(other.info)
     }
 }

@@ -28,9 +28,9 @@ val rsynk = Rsynk.newBuilder().apply {
                       commandWorkersNumber = 1
                   }.build()
                   
-rsynk.addTrackingFiles(...) 
+rsynk.trackFiles(...) 
 // or
-rsync.setTrackingFiles(...)
+rsync.setTrackedFiles(...)
 ```                
 
 It's also possible to track only a certin part of file (i.e. a consistent part which is correct in terms of your application current state)
@@ -44,7 +44,7 @@ val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
   val upperBound = getLastSerializedChunkPosition(usersLog)
   RsynkFilesBoundaries(lowerBound, upperBound)
 })
-rsynk.addTrackingFile(rsynkFile)
+rsynk.trackFile(rsynkFile)
 ```
 
 ### Building project

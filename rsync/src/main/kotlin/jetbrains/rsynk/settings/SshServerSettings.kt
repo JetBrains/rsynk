@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.command
+package jetbrains.rsynk.settings
 
-import jetbrains.rsynk.io.ReadingIO
-import jetbrains.rsynk.io.WriteIO
-import jetbrains.rsynk.options.RequestOptions
+import org.apache.sshd.common.keyprovider.KeyPairProvider
 
-interface Command {
-    fun execute(requestData: RequestData,
-                input: ReadingIO,
-                output: WriteIO,
-                error: WriteIO)
+interface SshServerSettings {
+    val port: Int
+    val nioWorkers: Int
+    val commandWorkers: Int
+    val idleConnectionTimeout: Int
+    val maxAuthAttempts: Int
+    val applicationNameNoSpaces: String
+    val serverKeys: KeyPairProvider
 }
-
-data class RequestData(
-        val options: RequestOptions,
-        val filePaths: List<String>,
-        val checksumSeed: Int
-)
-
-interface RsyncCommand : Command
