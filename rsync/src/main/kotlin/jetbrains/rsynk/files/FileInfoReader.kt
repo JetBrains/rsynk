@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.files
 
+import mu.KLogging
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -38,18 +39,33 @@ internal object FileBitmasks {
 
 class FileInfoReader(private val fs: FileSystemInfo) {
 
+    companion object : KLogging()
+
     fun getFileInfo(file: Path): FileInfo {
 
         val attributes = Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
         val mode = getFileMode(attributes)
+        val user = try {
+            fs.getOwner(file)
+        } catch(t: Throwable) {
+            logger.error(t, { "Cannot read file owner uid and name for $file: ${t.message}" })
+            fs.defaultUser
+        }
+
+        val group = try {
+            fs.getGroup(file)
+        } catch(t: Throwable) {
+            logger.error(t, { "Cannot read file gid and group name for $file: ${t.message}" })
+            fs.defaultGroup
+        }
 
         return FileInfo(
                 file,
                 mode,
                 attributes.size(),
                 attributes.lastModifiedTime().to(TimeUnit.SECONDS),
-                fs.defaultUser,
-                fs.defaultGroup
+                user,
+                group
         )
     }
 

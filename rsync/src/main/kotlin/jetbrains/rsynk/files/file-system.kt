@@ -15,11 +15,19 @@
  */
 package jetbrains.rsynk.files
 
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.attribute.PosixFileAttributes
+
 interface FileSystemInfo {
     val defaultUser: User
     val defaultGroup: Group
     val defaultFilePermission: Int
     val defaultDirPermission: Int
+
+    fun getOwner(file: Path): User
+    fun getGroup(file: Path): Group
 }
 
 class UnixDefaultFileSystemInfo : FileSystemInfo {
@@ -32,16 +40,24 @@ class UnixDefaultFileSystemInfo : FileSystemInfo {
         umask = umaskText.toInt(8)
     }
 
-    override val defaultUser: User
-        get() = User("nobody", nobodyId)
+    override val defaultUser: User = User("nobody", nobodyId)
 
-    override val defaultGroup: Group
-        get() = Group("nobody", nobodyId)
+    override val defaultGroup: Group = Group("nobody", nobodyId)
 
-    override val defaultFilePermission: Int
-        get() = 666 and umask.inv()
+    override val defaultFilePermission: Int = 666 and umask.inv()
 
-    override val defaultDirPermission: Int
-        get() = 777 and umask.inv()
+    override val defaultDirPermission: Int = 777 and umask.inv()
+
+    override fun getOwner(file: Path): User {
+        val uid = Files.getAttribute(file, "unix:uid", LinkOption.NOFOLLOW_LINKS) as Int
+        val userName = Files.readAttributes(file, PosixFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS).owner().name
+        return User(userName, uid)
+    }
+
+    override fun getGroup(file: Path): Group {
+        val gid = Files.getAttribute(file, "unix:gid", LinkOption.NOFOLLOW_LINKS) as Int
+        val groupName = Files.readAttributes(file, PosixFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS).group().name
+        return Group(groupName, gid)
+    }
 }
 
