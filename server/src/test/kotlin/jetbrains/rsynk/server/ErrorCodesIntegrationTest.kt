@@ -36,7 +36,7 @@ class ErrorCodesIntegrationTest {
             port = freePort
             nioWorkers = 1
             commandWorkers = 1
-            idleConnectionTimeout = 30000
+            idleConnectionTimeoutMills = 30000
             serverKeysProvider = IntegrationTestTools.getServerKey()
         }.build()
 

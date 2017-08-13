@@ -33,17 +33,21 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     private val server: RsynkSshServer
-    private val trackedFiles = ArrayList<RsynkFile>()
+    private val trackedFiles = LinkedHashSet<RsynkFile>()
     private val filesProvider = object : TrackedFilesProvider {
-        override fun getTrackedFiles(): List<RsynkFile> {
-            return trackedFiles
-        }
-
+        override fun getTrackedFiles(): List<RsynkFile> = trackedFiles.toList()
     }
 
     init {
-        val sshSettings = sshSetting()
-        val fileInfoReader = fileInfoReader()
+        val sshSettings = object : SSHSettings {
+            override val port: Int = builder.port
+            override val nioWorkers: Int = builder.nioWorkers
+            override val commandWorkers: Int = builder.commandWorkers
+            override val idleConnectionTimeout: Int = builder.idleConnectionTimeoutMills
+            override val maxAuthAttempts: Int = builder.maxAuthAttempts
+            override val serverKeys: KeyPairProvider = builder.serverKeysProvider
+            override val applicationNameNoSpaces: String = "rsynk"
+        }
 
         server = RsynkSshServer(
                 sshSettings,
@@ -51,43 +55,42 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
                 SSHSessionFactory()
         )
 
-        trackedFiles.addAll(builder.files)
-
         server.start()
     }
 
-    fun addTrackingFiles(files: List<RsynkFile>): Rsynk {
-        this.trackedFiles.addAll(files)
-        return this
+    fun trackFile(file: RsynkFile): Rsynk {
+        return trackFiles(listOf(file))
     }
 
-    fun addTrackingFile(file: RsynkFile) {
-        addTrackingFiles(listOf(file))
+    fun trackFiles(files: List<RsynkFile>): Rsynk {
+        synchronized(trackedFiles) {
+            trackedFiles.addAll(files)
+            return this
+        }
     }
 
-    fun setTrackingFiles(files: List<RsynkFile>): Rsynk {
-        this.trackedFiles.clear()
-        addTrackingFiles(files)
-        return this
+    fun stopTrackingFile(file: RsynkFile) {
+        synchronized(trackedFiles) {
+            if (!trackedFiles.remove(file)) {
+                val boundaries = file.getBoundariesCallable()
+                throw IllegalArgumentException("File (${file.file}, offset=${boundaries.offset}, length=${boundaries.length} is not tracked by rsynk")
+            }
+        }
+    }
+
+    fun stopTrackingAllFiles() {
+        synchronized(trackedFiles) {
+            this.trackedFiles.clear()
+        }
     }
 
     override fun close() {
         server.stop()
     }
 
-    private fun fileInfoReader(): FileInfoReader {
-        return FileInfoReader(UnixDefaultFileSystemInfo())
-    }
-
-    private fun sshSetting() = object : SSHSettings {
-        override val port: Int = builder.port
-        override val nioWorkers: Int = builder.nioWorkers
-        override val commandWorkers: Int = builder.commandWorkers
-        override val idleConnectionTimeout: Int = builder.idleConnectionTimeout
-        override val maxAuthAttempts: Int = builder.maxAuthAttempts
-        override val serverKeys: KeyPairProvider = builder.serverKeysProvider
-        override val applicationNameNoSpaces: String = "rsynk"
-    }
+    private val fileInfoReader: FileInfoReader
+        get() {
+            return FileInfoReader(UnixDefaultFileSystemInfo())
+        }
 }
-
 

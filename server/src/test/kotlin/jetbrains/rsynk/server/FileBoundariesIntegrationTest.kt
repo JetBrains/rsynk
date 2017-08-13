@@ -36,7 +36,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
@@ -54,7 +54,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(0, 20)
         })
 
@@ -72,7 +72,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(10, 30)
         })
 
@@ -90,15 +90,16 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(0, 10)
         })
 
         RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 10), destinationFile.readText())
 
+        rsynk.stopTrackingAllFiles()
 
-        rsynk.setTrackingFiles(emptyList()).addTrackingFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile) {
             RsynkFileBoundaries(10, 20)
         })
 
@@ -114,7 +115,7 @@ class FileBoundariesIntegrationTest {
             port = freePort
             nioWorkers = 1
             commandWorkers = 1
-            idleConnectionTimeout = 30000
+            idleConnectionTimeoutMills = 30000
             serverKeysProvider = IntegrationTestTools.getServerKey()
         }.build()
 

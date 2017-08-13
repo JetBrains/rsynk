@@ -15,25 +15,22 @@
  */
 package jetbrains.rsynk.application
 
-import jetbrains.rsynk.files.RsynkFile
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
 class RsynkBuilder internal constructor(var port: Int,
                                         var nioWorkers: Int,
                                         var commandWorkers: Int,
-                                        var idleConnectionTimeout: Int,
+                                        var idleConnectionTimeoutMills: Int,
                                         var serverKeysProvider: KeyPairProvider,
-                                        var maxAuthAttempts: Int,
-                                        internal val files: List<RsynkFile>) {
+                                        var maxAuthAttempts: Int) {
     companion object {
         internal val default = RsynkBuilder(
                 port = 22,
                 nioWorkers = 1,
                 commandWorkers = 1,
-                idleConnectionTimeout = 50 * 1000,
+                idleConnectionTimeoutMills = 30 * 1000,
                 serverKeysProvider = KeyPairProvider { emptyList() },
-                maxAuthAttempts = 2,
-                files = emptyList())
+                maxAuthAttempts = 2)
     }
 
     fun build() = Rsynk(this)
