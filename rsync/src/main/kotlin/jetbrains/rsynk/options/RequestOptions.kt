@@ -25,21 +25,14 @@ class RequestOptions(val options: Set<Option>) {
     val checksumSeedOrderFix = Option.ChecksumSeedOrderFix in options
 
     val delete: Boolean = Option.Delete in options
-    val filesSelection: Option.FileSelection
-        get() {
-            return options.filter { it is Option.FileSelection }
-                    .map { it as Option.FileSelection }
-                    .singleOrNull() ?: Option.FileSelection.NoDirectories
-        }
+    val filesSelection: Option.FileSelection = options.filter { it is Option.FileSelection }
+            .map { it as Option.FileSelection }
+            .singleOrNull() ?: Option.FileSelection.NoDirectories
 
     val numericIds: Boolean = Option.NumericIds in options
     val oneFileSystem: Boolean = Option.OneFileSystem in options
-    val preReleaseInfo: String?
-        get() {
-            val info = options.firstOrNull { it is Option.PreReleaseInfo } as? Option.PreReleaseInfo
-            return info?.info
-        }
-    val preserveDevices: Boolean  = Option.PreserveDevices in options
+    val preReleaseInfo: String? = (options.firstOrNull { it is Option.PreReleaseInfo } as? Option.PreReleaseInfo)?.info
+    val preserveDevices: Boolean = Option.PreserveDevices in options
     val preserveGroup: Boolean = Option.PreserveGroup in options
     val preserveLinks: Boolean = Option.PreserveLinks in options
     val preserveSpecials: Boolean = Option.PreserveSpecials in options

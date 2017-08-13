@@ -62,7 +62,7 @@ object RollingChecksum {
     private val Int.twoLowestBytes
         get() = 0xFFFF and this
 
-    private val  Int.twoHighestBytes
+    private val Int.twoHighestBytes
         get() = this ushr 16
 
     private fun getInt(twoLowestBytes: Int, twoHighestBytes: Int): Int {
@@ -104,7 +104,7 @@ data class LongChecksumChunk(
         if (other == null) {
             return false
         }
-        if(other !is LongChecksumChunk) {
+        if (other !is LongChecksumChunk) {
             return false
         }
         return Arrays.equals(this.checksum, other.checksum)

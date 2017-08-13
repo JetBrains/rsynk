@@ -17,7 +17,7 @@ package jetbrains.rsynk.application
 
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.RsynkFile
-import jetbrains.rsynk.files.TrackingFilesProvider
+import jetbrains.rsynk.files.TrackedFilesProvider
 import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
 import jetbrains.rsynk.server.ExplicitCommandFactory
 import jetbrains.rsynk.server.RsynkSshServer
@@ -33,8 +33,13 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     private val server: RsynkSshServer
-    private val trackingFiles = ArrayList<RsynkFile>()
-    private val filesProvider = TrackingFilesProvider { trackingFiles }
+    private val trackedFiles = ArrayList<RsynkFile>()
+    private val filesProvider = object : TrackedFilesProvider {
+        override fun getTrackedFiles(): List<RsynkFile> {
+            return trackedFiles
+        }
+
+    }
 
     init {
         val sshSettings = sshSetting()
@@ -46,13 +51,13 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
                 SSHSessionFactory()
         )
 
-        trackingFiles.addAll(builder.files)
+        trackedFiles.addAll(builder.files)
 
         server.start()
     }
 
     fun addTrackingFiles(files: List<RsynkFile>): Rsynk {
-        this.trackingFiles.addAll(files)
+        this.trackedFiles.addAll(files)
         return this
     }
 
@@ -61,7 +66,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     fun setTrackingFiles(files: List<RsynkFile>): Rsynk {
-        this.trackingFiles.clear()
+        this.trackedFiles.clear()
         addTrackingFiles(files)
         return this
     }

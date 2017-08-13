@@ -30,6 +30,8 @@ import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RequestOptions
 import jetbrains.rsynk.protocol.RsynkServerStaticConfiguration
 import mu.KLogging
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,12 +41,22 @@ import java.util.function.Supplier
 
 
 internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader,
-                                      private val trackingFiles: TrackingFilesProvider) : RsyncCommand {
+                                      private val trackedFiles: TrackedFilesProvider) : RsyncCommand {
 
     companion object : KLogging()
 
     private val fileListIndexDecoder = FileListIndexDecoder()
     private val fileListIndexEncoder = FileListIndexEncoder()
+
+    override fun matchArguments(args: List<String>): Boolean {
+        if (args.size < 4) {
+            return false
+        }
+        if (args.any { it == "--daemon" || it == "daemon" }) {
+            return false
+        }
+        return args[1] == "--server" && args[2] == "--sender"
+    }
 
     /**
      * Perform negotiation and send requested file.
@@ -53,11 +65,13 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
      *
      * Protocol phases enumerated and phases documented in protocol.md
      * */
-    override fun execute(requestData: RequestData,
-                         input: ReadingIO,
-                         output: WriteIO,
-                         error: WriteIO) {
+    override fun execute(args: List<String>,
+                         stdIn: InputStream,
+                         stdOut: OutputStream,
+                         stdErr: OutputStream) {
+        /*
         exchangeProtocolVersions(input, output)
+
         writeCompatFlags(requestData.options, output)
         writeChecksumSeed(requestData.checksumSeed, output)
 
@@ -67,6 +81,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         val filter = receiveFilterList(input)
         sendFileList(requestData, filter, input, output)
+        */
     }
 
 
@@ -127,7 +142,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                              reader: ReadingIO,
                              writer: WriteIO) {
 
-        val files = FileResolver(fileInfoReader, trackingFiles).resolve(data.filePaths)
+        val files = FileResolver(fileInfoReader, trackedFiles).resolve(data.filePaths)
 
         if (data.options.filesSelection is Option.FileSelection.Recurse) {
             throw NotSupportedException("Recursive mode is not yet supported")

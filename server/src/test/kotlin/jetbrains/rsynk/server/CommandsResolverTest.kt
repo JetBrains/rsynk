@@ -18,13 +18,13 @@ package jetbrains.rsynk.server
 import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
 import jetbrains.rsynk.files.FileInfoReader
-import jetbrains.rsynk.files.TrackingFilesProvider
+import jetbrains.rsynk.files.TrackedFilesProvider
 import jetbrains.rsynk.files.UnixDefaultFileSystemInfo
 import org.junit.Test
 
 class CommandsResolverTest {
 
-    private val rsyncCommandsHolder = AllCommandsResolver(FileInfoReader(UnixDefaultFileSystemInfo()), TrackingFilesProvider { emptyList() })
+    private val rsyncCommandsHolder = AllCommandsResolver(FileInfoReader(UnixDefaultFileSystemInfo()), TrackedFilesProvider { emptyList() })
 
     @Test(expected = CommandNotFoundException::class)
     fun empty_args_list_does_not_match_any_command_test() {

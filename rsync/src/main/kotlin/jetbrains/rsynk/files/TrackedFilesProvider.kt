@@ -15,6 +15,6 @@
  */
 package jetbrains.rsynk.files
 
-class TrackingFilesProvider(private val fetchTrackingFiles: () -> List<RsynkFile>) {
-    fun getTrackkngFiles() = fetchTrackingFiles()
+interface TrackedFilesProvider {
+    fun getTrackedFiles(): List<RsynkFile>
 }
