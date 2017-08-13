@@ -2,9 +2,9 @@ package jetbrains.rsynk.io
 
 import java.io.OutputStream
 
-class TaggingBufferedWriter(output: OutputStream,
-                            bufferSize: Int
-) : BufferedWriter(output, bufferSize) {
+class RsyncTaggingDataOutput(output: OutputStream,
+                             bufferSizeBytes: Int
+) : RsyncBufferedDataOutput(output, bufferSizeBytes) {
 
     private companion object {
         private val tagSize = 4

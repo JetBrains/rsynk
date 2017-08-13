@@ -15,18 +15,12 @@
  */
 package jetbrains.rsynk.io
 
-import java.nio.ByteBuffer
+interface RsyncDataInput {
+    fun readBytes(len: Int): ByteArray
 
-interface WriteIO {
-    fun writeChar(c: Char)
+    fun readInt(): Int
 
-    fun writeInt(i: Int)
+    fun readChar(): Char
 
-    fun writeByte(b: Byte)
-
-    fun writeBytes(bytes: ByteBuffer)
-
-    val writtenBytes: Long
-
-    fun flush()
+    fun bytesRead(): Long
 }

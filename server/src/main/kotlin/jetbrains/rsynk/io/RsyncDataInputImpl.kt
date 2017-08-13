@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicLong
 
-class BasicReadingIO(private val input: InputStream) : ReadingIO {
+class RsyncDataInputImpl(private val input: InputStream) : RsyncDataInput {
 
     private val readBytes = AtomicLong(0)
 

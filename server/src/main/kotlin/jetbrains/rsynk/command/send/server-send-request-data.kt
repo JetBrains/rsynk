@@ -31,7 +31,6 @@ private enum class ArgumentType { RSYNC, Option, FILE }
 
 internal object ServerSendRequestDataParser {
 
-
     fun parse(args: List<String>): ServerSendRequestData {
 
         val options = HashSet<Option>()

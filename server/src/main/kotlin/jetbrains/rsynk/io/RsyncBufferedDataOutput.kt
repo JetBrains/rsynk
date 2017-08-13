@@ -20,8 +20,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicLong
 
-open class BufferedWriter(private val output: OutputStream,
-                          bufferSize: Int = 1024 * 10) : WriteIO {
+open class RsyncBufferedDataOutput(private val output: OutputStream,
+                                   bufferSize: Int = 1024 * 10) : RsyncDataOutput {
 
     protected val buffer: ByteBuffer = ByteBuffer
             .allocate(bufferSize)

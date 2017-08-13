@@ -15,18 +15,18 @@
  */
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.io.BufferedWriter
+import jetbrains.rsynk.io.RsyncBufferedDataOutput
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
-class BufferedWriterTest {
+class RsyncBufferedDataOutputTest {
 
     @Test
     fun ints_bytes_little_endian_order_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedWriter(bos)
+        val writer = RsyncBufferedDataOutput(bos)
         writer.writeInt(42)
         writer.flush()
 
@@ -38,7 +38,7 @@ class BufferedWriterTest {
     @Test
     fun chars_bytes_little_endian_order_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedWriter(bos)
+        val writer = RsyncBufferedDataOutput(bos)
         writer.writeChar(42.toChar())
         writer.flush()
 
@@ -50,7 +50,7 @@ class BufferedWriterTest {
     @Test
     fun bytes_sequences_little_endian_order_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedWriter(bos)
+        val writer = RsyncBufferedDataOutput(bos)
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(1, 2, 42, 3, 4)))
         writer.flush()
 
@@ -62,7 +62,7 @@ class BufferedWriterTest {
     @Test
     fun write_bytes_bigger_than_buffer_size_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedWriter(bos, 3)
+        val writer = RsyncBufferedDataOutput(bos, 3)
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(1, 2, 42, 3, 4)))
         writer.flush()
 
@@ -74,7 +74,7 @@ class BufferedWriterTest {
     @Test
     fun write_bytes_bigger_than_buffer_size_portioned_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedWriter(bos, 3)
+        val writer = RsyncBufferedDataOutput(bos, 3)
 
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(1, 2)))
         writer.writeBytes(ByteBuffer.wrap(byteArrayOf(3, 4)))
@@ -89,7 +89,7 @@ class BufferedWriterTest {
     @Test
     fun write_int_byte_and_bytes_test() {
         val bos = ByteArrayOutputStream()
-        val writer = BufferedWriter(bos, 100)
+        val writer = RsyncBufferedDataOutput(bos, 100)
 
         writer.writeInt(31)
         writer.writeByte(42)

@@ -25,8 +25,10 @@ import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.*
-import jetbrains.rsynk.io.ReadingIO
-import jetbrains.rsynk.io.WriteIO
+import jetbrains.rsynk.io.RsyncDataInput
+import jetbrains.rsynk.io.RsyncDataInputImpl
+import jetbrains.rsynk.io.RsyncDataOutput
+import jetbrains.rsynk.io.RsyncTaggingDataOutput
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RsyncRequestArguments
 import jetbrains.rsynk.protocol.RsyncProtocolStaticConfig
@@ -70,23 +72,26 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                          stdIn: InputStream,
                          stdOut: OutputStream,
                          stdErr: OutputStream) {
-        /*
+        val input = RsyncDataInputImpl(stdIn)
+        val output = RsyncTaggingDataOutput(stdOut, 1024 * 10)
+        val requestData = ServerSendRequestDataParser.parse(args)
+
         exchangeProtocolVersions(input, output)
 
-        writeCompatFlags(requestData.options, output)
+        writeCompatFlags(requestData.arguments, output)
         writeChecksumSeed(requestData.checksumSeed, output)
 
         val message = input.readInt()
         //TODO: make client messages encoding more (than this) abstract
         output.writeInt(117440534/*that's a message to client*/)
 
-        val filter = receiveFilterList(input)
-        sendFileList(requestData, filter, input, output)
-        */
+        receiveFilterList(input)
+        sendFileList(requestData, input, output)
+
     }
 
 
-    private fun exchangeProtocolVersions(input: ReadingIO, output: WriteIO) {
+    private fun exchangeProtocolVersions(input: RsyncDataInput, output: RsyncDataOutput) {
 
         val clientProtocolVersion = input.readInt()
 
@@ -103,7 +108,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
     }
 
-    private fun writeCompatFlags(arguments: RsyncRequestArguments, output: WriteIO) {
+    private fun writeCompatFlags(arguments: RsyncRequestArguments, output: RsyncDataOutput) {
         val cf = HashSet<CompatFlag>()
         cf.addAll(RsyncProtocolStaticConfig.serverCompatFlags)
         // TODO: merge static and dynamic compat flags setup
@@ -116,13 +121,13 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
 
-    private fun writeChecksumSeed(checksumSeed: Int, output: WriteIO) {
+    private fun writeChecksumSeed(checksumSeed: Int, output: RsyncDataOutput) {
         output.writeInt(checksumSeed)
         output.flush()
     }
 
 
-    private fun receiveFilterList(input: ReadingIO): FilterList {
+    private fun receiveFilterList(input: RsyncDataInput) {
 
         val len = input.readInt()
 
@@ -135,13 +140,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             len = input.readBytes(4).littleEndianToInt()
             */
         }
-        return FilterList()
     }
 
     private fun sendFileList(data: ServerSendRequestData,
-                             filterList: FilterList?/* TODO: filter files (but not dot dir!) */,
-                             reader: ReadingIO,
-                             writer: WriteIO) {
+                             reader: RsyncDataInput,
+                             writer: RsyncDataOutput) {
 
         val files = FileResolver(fileInfoReader, trackedFiles).resolve(data.files)
 
@@ -198,7 +201,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     private fun sendFileInfo(f: FileInfo,
                              cache: PreviousFileSentFileInfoCache,
                              arguments: RsyncRequestArguments,
-                             output: WriteIO) {
+                             output: RsyncDataOutput) {
         var flags: Set<TransmitFlag> = HashSet()
 
         if (f.isDirectory) {
@@ -316,11 +319,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         */
     }
 
-    private fun sendUserId(uid: Int, writer: WriteIO) {
+    private fun sendUserId(uid: Int, writer: RsyncDataOutput) {
         writer.writeBytes(VarintEncoder.varlong(uid.toLong(), 1))
     }
 
-    private fun sendUserName(name: String, writer: WriteIO) {
+    private fun sendUserName(name: String, writer: RsyncDataOutput) {
         val nameBytes = name.toByteArray()
         if (nameBytes.size > Byte.MAX_VALUE_UNSIGNED) {
             logger.warn { "Too long user name will be truncated to ${Byte.MAX_VALUE_UNSIGNED} bytes ($name)" }
@@ -329,11 +332,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writer.writeBytes(ByteBuffer.wrap(nameBytes))
     }
 
-    private fun sendGroupId(gid: Int, writer: WriteIO) {
+    private fun sendGroupId(gid: Int, writer: RsyncDataOutput) {
         writer.writeBytes(VarintEncoder.varlong(gid.toLong(), 1))
     }
 
-    private fun sendGroupName(name: String, writer: WriteIO) {
+    private fun sendGroupName(name: String, writer: RsyncDataOutput) {
         val nameBytes = name.toByteArray()
         if (nameBytes.size > Byte.MAX_VALUE_UNSIGNED) {
             logger.warn { "Too long group name will be truncated to ${Byte.MAX_VALUE_UNSIGNED} bytes ($name)" }
@@ -344,8 +347,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun sendFiles(blocks: FileListsBlocks,
                           requestData: ServerSendRequestData,
-                          reader: ReadingIO,
-                          writer: WriteIO) {
+                          reader: RsyncDataInput,
+                          writer: RsyncDataOutput) {
 
 
         val state = TransferState()
@@ -450,7 +453,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                                              blockInTransmission: Int,
                                              sentFilesLimit: Int,
                                              requestData: ServerSendRequestData,
-                                             writer: WriteIO): StubDirectoriesExpandingResult {
+                                             writer: RsyncDataOutput): StubDirectoriesExpandingResult {
 
         var filesSent = 0
         var currentBlock = blockInTransmission
@@ -527,7 +530,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return result
     }
 
-    private fun decodeAndReadFileListIndex(reader: ReadingIO, writeIO: WriteIO): Int {
+    private fun decodeAndReadFileListIndex(reader: RsyncDataInput, writeIO: RsyncDataOutput): Int {
         writeIO.flush()
         val index = fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
         if (index == FileListsCode.done.code || index >= 0) {
@@ -536,17 +539,17 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         throw UnsupportedOperationException("It's time to implement deletion statistic reading and sending (rsync.c line 326)")
     }
 
-    private fun encodeAndSendFileListIndex(index: Int, writer: WriteIO) {
+    private fun encodeAndSendFileListIndex(index: Int, writer: RsyncDataOutput) {
         fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
         writer.flush()
     }
 
-    private fun sendFileIndexAndItemFlag(index: Int, itemFlag: Char, writer: WriteIO) {
+    private fun sendFileIndexAndItemFlag(index: Int, itemFlag: Char, writer: RsyncDataOutput) {
         encodeAndSendFileListIndex(index, writer)
         writer.writeChar(itemFlag)
     }
 
-    private fun receiveChecksumHeader(reader: ReadingIO): ChecksumHeader {
+    private fun receiveChecksumHeader(reader: RsyncDataInput): ChecksumHeader {
         val chunkCount = reader.readInt()
         val blockLength = reader.readInt()
         val digestLength = reader.readInt()
@@ -555,7 +558,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
     private fun sendChecksumHeader(header: ChecksumHeader,
-                                   writer: WriteIO) {
+                                   writer: RsyncDataOutput) {
         writer.writeInt(header.chunkCount)
         writer.writeInt(header.blockLength)
         writer.writeInt(header.digestLength)
@@ -563,7 +566,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
     private fun receiveChecksum(header: ChecksumHeader,
-                                reader: ReadingIO): Checksum {
+                                reader: RsyncDataInput): Checksum {
         val checksum = Checksum(header)
 
         for (chunkIndex in 0..header.chunkCount - 1) {
@@ -578,7 +581,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun skipMatchesAndGetChecksum(fileRepresentation: TransmissionFileRepresentation,
                                           fileInfo: FileInfo,
-                                          writer: WriteIO): ByteArray {
+                                          writer: RsyncDataOutput): ByteArray {
         val md = LongChecksum.newMessageDigestInstance()
         var bytesSent = 0
 
@@ -608,7 +611,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     private fun sendMatchesAndGetChecksum(fileRepresentation: TransmissionFileRepresentation,
                                           checksum: Checksum,
                                           checksumSeed: Int,
-                                          writer: WriteIO): ByteArray {
+                                          writer: RsyncDataOutput): ByteArray {
 
         val fileChecksum = LongChecksum.newMessageDigestInstance()
         val chunkChecksum = LongChecksum.newMessageDigestInstance()
@@ -700,7 +703,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     private fun sendData(bytes: ByteArray,
                          offset: Int,
                          length: Int,
-                         writer: WriteIO) {
+                         writer: RsyncDataOutput) {
 
         var currentOffset = offset
         val endOffset = offset + length - 1
@@ -713,7 +716,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
     }
 
-    private fun sendBlockEnd(writer: WriteIO) {
+    private fun sendBlockEnd(writer: RsyncDataOutput) {
         writer.writeByte(0)
     }
 
