@@ -19,13 +19,13 @@ import java.io.InputStream
 import java.io.OutputStream
 
 
-interface Command {
+internal interface Command {
     fun execute(args: List<String>,
                 stdIn: InputStream,
                 stdOut: OutputStream,
                 stdErr: OutputStream)
 }
 
-interface RsyncCommand : Command {
+internal interface RsyncCommand : Command {
     fun matchArguments(args: List<String>): Boolean
 }

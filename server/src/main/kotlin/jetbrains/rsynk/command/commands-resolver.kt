@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.command
 
+import jetbrains.rsynk.command.send.RsyncServerSendCommand
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.TrackedFilesProvider
 
@@ -64,4 +65,4 @@ internal class RsyncCommandsResolver(fileInfoReader: FileInfoReader,
     }
 }
 
-class CommandNotFoundException(message: String) : RuntimeException(message)
+internal class CommandNotFoundException(message: String) : RuntimeException(message)

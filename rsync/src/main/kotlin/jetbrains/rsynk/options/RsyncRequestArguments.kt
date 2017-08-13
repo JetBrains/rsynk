@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.options
 
-class RequestOptions(val options: Set<Option>) {
+class RsyncRequestArguments(options: Set<Option>) {
 
     val server: Boolean = Option.Server in options
     val sender: Boolean = Option.Sender in options

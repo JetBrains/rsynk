@@ -22,7 +22,7 @@ import org.apache.sshd.server.ServerFactoryManager
 import org.apache.sshd.server.session.ServerSession
 import org.apache.sshd.server.session.SessionFactory
 
-class SSHSessionFactory {
+internal class SSHSessionFactory {
 
     companion object : KLogging()
 

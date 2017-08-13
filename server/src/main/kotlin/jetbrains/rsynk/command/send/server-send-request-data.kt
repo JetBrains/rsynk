@@ -13,51 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server
+package jetbrains.rsynk.command.send
 
-import jetbrains.rsynk.command.RequestData
 import jetbrains.rsynk.data.ChecksumSeedGenerator
 import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
-import jetbrains.rsynk.options.RequestOptions
+import jetbrains.rsynk.options.RsyncRequestArguments
 import java.util.*
 
+internal data class ServerSendRequestData(
+        val arguments: RsyncRequestArguments,
+        val files: List<String>,
+        val checksumSeed: Int
+)
 
-object RsyncRequestDataParser {
+private enum class ArgumentType { RSYNC, Option, FILE }
 
-    private enum class ArgumentType { RSYNC, OPTION, FILE }
+internal object ServerSendRequestDataParser {
 
-    fun parse(args: List<String>): RequestData {
+
+    fun parse(args: List<String>): ServerSendRequestData {
 
         val options = HashSet<Option>()
         val files = ArrayList<String>()
-        var nextArgType = ArgumentType.RSYNC
 
+        var next = ArgumentType.RSYNC
         args.forEach { arg ->
-            when (nextArgType) {
 
+            when (next) {
                 ArgumentType.RSYNC -> {
                     if (arg != "rsync") {
-                        throw ArgsParingException("'rsync' argument must be sent first")
+                        throw ArgsParingException("'rsync' argument must be sent first, but was $arg")
                     }
-                    nextArgType = ArgumentType.OPTION
+                    next = ArgumentType.Option
                 }
 
-                ArgumentType.OPTION -> {
-                    when {
-                        arg.isLongOption() -> {
-                            options.add(parseLongName(arg))
-                        }
-                        arg.isShortOption() -> {
-                            options.addAll(parseShortName(arg))
-                        }
-                        else -> {
-                            if (arg != ".") {
-                                throw ArgsParingException("'.' argument expected after options list, got $arg")
-                            }
-                            nextArgType = ArgumentType.FILE
-                        }
+                ArgumentType.Option -> {
+                    if (isLongArgument(arg)) {
+                        options.add(parseLongArgument(arg))
+                        return@forEach
+                    } else if (isShortArgument(arg)) {
+                        options.addAll(parseShortArgument(arg))
+                        return@forEach
                     }
+
+                    if (arg != ".") {
+                        throw ArgsParingException("'.' argument expected after options list, got $arg")
+                    }
+                    next = ArgumentType.FILE
                 }
 
                 ArgumentType.FILE -> {
@@ -67,18 +70,18 @@ object RsyncRequestDataParser {
         }
         val seedOption = options.firstOrNull { it is Option.ChecksumSeed }
         val seed = (seedOption as? Option.ChecksumSeed)?.seed ?: ChecksumSeedGenerator.newSeed()
-        return RequestData(RequestOptions(options), files, seed)
+        return ServerSendRequestData(RsyncRequestArguments(options), files, seed)
     }
 
-    private fun String.isShortOption(): Boolean {
-        return length > 1 && startsWith("-")
+    private fun isShortArgument(str: String): Boolean {
+        return str.length > 1 && str.startsWith("-")
     }
 
-    private fun String.isLongOption(): Boolean {
-        return length > 2 && startsWith("--")
+    private fun isLongArgument(str: String): Boolean {
+        return str.length > 2 && str.startsWith("--")
     }
 
-    private fun parseShortName(o: String): Set<Option> {
+    private fun parseShortArgument(o: String): Set<Option> {
 
         val options = HashSet<Option>()
 
@@ -121,7 +124,7 @@ object RsyncRequestDataParser {
         return options
     }
 
-    private fun parseLongName(o: String): Option {
+    private fun parseLongArgument(o: String): Option {
         return when (o.dropWhile { it == '-' }) {
 
             "server" -> Option.Server

@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.server
 
+import jetbrains.rsynk.command.send.ServerSendRequestDataParser
 import jetbrains.rsynk.exitvalues.ArgsParingException
 import jetbrains.rsynk.options.Option
 import org.junit.Assert
@@ -24,55 +25,55 @@ class RsyncRequestDataParserTest {
 
     @Test
     fun parse_long_named_options_test() {
-        val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-LCd", "."))
-        Assert.assertTrue(data.options.server)
-        Assert.assertTrue(data.options.sender)
+        val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-LCd", "."))
+        Assert.assertTrue(data.arguments.server)
+        Assert.assertTrue(data.arguments.sender)
     }
 
     @Test
     fun parse_short_named_options_test() {
-        val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-LCd", "."))
-        Assert.assertTrue(data.options.symlinkTimeSettings)
-        Assert.assertTrue(data.options.checksumSeedOrderFix)
-        Assert.assertEquals(Option.FileSelection.TransferDirectoriesWithoutContent, data.options.filesSelection)
+        val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-LCd", "."))
+        Assert.assertTrue(data.arguments.symlinkTimeSettings)
+        Assert.assertTrue(data.arguments.checksumSeedOrderFix)
+        Assert.assertEquals(Option.FileSelection.TransferDirectoriesWithoutContent, data.arguments.filesSelection)
     }
 
     @Test
     fun parse_files_test() {
-        val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/first/file",
+        val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/first/file",
                 "path/to/second-file"))
-        Assert.assertEquals(data.filePaths.joinToString(), 3, data.filePaths.size)
-        Assert.assertTrue(data.filePaths.contains("/path/to/first/file"))
-        Assert.assertTrue(data.filePaths.contains("path/to/second-file"))
+        Assert.assertEquals(data.files.joinToString(), 3, data.files.size)
+        Assert.assertTrue(data.files.contains("/path/to/first/file"))
+        Assert.assertTrue(data.files.contains("path/to/second-file"))
     }
 
     @Test
     fun include_dot_dir_as_as_file_test() {
-        val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/file"))
-        Assert.assertEquals(data.filePaths.joinToString(), 2, data.filePaths.size)
-        Assert.assertTrue(data.filePaths.contains("."))
+        val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/file"))
+        Assert.assertEquals(data.files  .joinToString(), 2, data.files.size)
+        Assert.assertTrue(data.files.contains("."))
     }
 
     @Test
     fun default_file_selection_status_test() {
-        val data = RsyncRequestDataParser.parse(listOf("rsync"))
-        Assert.assertEquals(Option.FileSelection.NoDirectories, data.options.filesSelection)
+        val data = ServerSendRequestDataParser.parse(listOf("rsync"))
+        Assert.assertEquals(Option.FileSelection.NoDirectories, data.arguments.filesSelection)
     }
 
     @Test
     fun parse_pre_release_info_test() {
-        val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Le31.100002C", "."))
-        Assert.assertEquals("31.100002", data.options.preReleaseInfo)
+        val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Le31.100002C", "."))
+        Assert.assertEquals("31.100002", data.arguments.preReleaseInfo)
     }
 
     @Test(expected = ArgsParingException::class)
     fun parse_non_rsync_command_test() {
-        RsyncRequestDataParser.parse(listOf("--server", "-e.sd", "."))
+        ServerSendRequestDataParser.parse(listOf("--server", "-e.sd", "."))
     }
 
     @Test
     fun parse_checksum_seed_test() {
-        val data = RsyncRequestDataParser.parse(listOf("rsync", "--server", "--sender", "--checksum-seed=42", "."))
+        val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "--checksum-seed=42", "."))
         Assert.assertEquals(42, data.checksumSeed)
     }
 }

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.command
+package jetbrains.rsynk.command.send
 
+import jetbrains.rsynk.command.RsyncCommand
 import jetbrains.rsynk.data.*
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
@@ -27,7 +28,7 @@ import jetbrains.rsynk.flags.*
 import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
-import jetbrains.rsynk.options.RequestOptions
+import jetbrains.rsynk.options.RsyncRequestArguments
 import jetbrains.rsynk.protocol.RsynkServerStaticConfiguration
 import mu.KLogging
 import java.io.InputStream
@@ -102,11 +103,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
     }
 
-    private fun writeCompatFlags(options: RequestOptions, output: WriteIO) {
+    private fun writeCompatFlags(arguments: RsyncRequestArguments, output: WriteIO) {
         val cf = HashSet<CompatFlag>()
         cf.addAll(RsynkServerStaticConfiguration.serverCompatFlags)
         // TODO: merge static and dynamic compat flags setup
-        if (options.checksumSeedOrderFix) {
+        if (arguments.checksumSeedOrderFix) {
             cf += CompatFlag.FixChecksumSeed
         }
         val encoded = cf.encode()
@@ -137,14 +138,14 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return FilterList()
     }
 
-    private fun sendFileList(data: RequestData,
+    private fun sendFileList(data: ServerSendRequestData,
                              filterList: FilterList?/* TODO: filter files (but not dot dir!) */,
                              reader: ReadingIO,
                              writer: WriteIO) {
 
-        val files = FileResolver(fileInfoReader, trackedFiles).resolve(data.filePaths)
+        val files = FileResolver(fileInfoReader, trackedFiles).resolve(data.files)
 
-        if (data.options.filesSelection is Option.FileSelection.Recurse) {
+        if (data.arguments.filesSelection is Option.FileSelection.Recurse) {
             throw NotSupportedException("Recursive mode is not yet supported")
         }
 
@@ -153,7 +154,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         var prevFileCache = emptyPreviousFileCache
         initialBlock.files.forEach { _, file ->
-            sendFileInfo(file, prevFileCache, data.options, writer)
+            sendFileInfo(file, prevFileCache, data.arguments, writer)
             prevFileCache = PreviousFileSentFileInfoCache(file.mode,
                     file.user,
                     file.group,
@@ -166,7 +167,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         //Successfully sent files metadata
         writer.writeByte(0.toByte())
 
-        if (data.options.preserveUser && !data.options.numericIds && data.options.filesSelection is Option.FileSelection.Recurse) {
+        if (data.arguments.preserveUser && !data.arguments.numericIds && data.arguments.filesSelection is Option.FileSelection.Recurse) {
             prevFileCache.sentUserNames.forEach { user ->
                 sendUserId(user.uid, writer)
                 sendUserName(user.name, writer)
@@ -174,7 +175,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             writer.writeBytes(VarintEncoder.varlong(0, 1))
         }
 
-        if (data.options.preserveGroup && !data.options.numericIds && data.options.filesSelection is Option.FileSelection.Recurse) {
+        if (data.arguments.preserveGroup && !data.arguments.numericIds && data.arguments.filesSelection is Option.FileSelection.Recurse) {
             prevFileCache.sendGroupNames.forEach { group ->
                 sendGroupId(group.gid, writer)
                 sendGroupName(group.name, writer)
@@ -183,7 +184,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         if (initialBlock.files.isEmpty()) {
-            if (data.options.filesSelection is Option.FileSelection.Recurse) {
+            if (data.arguments.filesSelection is Option.FileSelection.Recurse) {
                 writer.writeByte((-1).toByte())
                 writer.flush()
             }
@@ -196,7 +197,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun sendFileInfo(f: FileInfo,
                              cache: PreviousFileSentFileInfoCache,
-                             options: RequestOptions,
+                             arguments: RsyncRequestArguments,
                              output: WriteIO) {
         var flags: Set<TransmitFlag> = HashSet()
 
@@ -213,10 +214,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             flags += TransmitFlag.SameMode
         }
 
-        if (options.preserveUser && f.user != cache.user) {
+        if (arguments.preserveUser && f.user != cache.user) {
             if (!f.user.isRoot &&
-                    !options.numericIds &&
-                    options.filesSelection is Option.FileSelection.Recurse &&
+                    !arguments.numericIds &&
+                    arguments.filesSelection is Option.FileSelection.Recurse &&
                     f.user in cache.sentUserNames) {
                 flags += TransmitFlag.UserNameFollows
             }
@@ -224,10 +225,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             flags += TransmitFlag.SameUserId
         }
 
-        if (options.preserveGroup && f.group != cache.group) {
+        if (arguments.preserveGroup && f.group != cache.group) {
             if (!f.group.isRoot &&
-                    !options.numericIds &&
-                    options.filesSelection is Option.FileSelection.Recurse &&
+                    !arguments.numericIds &&
+                    arguments.filesSelection is Option.FileSelection.Recurse &&
                     f.group in cache.sendGroupNames) {
                 flags += TransmitFlag.GroupNameFollows
             }
@@ -285,24 +286,24 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             output.writeInt(f.mode)
         }
 
-        if (options.preserveUser && TransmitFlag.SameUserId !in flags) {
+        if (arguments.preserveUser && TransmitFlag.SameUserId !in flags) {
             sendUserId(f.user.uid, output)
             if (TransmitFlag.UserNameFollows in flags) {
                 sendUserName(f.user.name, output)
             }
         }
 
-        if (options.preserveGroup && TransmitFlag.SameGroupId !in flags) {
+        if (arguments.preserveGroup && TransmitFlag.SameGroupId !in flags) {
             sendGroupId(f.group.gid, output)
             if (TransmitFlag.GroupNameFollows in flags) {
                 sendGroupName(f.group.name, output)
             }
         }
 
-        if (options.preserveDevices || options.preserveSpecials) {
+        if (arguments.preserveDevices || arguments.preserveSpecials) {
             //TODO send device info if this is a device or special
             throw InvalidFileException("${f.path} is not a regular file, only regular files are supported")
-        } else if (options.preserveLinks) {
+        } else if (arguments.preserveLinks) {
             //TODO send target if this is a symlink
             throw InvalidFileException("${f.path} is not a regular file, only regular files are supported")
         }
@@ -342,7 +343,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
     private fun sendFiles(blocks: FileListsBlocks,
-                          requestData: RequestData,
+                          requestData: ServerSendRequestData,
                           reader: ReadingIO,
                           writer: WriteIO) {
 
@@ -383,7 +384,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             blocks.popBlock()!!.files[-1]!!
 
                     if (ItemFlag.Transfer !in iflags) {
-                        fileListIndexEncoder.encodeAndSend(index, Consumer<Byte>{ b -> writer.writeByte(b) })
+                        fileListIndexEncoder.encodeAndSend(index, Consumer<Byte> { b -> writer.writeByte(b) })
                         writer.writeBytes(VarintEncoder.varint(iflags.encode()))
                         /*
                         * TODO: stats
@@ -396,19 +397,19 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             throw NotSupportedException("It's time to support xname (sender.c line 179)")
                         }
 
-                        if (requestData.options.preserveXattrs) {
+                        if (requestData.arguments.preserveXattrs) {
                             throw NotSupportedException("It's time to support sending xattr request (sender.c line 183)")
                         }
 
                         if (ItemFlag.IsNew in iflags) {
                             // TODO: update statistic (sender.c line 273)
                         }
-                       continue@stateLoop
+                        continue@stateLoop
                     }
 
                     val checksumHeader = receiveChecksumHeader(reader)
                     val checksum = receiveChecksum(checksumHeader, reader)
-                    fileListIndexEncoder.encodeAndSend(index, Consumer<Byte>{ b -> writer.writeByte(b) })
+                    fileListIndexEncoder.encodeAndSend(index, Consumer<Byte> { b -> writer.writeByte(b) })
                     writer.writeBytes(VarintEncoder.shortint(iflags.encode()))
 
                     sendChecksumHeader(checksumHeader, writer)
@@ -448,7 +449,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     private fun expandAndSendStubDirectories(fileListsBlocks: FileListsBlocks,
                                              blockInTransmission: Int,
                                              sentFilesLimit: Int,
-                                             requestData: RequestData,
+                                             requestData: ServerSendRequestData,
                                              writer: WriteIO): StubDirectoriesExpandingResult {
 
         var filesSent = 0
@@ -462,7 +463,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             val block = fileListsBlocks.addFileBlock(stubDir, expanded)
 
             block.files.forEach { _index, file ->
-                sendFileInfo(file, emptyPreviousFileCache, requestData.options, writer)
+                sendFileInfo(file, emptyPreviousFileCache, requestData.arguments, writer)
                 filesSent++
             }
             sendBlockEnd(writer)
@@ -473,7 +474,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
     private fun expandStubDirectory(directory: FileInfo,
-                                    requestData: RequestData): List<FileInfo> {
+                                    requestData: ServerSendRequestData): List<FileInfo> {
         val root = locateRootDirectoryPath(directory)
 
         val list = ArrayList<FileInfo>()
@@ -484,15 +485,15 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                 val fileInfo = fileInfoReader.getFileInfo(directoryEntry)
 
                 val element = when {
-                    requestData.options.preserveLinks && fileInfo.isSymlink -> {
+                    requestData.arguments.preserveLinks && fileInfo.isSymlink -> {
                         TODO()
                     }
 
-                    requestData.options.preserveDevices && (fileInfo.isBlockDevice || fileInfo.isCharacterDevice) -> {
+                    requestData.arguments.preserveDevices && (fileInfo.isBlockDevice || fileInfo.isCharacterDevice) -> {
                         TODO()
                     }
 
-                    requestData.options.preserveSpecials && (fileInfo.isFIFO || fileInfo.isSocket) -> {
+                    requestData.arguments.preserveSpecials && (fileInfo.isFIFO || fileInfo.isSocket) -> {
                         TODO()
                     }
 
@@ -719,7 +720,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 }
 
 
-class TransferState {
+private class TransferState {
 
     sealed class State(val name: String) {
         object Transfer : State("transfer")
@@ -754,4 +755,10 @@ private data class PreviousFileSentFileInfoCache(val mode: Int?,
 private data class StubDirectoriesExpandingResult(val filesSent: Int,
                                                   val blocksSent: Int)
 
-private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null, null, null, null, "", emptySet(), emptySet())
+private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null,
+        null,
+        null,
+        null,
+        "",
+        emptySet(),
+        emptySet())
