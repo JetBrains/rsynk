@@ -21,7 +21,7 @@ sealed class Option {
     object Daemon : Option()
 
     object Compress : Option()
-    class ChecksumSeed(val seed: Int) : Option()
+    data class ChecksumSeed(val seed: Int) : Option()
     object ChecksumSeedOrderFix : Option()
     object Delete : Option()
 
@@ -31,7 +31,7 @@ sealed class Option {
     object SymlinkTimeSetting : Option()
     object NumericIds : Option()
     object OneFileSystem : Option()
-    class PreReleaseInfo(val info: String) : Option()
+    data class PreReleaseInfo(val info: String) : Option()
     object PreserveDevices : Option()
     object PreserveGroup : Option()
     object PreserveLinks : Option()

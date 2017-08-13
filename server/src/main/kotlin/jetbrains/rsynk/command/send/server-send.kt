@@ -29,7 +29,7 @@ import jetbrains.rsynk.io.ReadingIO
 import jetbrains.rsynk.io.WriteIO
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RsyncRequestArguments
-import jetbrains.rsynk.protocol.RsynkServerStaticConfiguration
+import jetbrains.rsynk.protocol.RsyncProtocolStaticConfig
 import mu.KLogging
 import java.io.InputStream
 import java.io.OutputStream
@@ -90,22 +90,22 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         val clientProtocolVersion = input.readInt()
 
-        output.writeInt(RsynkServerStaticConfiguration.serverProtocolVersion)
+        output.writeInt(RsyncProtocolStaticConfig.serverProtocolVersion)
         output.flush()
 
-        if (clientProtocolVersion < RsynkServerStaticConfiguration.clientProtocolVersionMin) {
+        if (clientProtocolVersion < RsyncProtocolStaticConfig.clientProtocolVersionMin) {
             throw UnsupportedProtocolException("Client protocol version must be at least " +
-                    RsynkServerStaticConfiguration.clientProtocolVersionMin)
+                    RsyncProtocolStaticConfig.clientProtocolVersionMin)
         }
-        if (clientProtocolVersion > RsynkServerStaticConfiguration.clientProtocolVersionMax) {
+        if (clientProtocolVersion > RsyncProtocolStaticConfig.clientProtocolVersionMax) {
             throw UnsupportedProtocolException("Client protocol version must be no more than " +
-                    RsynkServerStaticConfiguration.clientProtocolVersionMax)
+                    RsyncProtocolStaticConfig.clientProtocolVersionMax)
         }
     }
 
     private fun writeCompatFlags(arguments: RsyncRequestArguments, output: WriteIO) {
         val cf = HashSet<CompatFlag>()
-        cf.addAll(RsynkServerStaticConfiguration.serverCompatFlags)
+        cf.addAll(RsyncProtocolStaticConfig.serverCompatFlags)
         // TODO: merge static and dynamic compat flags setup
         if (arguments.checksumSeedOrderFix) {
             cf += CompatFlag.FixChecksumSeed
@@ -371,7 +371,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
                 index >= 0 -> {
 
-                    if (RsynkServerStaticConfiguration.serverCompatFlags.contains(CompatFlag.IncRecurse)) {
+                    if (RsyncProtocolStaticConfig.serverCompatFlags.contains(CompatFlag.IncRecurse)) {
                         throw NotSupportedException("It's time to implement extra file list sending (sender.c line 234)")
                     }
 
@@ -706,7 +706,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         val endOffset = offset + length - 1
 
         while (currentOffset <= endOffset) {
-            val chunkLength = Math.min(RsynkServerStaticConfiguration.chunkSize, endOffset - currentOffset + 1)
+            val chunkLength = Math.min(RsyncProtocolStaticConfig.chunkSize, endOffset - currentOffset + 1)
             writer.writeInt(chunkLength)
             writer.writeBytes(ByteBuffer.wrap(bytes, currentOffset, chunkLength))
             currentOffset += chunkLength

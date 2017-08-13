@@ -17,7 +17,7 @@ package jetbrains.rsynk.protocol
 
 import jetbrains.rsynk.flags.CompatFlag
 
-object RsynkServerStaticConfiguration {
+object RsyncProtocolStaticConfig {
     val clientProtocolVersionMin = 31
     val serverProtocolVersion = 31
     val clientProtocolVersionMax = 31
