@@ -26,9 +26,9 @@ import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.*
 import jetbrains.rsynk.io.RsyncDataInput
-import jetbrains.rsynk.io.RsyncDataInputImpl
 import jetbrains.rsynk.io.RsyncDataOutput
 import jetbrains.rsynk.io.RsyncTaggingDataOutput
+import jetbrains.rsynk.io.RsyncTaggingInput
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RsyncRequestArguments
 import jetbrains.rsynk.protocol.RsyncProtocolStaticConfig
@@ -72,7 +72,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                          stdIn: InputStream,
                          stdOut: OutputStream,
                          stdErr: OutputStream) {
-        val input = RsyncDataInputImpl(stdIn)
+        val input = RsyncTaggingInput(stdIn)
         val output = RsyncTaggingDataOutput(stdOut, 1024 * 10)
         val requestData = ServerSendRequestDataParser.parse(args)
 

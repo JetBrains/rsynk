@@ -18,9 +18,13 @@ package jetbrains.rsynk.io
 interface RsyncDataInput {
     fun readBytes(len: Int): ByteArray
 
+    fun readBytes(dest: ByteArray, off: Int, len: Int)
+
     fun readInt(): Int
 
     fun readChar(): Char
 
     fun bytesRead(): Long
+
+    fun bytesAvailable(): Int
 }
