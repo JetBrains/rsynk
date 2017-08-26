@@ -72,8 +72,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                          stdIn: InputStream,
                          stdOut: OutputStream,
                          stdErr: OutputStream) {
+
         val input = RsyncTaggingInput(stdIn)
-        val output = RsyncTaggingDataOutput(stdOut, 1024 * 10)
+        val output = RsyncTaggingDataOutput(stdOut)
         val requestData = ServerSendRequestDataParser.parse(args)
 
         exchangeProtocolVersions(input, output)
