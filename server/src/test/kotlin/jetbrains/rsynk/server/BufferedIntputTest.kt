@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.server
 
-class ReaderTest {
+class BufferedIntputTest {
     // TODO: re-implement the test, having messages in mind
     /*
     @Test
