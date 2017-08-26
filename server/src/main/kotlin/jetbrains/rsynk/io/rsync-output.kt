@@ -68,7 +68,7 @@ private class RsyncBufferedDataOutput(
         get() = written.get()
 }
 
-class RsyncTaggingDataOutput(
+class RsyncTaggingOutput(
         output: OutputStream
 ) : RsyncDataOutput {
 

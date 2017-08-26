@@ -99,7 +99,7 @@ private class RsyncBytesReaderImpl(
     }
 
     private fun readNextMessage(): Int {
-        val tag = readInt { input.readBytes(it) }
+        val tag = readInt(input.readBytes(intSize), 0)
         val dataHeader = ChannelMessageHeaderDecoder.decodeHeader(tag) ?: throw IOException("Cannot decode header $tag")
 
         if (dataHeader.tag == ChannelMessageTag.Data) {
@@ -114,12 +114,13 @@ private class RsyncBytesReaderImpl(
 const private val charSize = 2
 const private val intSize = 4
 
-private fun readChar(readBytes: (len: Int) -> ByteArray): Char {
-    return ByteBuffer.wrap(readBytes(charSize)).order(ByteOrder.LITTLE_ENDIAN).char
+
+private fun readChar(buffer: ByteArray, off: Int): Char {
+    return ByteBuffer.wrap(buffer, off, charSize).order(ByteOrder.LITTLE_ENDIAN).char
 }
 
-private fun readInt(readBytes: (len: Int) -> ByteArray): Int {
-    return ByteBuffer.wrap(readBytes(intSize)).order(ByteOrder.LITTLE_ENDIAN).int
+private fun readInt(buffer: ByteArray, off: Int): Int {
+    return ByteBuffer.wrap(buffer, off, intSize).order(ByteOrder.LITTLE_ENDIAN).int
 }
 
 
@@ -148,7 +149,7 @@ class RsyncTaggingInput(
 
     override fun readInt(): Int {
         ensureFetched(intSize)
-        readInt { byteReader.readBytes(intSize) }.let {
+        readInt(buffer, readPtr).let {
             readPtr += intSize
             return it
         }
@@ -156,7 +157,7 @@ class RsyncTaggingInput(
 
     override fun readChar(): Char {
         ensureFetched(charSize)
-        readChar { byteReader.readBytes(charSize) }.let {
+        readChar(buffer, readPtr).let {
             readPtr += charSize
             return it
         }
@@ -193,4 +194,5 @@ class RsyncTaggingInput(
             Thread.sleep(seq.next)
         }
     }
+
 }

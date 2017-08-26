@@ -27,7 +27,7 @@ import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.*
 import jetbrains.rsynk.io.RsyncDataInput
 import jetbrains.rsynk.io.RsyncDataOutput
-import jetbrains.rsynk.io.RsyncTaggingDataOutput
+import jetbrains.rsynk.io.RsyncTaggingOutput
 import jetbrains.rsynk.io.RsyncTaggingInput
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RsyncRequestArguments
@@ -74,7 +74,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                          stdErr: OutputStream) {
 
         val input = RsyncTaggingInput(stdIn)
-        val output = RsyncTaggingDataOutput(stdOut)
+        val output = RsyncTaggingOutput(stdOut)
         val requestData = ServerSendRequestDataParser.parse(args)
 
         exchangeProtocolVersions(input, output)
