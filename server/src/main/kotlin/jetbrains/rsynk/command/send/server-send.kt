@@ -194,6 +194,50 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         sendFiles(fileList, data, reader, writer)
+
+        writer.flush()
+
+        finalGoodbye(reader, writer)
+
+        writer.flush()
+    }
+
+    private fun finalGoodbye(reader: RsyncDataInput,
+                             writer: RsyncDataOutput) {
+
+        var index = readIndexAndAttributes(reader, writer)
+
+        if (index == FileListsCode.done.code) {
+            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+            writer.flush()
+            //index = readIndexAndAttributes(reader, writer)
+        }
+
+        if (index != FileListsCode.done.code) {
+            throw ProtocolException("At a final goodnye expected index ${FileListsCode.done.code}, got $index")
+        }
+    }
+
+    private fun readIndexAndAttributes(reader: RsyncDataInput,
+                                       writer: RsyncDataOutput): Int {
+        var index = 0
+        while (true) {
+            index = decodeAndReadFileListIndex(reader, writer)
+
+            if (index >= 0) {
+                break
+            }
+
+            if (index == FileListsCode.done.code) {
+                return index
+            }
+
+            TODO("Implement stats processing 'rsync.c, 326'")
+        }
+
+        val iflag = reader.readChar().decodeItemFlags()
+        TODO("To implement rsync.c 372")
     }
 
     private fun sendFileInfo(f: FileInfo,
@@ -366,7 +410,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             when {
                 index == FileListsCode.done.code -> {
                     state.nextState()
-                    encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+                    if (state.current != TransferState.State.Stop) {
+                        encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+                    }
                     continue@stateLoop
                 }
 
@@ -382,14 +428,14 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                         //blocks.peekBlock(block.parent.files(index))
                         throw UnsupportedOperationException("Store parent index in blocks")
                     }*/ // <---- correct code for future
-                            blocks.popBlock()!!.files[-1]!!
+                            blocks.popBlock()!!.files[0]!!
 
                     if (ItemFlag.Transfer !in iflags) {
-                        fileListIndexEncoder.encodeAndSend(index, Consumer<Byte> { b -> writer.writeByte(b) })
+                        fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
                         writer.writeBytes(VarintEncoder.varint(iflags.encode()))
-                        /*
-                        * TODO: stats
-                        * */
+
+                        // TODO: send stats
+
                         if (ItemFlag.BasicTypeFollows in iflags) {
                             throw NotSupportedException("It's time to support fnamecpm_type (sender.c line 177)")
                         }
@@ -410,7 +456,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
                     val checksumHeader = receiveChecksumHeader(reader)
                     val checksum = receiveChecksum(checksumHeader, reader)
-                    fileListIndexEncoder.encodeAndSend(index, Consumer<Byte> { b -> writer.writeByte(b) })
+                    fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
+
                     writer.writeBytes(VarintEncoder.shortint(iflags.encode()))
 
                     sendChecksumHeader(checksumHeader, writer)
@@ -425,13 +472,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             blockSize * bufferSizeMultiplier) { fileRepr ->
 
                         val calculatedChecksum = try {
-
                             if (checksumHeader.isNewFile) {
                                 skipMatchesAndGetChecksum(fileRepr, file, writer)
                             } else {
                                 sendMatchesAndGetChecksum(fileRepr, checksum, requestData.checksumSeed, writer)
                             }
-
                         } catch (t: Throwable) {
                             byteArrayOf() //TODO
                         }
@@ -445,6 +490,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                 }
             }
         }
+
+        encodeAndSendFileListIndex(FileListsCode.done.code, writer)
     }
 
     private fun expandAndSendStubDirectories(fileListsBlocks: FileListsBlocks,
@@ -528,8 +575,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return result
     }
 
-    private fun decodeAndReadFileListIndex(reader: RsyncDataInput, writeIO: RsyncDataOutput): Int {
-        writeIO.flush()
+    private fun decodeAndReadFileListIndex(reader: RsyncDataInput, writer: RsyncDataOutput): Int {
+        writer.flush()
         val index = fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
         if (index == FileListsCode.done.code || index >= 0) {
             return index
@@ -539,12 +586,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun encodeAndSendFileListIndex(index: Int, writer: RsyncDataOutput) {
         fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
-        writer.flush()
-    }
-
-    private fun sendFileIndexAndItemFlag(index: Int, itemFlag: Char, writer: RsyncDataOutput) {
-        encodeAndSendFileListIndex(index, writer)
-        writer.writeChar(itemFlag)
     }
 
     private fun receiveChecksumHeader(reader: RsyncDataInput): ChecksumHeader {
@@ -598,6 +639,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             md.update(bytes, offset, windowLength)
             fileRepresentation.slide(windowLength)
         }
+
+        writer.writeInt(0)
 
         if (bytesSent.toLong() != fileInfo.size) {
             logger.debug { "Sent $bytesSent bytes of ${fileInfo.size} file" }
