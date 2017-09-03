@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicLong
 
-private class RsyncBufferedDataOutput(
+class RsyncBufferedOutput(
         private val output: OutputStream
 ) : RsyncDataOutput {
 
@@ -72,7 +72,7 @@ class RsyncTaggingOutput(
         output: OutputStream
 ) : RsyncDataOutput {
 
-    private val bufferedOutput = RsyncBufferedDataOutput(output)
+    private val bufferedOutput = RsyncBufferedOutput(output)
 
     private var tagOffset = 0
 

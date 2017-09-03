@@ -25,10 +25,7 @@ import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
 import jetbrains.rsynk.flags.*
-import jetbrains.rsynk.io.RsyncDataInput
-import jetbrains.rsynk.io.RsyncDataOutput
-import jetbrains.rsynk.io.RsyncTaggingOutput
-import jetbrains.rsynk.io.RsyncTaggingInput
+import jetbrains.rsynk.io.*
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RsyncRequestArguments
 import jetbrains.rsynk.protocol.RsyncProtocolStaticConfig
@@ -73,8 +70,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                          stdOut: OutputStream,
                          stdErr: OutputStream) {
 
-        val input = RsyncTaggingInput(stdIn)
-        val output = RsyncTaggingOutput(stdOut)
+        val input = RsyncInput(stdIn)
+        val output = RsyncBufferedOutput(stdOut)
         val requestData = ServerSendRequestDataParser.parse(args)
 
         exchangeProtocolVersions(input, output)
@@ -82,13 +79,14 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writeCompatFlags(requestData.arguments, output)
         writeChecksumSeed(requestData.checksumSeed, output)
 
-        val message = input.readInt()
+        //val message = input.readInt()
         //TODO: make client messages encoding more (than this) abstract
-        output.writeInt(117440534/*that's a message to client*/)
+        //output.writeInt(117440534/*that's a message to client*/)
 
-        receiveFilterList(input)
-        sendFileList(requestData, input, output)
-
+        val rsyncInput = RsyncTaggingInput(stdIn)
+        val rsyncOutput = RsyncTaggingOutput(stdOut)
+        receiveFilterList(rsyncInput)
+        sendFileList(requestData, rsyncInput, rsyncOutput)
     }
 
 
@@ -195,7 +193,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             return
         }
 
-        val message = reader.readInt()
         sendFiles(fileList, data, reader, writer)
     }
 

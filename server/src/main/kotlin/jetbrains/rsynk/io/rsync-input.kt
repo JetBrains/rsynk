@@ -123,6 +123,37 @@ private fun readInt(buffer: ByteArray, off: Int): Int {
     return ByteBuffer.wrap(buffer, off, intSize).order(ByteOrder.LITTLE_ENDIAN).int
 }
 
+class RsyncInput(
+        input: InputStream
+) : RsyncDataInput {
+
+    private val bytesReader = BytesReaderImpl(input)
+
+    override fun readBytes(len: Int): ByteArray {
+        return bytesReader.readBytes(len)
+    }
+
+    override fun readBytes(dest: ByteArray, off: Int, len: Int) {
+        bytesReader.readBytes(dest, off, len)
+    }
+
+    override fun readInt(): Int {
+        return readInt(bytesReader.readBytes(intSize), 0)
+    }
+
+    override fun readChar(): Char {
+        return readChar(bytesReader.readBytes(charSize), 0)
+    }
+
+    override fun bytesRead(): Long {
+        return bytesReader.bytesRead
+    }
+
+    override fun bytesAvailable(): Int { // TODO: Should it be in {link@RsyncDataInput} ?
+        return 0
+    }
+}
+
 
 class RsyncTaggingInput(
         input: InputStream
@@ -141,6 +172,7 @@ class RsyncTaggingInput(
     }
 
     override fun readBytes(dest: ByteArray, off: Int, len: Int) {
+        ensureFetched(len)
         val written = writeFetchedBytes(dest, off, len)
         if (written < len) {
             byteReader.readBytes(dest, off + written, len - written)
@@ -185,14 +217,10 @@ class RsyncTaggingInput(
             throw IOException("Buffer is not big enough: fetchedBytesPtr=$fetchedBytesPtr, len=$len")
         }
 
-        val seq = SleepSequence()
 
         while (fetchedBytesPtr - readPtr < len) {
             val read = byteReader.readNextAvailable(buffer, fetchedBytesPtr)
             fetchedBytesPtr += read
-
-            Thread.sleep(seq.next)
         }
     }
-
 }
