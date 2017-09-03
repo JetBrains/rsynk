@@ -95,6 +95,7 @@ private class RsyncBytesReaderImpl(
         }
         val len = Math.min(available, buf.size - off)
         input.readBytes(buf, off, len)
+        available -= len
         return len
     }
 
