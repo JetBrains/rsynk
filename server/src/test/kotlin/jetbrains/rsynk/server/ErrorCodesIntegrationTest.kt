@@ -24,7 +24,6 @@ import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 
-@Suppress("UsePropertyAccessSyntax")
 class ErrorCodesIntegrationTest {
 
     companion object {
@@ -52,12 +51,12 @@ class ErrorCodesIntegrationTest {
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_old_test() {
         val session = jsch.getSession("voytovichs", "localhost", freePort)
         session.setConfig("StrictHostKeyChecking", "no")
-        session.setTimeout(60000)
+        session.timeout = 60000
         session.setPassword("whatever".toByteArray())
         session.connect()
         val channel = session.openChannel("exec") as ChannelExec
 
-        channel.setCommand("rsync --server --sender")
+        channel.setCommand("rsync --server --sender . hoho")
         channel.connect()
 
         val output = channel.outputStream
@@ -80,12 +79,12 @@ class ErrorCodesIntegrationTest {
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_new_test() {
         val session = jsch.getSession("voytovichs", "localhost", freePort)
         session.setConfig("StrictHostKeyChecking", "no")
-        session.setTimeout(60000)
+        session.timeout = 60000
         session.setPassword("whatever".toByteArray())
         session.connect()
         val channel = session.openChannel("exec") as ChannelExec
 
-        channel.setCommand("rsync --server --sender")
+        channel.setCommand("rsync --server --sender . hoho")
         channel.connect()
 
         val output = channel.outputStream
@@ -108,12 +107,12 @@ class ErrorCodesIntegrationTest {
     fun request_not_tracked_file_test() {
         val session = jsch.getSession("voytovichs", "localhost", freePort)
         session.setConfig("StrictHostKeyChecking", "no")
-        session.setTimeout(60000)
+        session.timeout = 60000
         session.setPassword("whatever".toByteArray())
         session.connect()
         val channel = session.openChannel("exec") as ChannelExec
 
-        channel.setCommand("rsync --server --sender . not/existing/path")
+        channel.setCommand("rsync --server --sender . /not/existing/path")
         channel.connect()
 
         val output = channel.outputStream
@@ -121,6 +120,7 @@ class ErrorCodesIntegrationTest {
         output.write(byteArrayOf(31, 0, 0, 0))
         output.flush()
 
+        output.write(byteArrayOf(4, 0, 0, 7))
         output.write(byteArrayOf(0, 0, 0, 0))
         output.flush()
 
@@ -132,7 +132,7 @@ class ErrorCodesIntegrationTest {
         session.disconnect()
 
         Assert.assertTrue("Reported error '$reportedError' doesn't contain expected message",
-                reportedError.contains("File not/existing/path is missing among files tracked by rsynk"))
+                reportedError.contains("File /not/existing/path is missing among files tracked by rsynk"))
         Assert.assertEquals(3 /* files selection error code */, channel.exitStatus)
     }
 }

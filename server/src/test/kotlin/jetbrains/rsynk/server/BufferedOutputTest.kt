@@ -16,6 +16,8 @@
 package jetbrains.rsynk.server
 
 class BufferedOutputTest {
+    // TODO: reimplement those with messages in mind
+
     /*
     @Test
     fun ints_bytes_little_endian_order_test() {

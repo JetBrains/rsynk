@@ -16,7 +16,7 @@
 package jetbrains.rsynk.server
 
 class BufferedIntputTest {
-    // TODO: re-implement the test, having messages in mind
+    // TODO: reimplement those with messages in mind
     /*
     @Test
     fun read_a_byte_test() {
