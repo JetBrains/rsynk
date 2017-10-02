@@ -54,7 +54,7 @@ class RsyncIntegrationTest {
     @Test
     fun file_transfer_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-        val source = File(data, "from.txt")//File("/Users/jetbrains/Code/rsynk/protocol-testing/hoho/from.txt")
+        val source = File(data, "from.txt")
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
@@ -70,7 +70,7 @@ class RsyncIntegrationTest {
     @Test
     fun file_transfer_to_existing_source_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-        val source = File(data, "from.txt")//File("/Users/jetbrains/Code/rsynk/protocol-testing/hoho/from.txt")
+        val source = File(data, "from.txt")
         source.writeText(IntegrationTestTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source, { RsynkFileBoundaries(0, source.length()) })
