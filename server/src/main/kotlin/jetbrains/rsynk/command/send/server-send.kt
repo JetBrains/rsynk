@@ -194,24 +194,18 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         sendFiles(fileList, data, reader, writer)
-
-        writer.flush()
-
+        sendStats(writer)
         finalGoodbye(reader, writer)
-
-        writer.flush()
     }
 
     private fun finalGoodbye(reader: RsyncDataInput,
                              writer: RsyncDataOutput) {
 
-        var index = readIndexAndAttributes(reader, writer)
+        val index = readIndexAndAttributes(reader, writer)
 
         if (index == FileListsCode.done.code) {
             encodeAndSendFileListIndex(FileListsCode.done.code, writer)
-            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
             writer.flush()
-            //index = readIndexAndAttributes(reader, writer)
         }
 
         if (index != FileListsCode.done.code) {
@@ -739,6 +733,16 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writer.writeInt(0)
 
         return fileChecksum.digest()
+    }
+
+    private fun sendStats(writer: RsyncDataOutput) {
+        // send dull statistic for not
+        // TODO: coolect real stats
+        writer.writeBytes(VarintEncoder.varlong(1, 3)) // total bytes read
+        writer.writeBytes(VarintEncoder.varlong(1, 3)) // total bytes written
+        writer.writeBytes(VarintEncoder.varlong(1, 3)) // total files size
+        writer.writeBytes(VarintEncoder.varlong(1, 3)) // file list build time
+        writer.writeBytes(VarintEncoder.varlong(1, 3)) // file list transfer time
     }
 
     private fun sendData(bytes: ByteArray,
