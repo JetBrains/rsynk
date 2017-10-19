@@ -68,10 +68,13 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     override fun execute(args: List<String>,
                          stdIn: InputStream,
                          stdOut: OutputStream,
-                         stdErr: OutputStream) {
+                         stdErr: OutputStream /* unused, todo: lets remove it from interface */) {
 
-        val input = RsyncInput(stdIn)
-        val output = RsyncBufferedOutput(stdOut)
+        val bytesCountingInputStream = BytesCountingInputStream(stdIn)
+        val bytesCountingOutputStream = BytesCountingOutputStream(stdOut)
+
+        val input = RsyncInput(bytesCountingInputStream)
+        val output = RsyncBufferedOutput(bytesCountingOutputStream)
         val requestData = ServerSendRequestDataParser.parse(args)
 
         exchangeProtocolVersions(input, output)
@@ -90,7 +93,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             sendFiles(fileList, requestData, rsyncInput, rsyncOutput)
         }
 
-        sendStats(rsyncOutput)
+        sendStats(bytesCountingInputStream.bytesRead,
+                bytesCountingOutputStream.bytesWritten,
+                rsyncOutput)
 
         finalGoodbye(rsyncInput, rsyncOutput)
     }
@@ -737,11 +742,13 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return fileChecksum.digest()
     }
 
-    private fun sendStats(writer: RsyncDataOutput) {
+    private fun sendStats(bytesRead: Long,
+                          bytesWritten: Long,
+                          writer: RsyncDataOutput) {
         // send dull statistic for not
         // TODO: coolect real stats
-        writer.writeBytes(VarintEncoder.varlong(1, 3)) // total bytes read
-        writer.writeBytes(VarintEncoder.varlong(1, 3)) // total bytes written
+        writer.writeBytes(VarintEncoder.varlong(bytesRead, 3)) // total bytes read
+        writer.writeBytes(VarintEncoder.varlong(bytesWritten, 3)) // total bytes written
         writer.writeBytes(VarintEncoder.varlong(1, 3)) // total files size
         writer.writeBytes(VarintEncoder.varlong(1, 3)) // file list build time
         writer.writeBytes(VarintEncoder.varlong(1, 3)) // file list transfer time
