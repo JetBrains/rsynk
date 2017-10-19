@@ -22,8 +22,7 @@ import java.io.OutputStream
 internal interface Command {
     fun execute(args: List<String>,
                 stdIn: InputStream,
-                stdOut: OutputStream,
-                stdErr: OutputStream)
+                stdOut: OutputStream)
 }
 
 internal interface RsyncCommand : Command {

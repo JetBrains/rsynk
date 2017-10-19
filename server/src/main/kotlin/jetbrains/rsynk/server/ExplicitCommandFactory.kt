@@ -62,7 +62,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
 
                 val command = try {
                     commands.resolve(args)
-                } catch(e: CommandNotFoundException) {
+                } catch (e: CommandNotFoundException) {
                     exit(RsyncExitCodes.RsyncProtocolDataStreamError, "Unknown command: ${e.message}\n")
                     return
                 }
@@ -86,8 +86,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                         command.execute(
                                 args,
                                 stdin,
-                                stdout,
-                                stderr
+                                stdout
                         )
 
                         exit(RsyncExitCodes.Success)
@@ -95,7 +94,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                         logger.info { "Command $args failed: with $e (${e.message})" }
                         writeError(e)
                         exit(e.exitCode)
-                    } catch(t: Throwable) {
+                    } catch (t: Throwable) {
                         logger.error(t, { "Command $args failed: ${t.message}" })
                         writeError(t)
                         exit(RsyncExitCodes.RsyncProtocolDataStreamError)

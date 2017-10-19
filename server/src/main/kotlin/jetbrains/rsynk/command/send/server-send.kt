@@ -67,8 +67,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
      * */
     override fun execute(args: List<String>,
                          stdIn: InputStream,
-                         stdOut: OutputStream,
-                         stdErr: OutputStream /* unused, todo: lets remove it from interface */) {
+                         stdOut: OutputStream) {
 
         val bytesCountingInputStream = BytesCountingInputStream(stdIn)
         val bytesCountingOutputStream = BytesCountingOutputStream(stdOut)
