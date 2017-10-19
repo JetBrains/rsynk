@@ -49,7 +49,7 @@ data class FileListBlock(val rootDirectory: FileInfo?,
     }
 }
 
-class FileListsBlocks(private val isRecursive: Boolean) {
+class FileListBlocks(private val isRecursive: Boolean) {
 
     private val blocks = ArrayList<FileListBlock>()
     private val stubDirectories = TreeMap<Int, FileInfo>()
