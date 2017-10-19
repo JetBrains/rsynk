@@ -56,17 +56,6 @@ private interface RsyncBytesReader : BytesReader {
     val bytesAvailable: Int
 }
 
-private class SleepSequence {
-    private val sequence = arrayOf(0, 0, 15, 50, 100, 333, 423, 700).iterator()
-    val next: Long
-        get() {
-            if (sequence.hasNext()) {
-                sequence.next()
-            }
-            return 777
-        }
-}
-
 private class RsyncBytesReaderImpl(
         private val input: BytesReader
 ) : RsyncBytesReader, BytesReader by input {
@@ -88,11 +77,11 @@ private class RsyncBytesReaderImpl(
     }
 
     override fun readNextAvailable(buf: ByteArray, off: Int): Int {
-        val seq = SleepSequence()
+
         while (available == 0) {
             available = readNextMessage()
-            Thread.sleep(seq.next)
         }
+
         val len = Math.min(available, buf.size - off)
         input.readBytes(buf, off, len)
         available -= len
