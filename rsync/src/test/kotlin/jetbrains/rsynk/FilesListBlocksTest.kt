@@ -16,14 +16,14 @@
 package jetbrains.rsynk
 
 import jetbrains.rsynk.files.FileInfo
-import jetbrains.rsynk.files.FileListBlocks
+import jetbrains.rsynk.files.FilesListBlocks
 import jetbrains.rsynk.files.Group
 import jetbrains.rsynk.files.User
 import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Paths
 
-class FileListBlocksTest {
+class FilesListBlocksTest {
 
     companion object Files {
 
@@ -39,7 +39,7 @@ class FileListBlocksTest {
 
     @Test
     fun preserve_index_for_not_null_root_non_recursive_test() {
-        val blocks = FileListBlocks(false)
+        val blocks = FilesListBlocks(false)
         blocks.addFileBlock(Files.directory, listOf(file))
         val block = blocks.popBlock() ?: throw AssertionError("Block must not be null")
         Assert.assertEquals(Files.directory, block.rootDirectory)
@@ -51,7 +51,7 @@ class FileListBlocksTest {
 
     @Test
     fun preserve_index_for_null_root_non_recursive_test() {
-        val blocks = FileListBlocks(false)
+        val blocks = FilesListBlocks(false)
         blocks.addFileBlock(null, listOf(file))
         val block = blocks.popBlock() ?: throw AssertionError("Block must not be null")
         Assert.assertNull(block.rootDirectory)
@@ -63,7 +63,7 @@ class FileListBlocksTest {
 
     @Test
     fun directory_index_is_minus_1_for_non_recursive_mode_test() {
-        val blocks = FileListBlocks(false)
+        val blocks = FilesListBlocks(false)
         blocks.addFileBlock(null, listOf(Files.file))
         val blockFiles = blocks.popBlock()?.files ?: throw AssertionError("Block must not be null")
         Assert.assertEquals(1, blockFiles.size)
@@ -72,7 +72,7 @@ class FileListBlocksTest {
 
     @Test
     fun first_directory_index_is_zero_for_recursive_mode_test() {
-        val blocks = FileListBlocks(true)
+        val blocks = FilesListBlocks(true)
         blocks.addFileBlock(null, listOf(Files.file))
         val blockFiles = blocks.popBlock()?.files ?: throw AssertionError("Block must not be null")
         Assert.assertEquals(1, blockFiles.size)
@@ -81,21 +81,21 @@ class FileListBlocksTest {
 
     @Test
     fun empty_stub_directories_on_non_recursive_mode_test() {
-        val blocks = FileListBlocks(false)
+        val blocks = FilesListBlocks(false)
         blocks.addFileBlock(Files.directory, listOf(Files.file))
         Assert.assertNull(blocks.popStubDir(0))
     }
 
     @Test
     fun not_empty_stub_directories_on_recursive_mode_test() {
-        val blocks = FileListBlocks(true)
+        val blocks = FilesListBlocks(true)
         blocks.addFileBlock(null, listOf(Files.directory, Files.file))
         Assert.assertEquals(Files.directory, blocks.popStubDir(0))
     }
 
     @Test
     fun do_not_include_dot_dir_in_stub_dirs_test() {
-        val blocks = FileListBlocks(true)
+        val blocks = FilesListBlocks(true)
         blocks.addFileBlock(null, listOf(Files.dotDirectory, Files.file))
         Assert.assertNull(blocks.popStubDir(0))
     }

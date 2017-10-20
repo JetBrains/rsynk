@@ -17,18 +17,18 @@ package jetbrains.rsynk.files
 
 import java.util.*
 
-sealed class FileListsCode(val code: Int) {
-    object done : FileListsCode(-1)
-    object eof : FileListsCode(-2)
-    object delStats : FileListsCode(-3)
-    object offset : FileListsCode(-101)
+sealed class FilesListsIndex(val code: Int) {
+    object done : FilesListsIndex(-1)
+    object eof : FilesListsIndex(-2)
+    object delStats : FilesListsIndex(-3)
+    object offset : FilesListsIndex(-101)
 }
 
-data class FileListBlock(val rootDirectory: FileInfo?,
-                         val files: Map<Int, FileInfo>,
-                         val begin: Int,
-                         val end: Int,
-                         val filesSize: Long) : Comparable<FileListBlock> {
+data class FilesListBlock(val rootDirectory: FileInfo?,
+                          val files: Map<Int, FileInfo>,
+                          val begin: Int,
+                          val end: Int,
+                          val filesSize: Long) : Comparable<FilesListBlock> {
 
     private val deletedFiles = HashSet<Int>()
 
@@ -44,14 +44,14 @@ data class FileListBlock(val rootDirectory: FileInfo?,
         return index in deletedFiles
     }
 
-    override fun compareTo(other: FileListBlock): Int {
+    override fun compareTo(other: FilesListBlock): Int {
         return begin.compareTo(other.begin)
     }
 }
 
-class FileListBlocks(private val isRecursive: Boolean) {
+class FilesListBlocks(private val isRecursive: Boolean) {
 
-    private val blocks = ArrayList<FileListBlock>()
+    private val blocks = ArrayList<FilesListBlock>()
     private val stubDirectories = TreeMap<Int, FileInfo>()
 
     private var nextStubDirIndex: Int = 0
@@ -64,9 +64,9 @@ class FileListBlocks(private val isRecursive: Boolean) {
     val hasStubDirs: Boolean
         get() = stubDirectories.isNotEmpty()
 
-    fun addFileBlock(root: FileInfo?, fileList: List<FileInfo>): FileListBlock {
+    fun addFileBlock(root: FileInfo?, filesList: List<FileInfo>): FilesListBlock {
         if (isRecursive) {
-            fileList.filter { it.isDirectory }
+            filesList.filter { it.isDirectory }
                     .sorted()
                     .forEach { dir ->
                         if (dir.isNotDotDir) {
@@ -77,13 +77,13 @@ class FileListBlocks(private val isRecursive: Boolean) {
         }
 
         val startIndex = nextDirIndex
-        val lastIndex = startIndex + fileList.size
+        val lastIndex = startIndex + filesList.size
 
         val indexToFile = TreeMap<Int, FileInfo>()
-        (startIndex + 1..lastIndex).zip(fileList.sorted()).toMap(indexToFile)        //TODO prune duplicates
+        (startIndex + 1..lastIndex).zip(filesList.sorted()).toMap(indexToFile)        //TODO prune duplicates
 
-        val filesSize = fileList.filter { it.isSymlink || it.isReqularFile }.fold(0L, { sum, file -> sum + file.size })
-        val block = FileListBlock(root, indexToFile, startIndex, lastIndex, filesSize)
+        val filesSize = filesList.filter { it.isSymlink || it.isReqularFile }.fold(0L, { sum, file -> sum + file.size })
+        val block = FilesListBlock(root, indexToFile, startIndex, lastIndex, filesSize)
         blocks.add(block)
 
         nextDirIndex = lastIndex + 1
@@ -97,14 +97,14 @@ class FileListBlocks(private val isRecursive: Boolean) {
         return foundDir
     }
 
-    fun popBlock(): FileListBlock? {
+    fun popBlock(): FilesListBlock? {
         if (blocks.isEmpty()) {
             return null
         }
         return blocks.removeAt(0)
     }
 
-    fun peekBlock(i: Int): FileListBlock? = blocks.getOrNull(i)
+    fun peekBlock(i: Int): FilesListBlock? = blocks.getOrNull(i)
 
     fun getTotalFilesSizeBytes(): Long {
         return blocks.fold(0L) { sum, block -> sum + block.filesSize }

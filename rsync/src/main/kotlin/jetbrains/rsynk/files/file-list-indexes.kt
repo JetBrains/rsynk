@@ -20,7 +20,7 @@ import java.nio.ByteOrder
 import java.util.function.Consumer
 import java.util.function.Supplier
 
-class FileListIndexDecoder {
+class FilesListIndexDecoder {
 
     private var lastPositive = -1
     private var lastNegative = 1
@@ -31,7 +31,7 @@ class FileListIndexDecoder {
         buffer[0] = reader.get().toInt()
 
         if (buffer[0] == 0) {
-            return FileListsCode.done.code
+            return FilesListsIndex.done.code
         }
 
         val isNegative = if ((0xFF and buffer[0]) == 0xFF) {
@@ -75,14 +75,14 @@ class FileListIndexDecoder {
     }
 }
 
-class FileListIndexEncoder {
+class FilesListIndexEncoder {
 
     private var lastPositive = -1
     private var lastNegative = 1
 
     fun encodeAndSend(index: Int, writer: Consumer<Byte>) {
 
-        if (index == FileListsCode.done.code) {
+        if (index == FilesListsIndex.done.code) {
             writer.accept(0)
             return
         }

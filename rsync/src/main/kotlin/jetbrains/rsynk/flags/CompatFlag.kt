@@ -20,7 +20,7 @@ sealed class CompatFlag(val value: Int) {
     object IncRecurse : CompatFlag(1)
     object SymlinkTimes : CompatFlag(2)
     object SymlinkIconv : CompatFlag(4)
-    object SafeFileList : CompatFlag(8)
+    object SafeFilesList : CompatFlag(8)
     object AvoidFileAttributesOptimization : CompatFlag(16)
     object FixChecksumSeed : CompatFlag(32)
 }
@@ -34,7 +34,7 @@ fun Byte.decodeCompatFlags(): Set<CompatFlag> {
     return listOf(CompatFlag.IncRecurse,
             CompatFlag.SymlinkTimes,
             CompatFlag.SymlinkIconv,
-            CompatFlag.SafeFileList,
+            CompatFlag.SafeFilesList,
             CompatFlag.AvoidFileAttributesOptimization,
             CompatFlag.FixChecksumSeed)
             .filter { flag -> thisIntValue.and(flag.value) == flag.value }

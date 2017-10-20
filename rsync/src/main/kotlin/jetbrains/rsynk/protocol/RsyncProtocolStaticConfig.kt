@@ -24,9 +24,9 @@ object RsyncProtocolStaticConfig {
 
     val serverCompatFlags: Set<CompatFlag> = setOf(CompatFlag.SymlinkTimes,
             CompatFlag.SymlinkIconv,
-            CompatFlag.SafeFileList,
+            CompatFlag.SafeFilesList,
             CompatFlag.AvoidFileAttributesOptimization)
 
-    val fileListPartitionLimit = 1024
+    val filesListPartitionLimit = 1024
     val chunkSize = 8 * 1024
 }

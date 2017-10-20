@@ -61,7 +61,7 @@ class CompatFlagsTest {
         val allFlags = setOf(CompatFlag.IncRecurse,
                 CompatFlag.SymlinkTimes,
                 CompatFlag.SymlinkIconv,
-                CompatFlag.SafeFileList,
+                CompatFlag.SafeFilesList,
                 CompatFlag.AvoidFileAttributesOptimization,
                 CompatFlag.FixChecksumSeed)
         val allFlagsText = allFlags.map { flag -> flag.javaClass.name }

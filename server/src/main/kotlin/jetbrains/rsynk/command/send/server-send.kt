@@ -46,8 +46,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     companion object : KLogging()
 
-    private val fileListIndexDecoder = FileListIndexDecoder()
-    private val fileListIndexEncoder = FileListIndexEncoder()
+    private val filesListIndexDecoder = FilesListIndexDecoder()
+    private val filesListIndexEncoder = FilesListIndexEncoder()
 
     override fun matchArguments(args: List<String>): Boolean {
         if (args.size < 4) {
@@ -87,7 +87,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         receiveFilterList(rsyncInput)
 
-        val sendFilesResult = sendFileList(requestData, rsyncOutput)
+        val sendFilesResult = sendFilesList(requestData, rsyncOutput)
 
         if (sendFilesResult.filesList != null) {
             sendFiles(sendFilesResult.filesList, requestData, rsyncInput, rsyncOutput)
@@ -155,8 +155,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
     }
 
-    private fun sendFileList(data: ServerSendRequestData,
-                             writer: RsyncDataOutput): SendFilesListResult {
+    private fun sendFilesList(data: ServerSendRequestData,
+                              writer: RsyncDataOutput): SendFilesListResult {
         val buildFilesListTimer = CommandExecutionTimer.start()
 
         val files = FileResolver(fileInfoReader, trackedFiles).resolve(data.files)
@@ -165,8 +165,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             throw NotSupportedException("Recursive mode is not yet supported")
         }
 
-        val fileList = FileListBlocks(false)
-        val initialBlock = fileList.addFileBlock(null, files.map { it.info }) //TODO: implement file boundaries restriction!
+        val filesList = FilesListBlocks(false)
+        val initialBlock = filesList.addFileBlock(null, files.map { it.info }) //TODO: implement file boundaries restriction!
 
         var prevFileCache = emptyPreviousFileCache
         initialBlock.files.forEach { _, file ->
@@ -209,7 +209,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
             return SendFilesListResult(null, buildFilesListExecutionTime, sendFilesListExecutionTime)
         }
-        return SendFilesListResult(fileList, buildFilesListExecutionTime, sendFilesListExecutionTime)
+        return SendFilesListResult(filesList, buildFilesListExecutionTime, sendFilesListExecutionTime)
     }
 
     private fun finalGoodbye(reader: RsyncDataInput,
@@ -217,13 +217,13 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         val index = readIndexAndAttributes(reader, writer)
 
-        if (index == FileListsCode.done.code) {
-            encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+        if (index == FilesListsIndex.done.code) {
+            encodeAndSendFilesListIndex(FilesListsIndex.done.code, writer)
             writer.flush()
         }
 
-        if (index != FileListsCode.done.code) {
-            throw ProtocolException("At a final goodbye expected index ${FileListsCode.done.code}, got $index")
+        if (index != FilesListsIndex.done.code) {
+            throw ProtocolException("At a final goodbye expected index ${FilesListsIndex.done.code}, got $index")
         }
     }
 
@@ -231,13 +231,12 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                                        writer: RsyncDataOutput): Int {
         var index = 0
         while (true) {
-            index = decodeAndReadFileListIndex(reader, writer)
-
+            index = decodeAndReadFilesListIndex(reader, writer)
             if (index >= 0) {
                 break
             }
 
-            if (index == FileListsCode.done.code) {
+            if (index == FilesListsIndex.done.code) {
                 return index
             }
 
@@ -395,7 +394,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         writer.writeBytes(ByteBuffer.wrap(nameBytes))
     }
 
-    private fun sendFiles(blocks: FileListBlocks,
+    private fun sendFiles(blocks: FilesListBlocks,
                           requestData: ServerSendRequestData,
                           reader: RsyncDataInput,
                           writer: RsyncDataOutput) {
@@ -405,8 +404,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         stateLoop@ while (state.current != TransferState.State.Stop) {
 
-            val index = decodeAndReadFileListIndex(reader, writer)
-            val iflags = if (index == FileListsCode.done.code) {
+            val index = decodeAndReadFilesListIndex(reader, writer)
+            val iflags = if (index == FilesListsIndex.done.code) {
                 emptySet() // don't read flags if index is done
             } else {
                 reader.readChar().decodeItemFlags()
@@ -416,10 +415,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
 
             when {
-                index == FileListsCode.done.code -> {
+                index == FilesListsIndex.done.code -> {
                     state.nextState()
                     if (state.current != TransferState.State.Stop) {
-                        encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+                        encodeAndSendFilesListIndex(FilesListsIndex.done.code, writer)
                     }
                     continue@stateLoop
                 }
@@ -439,7 +438,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             blocks.popBlock()!!.files[0]!!
 
                     if (ItemFlag.Transfer !in iflags) {
-                        fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
+                        filesListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
                         writer.writeBytes(VarintEncoder.varint(iflags.encode()))
 
                         // TODO: send stats
@@ -464,7 +463,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
                     val checksumHeader = receiveChecksumHeader(reader)
                     val checksum = receiveChecksum(checksumHeader, reader)
-                    fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
+                    filesListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
 
                     writer.writeBytes(VarintEncoder.shortint(iflags.encode()))
 
@@ -499,10 +498,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
         }
 
-        encodeAndSendFileListIndex(FileListsCode.done.code, writer)
+        encodeAndSendFilesListIndex(FilesListsIndex.done.code, writer)
     }
 
-    private fun expandAndSendStubDirectories(fileListBlocks: FileListBlocks,
+    private fun expandAndSendStubDirectories(filesListBlocks: FilesListBlocks,
                                              blockInTransmission: Int,
                                              sentFilesLimit: Int,
                                              requestData: ServerSendRequestData,
@@ -511,12 +510,12 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         var filesSent = 0
         var currentBlock = blockInTransmission
 
-        while (fileListBlocks.hasStubDirs && filesSent < sentFilesLimit) {
-            val stubDir = fileListBlocks.popStubDir(currentBlock) ?: throw ProtocolException("Invalid stub directory block index: $currentBlock")
-            encodeAndSendFileListIndex(FileListsCode.offset.code - currentBlock, writer)
+        while (filesListBlocks.hasStubDirs && filesSent < sentFilesLimit) {
+            val stubDir = filesListBlocks.popStubDir(currentBlock) ?: throw ProtocolException("Invalid stub directory block index: $currentBlock")
+            encodeAndSendFilesListIndex(FilesListsIndex.offset.code - currentBlock, writer)
 
             val expanded = expandStubDirectory(stubDir, requestData)
-            val block = fileListBlocks.addFileBlock(stubDir, expanded)
+            val block = filesListBlocks.addFileBlock(stubDir, expanded)
 
             block.files.forEach { _index, file ->
                 sendFileInfo(file, emptyPreviousFileCache, requestData.arguments, writer)
@@ -583,17 +582,17 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return result
     }
 
-    private fun decodeAndReadFileListIndex(reader: RsyncDataInput, writer: RsyncDataOutput): Int {
+    private fun decodeAndReadFilesListIndex(reader: RsyncDataInput, writer: RsyncDataOutput): Int {
         writer.flush()
-        val index = fileListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
-        if (index == FileListsCode.done.code || index >= 0) {
+        val index = filesListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
+        if (index == FilesListsIndex.done.code || index >= 0) {
             return index
         }
         throw UnsupportedOperationException("It's time to implement deletion statistic reading and sending (rsync.c line 326)")
     }
 
-    private fun encodeAndSendFileListIndex(index: Int, writer: RsyncDataOutput) {
-        fileListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
+    private fun encodeAndSendFilesListIndex(index: Int, writer: RsyncDataOutput) {
+        filesListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
     }
 
     private fun receiveChecksumHeader(reader: RsyncDataInput): ChecksumHeader {
@@ -829,7 +828,7 @@ private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null,
         emptySet())
 
 private data class SendFilesListResult(
-        val filesList: FileListBlocks?,
+        val filesList: FilesListBlocks?,
         val buildFilesListTime: Long,
         val sendFilesListTime: Long
 )
