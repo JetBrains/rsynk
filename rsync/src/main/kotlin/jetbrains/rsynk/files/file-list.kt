@@ -64,9 +64,6 @@ class FileListBlocks(private val isRecursive: Boolean) {
     val hasStubDirs: Boolean
         get() = stubDirectories.isNotEmpty()
 
-    val blocksSize: Int
-        get() = blocks.size
-
     fun addFileBlock(root: FileInfo?, fileList: List<FileInfo>): FileListBlock {
         if (isRecursive) {
             fileList.filter { it.isDirectory }
@@ -109,9 +106,7 @@ class FileListBlocks(private val isRecursive: Boolean) {
 
     fun peekBlock(i: Int): FileListBlock? = blocks.getOrNull(i)
 
-    fun isEmpty(): Boolean {
-        return blocksSize == 0 && !hasStubDirs
+    fun getTotalFilesSizeBytes(): Long {
+        return blocks.fold(0L) { sum, block -> sum + block.filesSize }
     }
-
-    fun isNotEmpty(): Boolean = !isEmpty()
 }

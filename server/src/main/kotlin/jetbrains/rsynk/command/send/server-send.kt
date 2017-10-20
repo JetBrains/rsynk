@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.command.send
 
+import jetbrains.rsynk.command.CommandExecutionTimer
 import jetbrains.rsynk.command.RsyncCommand
 import jetbrains.rsynk.data.*
 import jetbrains.rsynk.exitvalues.InvalidFileException
@@ -86,14 +87,17 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         receiveFilterList(rsyncInput)
 
-        val fileList = sendFileList(requestData, rsyncOutput)
+        val sendFilesResult = sendFileList(requestData, rsyncOutput)
 
-        if (fileList != null) {
-            sendFiles(fileList, requestData, rsyncInput, rsyncOutput)
+        if (sendFilesResult.filesList != null) {
+            sendFiles(sendFilesResult.filesList, requestData, rsyncInput, rsyncOutput)
         }
 
         sendStats(bytesCountingInputStream.bytesRead,
                 bytesCountingOutputStream.bytesWritten,
+                sendFilesResult.filesList?.getTotalFilesSizeBytes() ?: 0L,
+                sendFilesResult.buildFilesListTime,
+                sendFilesResult.sendFilesListTime,
                 rsyncOutput)
 
         finalGoodbye(rsyncInput, rsyncOutput)
@@ -152,7 +156,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
     private fun sendFileList(data: ServerSendRequestData,
-                             writer: RsyncDataOutput): FileListBlocks? {
+                             writer: RsyncDataOutput): SendFilesListResult {
+        val buildFilesListTimer = CommandExecutionTimer.start()
 
         val files = FileResolver(fileInfoReader, trackedFiles).resolve(data.files)
 
@@ -175,7 +180,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     prevFileCache.sendGroupNames + file.group)
         }
 
-        //Successfully sent files metadata
+        val buildFilesListExecutionTime = buildFilesListTimer.getTimeFromStart()
+        val sendFilesListExecutionTimer = CommandExecutionTimer.start()
+
         writer.writeByte(0.toByte())
 
         if (data.arguments.preserveUser && !data.arguments.numericIds && data.arguments.filesSelection is Option.FileSelection.Recurse) {
@@ -193,15 +200,16 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             }
             writer.writeBytes(VarintEncoder.varlong(0, 1))
         }
+        val sendFilesListExecutionTime = sendFilesListExecutionTimer.getTimeFromStart()
 
         if (initialBlock.files.isEmpty()) {
             if (data.arguments.filesSelection is Option.FileSelection.Recurse) {
                 writer.writeByte((-1).toByte())
                 writer.flush()
             }
-            return null
+            return SendFilesListResult(null, buildFilesListExecutionTime, sendFilesListExecutionTime)
         }
-        return fileList
+        return SendFilesListResult(fileList, buildFilesListExecutionTime, sendFilesListExecutionTime)
     }
 
     private fun finalGoodbye(reader: RsyncDataInput,
@@ -743,14 +751,15 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun sendStats(bytesRead: Long,
                           bytesWritten: Long,
+                          totalFilesSizeBytes: Long,
+                          filesListBuildTimeMS: Long,
+                          filesListTransferTimeMS: Long,
                           writer: RsyncDataOutput) {
-        // send dull statistic for not
-        // TODO: coolect real stats
-        writer.writeBytes(VarintEncoder.varlong(bytesRead, 3)) // total bytes read
-        writer.writeBytes(VarintEncoder.varlong(bytesWritten, 3)) // total bytes written
-        writer.writeBytes(VarintEncoder.varlong(1, 3)) // total files size
-        writer.writeBytes(VarintEncoder.varlong(1, 3)) // file list build time
-        writer.writeBytes(VarintEncoder.varlong(1, 3)) // file list transfer time
+        writer.writeBytes(VarintEncoder.varlong(bytesRead, 3))
+        writer.writeBytes(VarintEncoder.varlong(bytesWritten, 3))
+        writer.writeBytes(VarintEncoder.varlong(totalFilesSizeBytes, 3))
+        writer.writeBytes(VarintEncoder.varlong(filesListBuildTimeMS, 3))
+        writer.writeBytes(VarintEncoder.varlong(filesListTransferTimeMS, 3))
     }
 
     private fun sendData(bytes: ByteArray,
@@ -818,3 +827,9 @@ private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null,
         "",
         emptySet(),
         emptySet())
+
+private data class SendFilesListResult(
+        val filesList: FileListBlocks?,
+        val buildFilesListTime: Long,
+        val sendFilesListTime: Long
+)
