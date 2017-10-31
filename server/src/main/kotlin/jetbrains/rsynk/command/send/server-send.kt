@@ -242,7 +242,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             TODO("Implement stats processing 'rsync.c, 326'")
         }
 
-        val iflag = reader.readChar().decodeItemFlags()
+        val iflag = reader.readChar()
         TODO("To implement rsync.c 372")
     }
 
@@ -405,9 +405,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
             val index = decodeAndReadFilesListIndex(reader, writer)
             val iflags = if (index == FilesListsIndex.done.code) {
-                emptySet() // don't read flags if index is done
+                0 // don't read flags if index is done
             } else {
-                reader.readChar().decodeItemFlags()
+                reader.readChar().toInt()
             }
             if (!ItemFlagsValidator.isFlagSupported(iflags)) {
                 throw NotSupportedException("Received not supported item flag ($iflags)")
@@ -436,17 +436,17 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     }*/ // <---- correct code for future
                             blocks.popBlock()!!.files[0]!!
 
-                    if (ItemFlag.Transfer !in iflags) {
+                    if (iflags and ItemFlag.TRANSFER.mask == 0) {
                         filesListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
-                        writer.writeBytes(VarintEncoder.varint(iflags.encode()))
+                        writer.writeBytes(VarintEncoder.varint(iflags))
 
                         // TODO: send stats
 
-                        if (ItemFlag.BasicTypeFollows in iflags) {
+                        if (iflags and ItemFlag.BASIC_TYPE_FOLLOWS.mask != 0) {
                             throw NotSupportedException("It's time to support fnamecpm_type (sender.c line 177)")
                         }
 
-                        if (ItemFlag.XNameFollows in iflags) {
+                        if (iflags and ItemFlag.XNAME_FOLLOWS.mask != 0) {
                             throw NotSupportedException("It's time to support xname (sender.c line 179)")
                         }
 
@@ -454,7 +454,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             throw NotSupportedException("It's time to support sending xattr request (sender.c line 183)")
                         }
 
-                        if (ItemFlag.IsNew in iflags) {
+                        if (iflags and ItemFlag.IS_NEW.mask != 0) {
                             // TODO: update statistic (sender.c line 273)
                         }
                         continue@stateLoop
@@ -464,7 +464,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     val checksum = receiveChecksum(checksumHeader, reader)
                     filesListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
 
-                    writer.writeBytes(VarintEncoder.shortint(iflags.encode()))
+                    writer.writeBytes(VarintEncoder.shortint(iflags))
 
                     sendChecksumHeader(checksumHeader, writer)
 

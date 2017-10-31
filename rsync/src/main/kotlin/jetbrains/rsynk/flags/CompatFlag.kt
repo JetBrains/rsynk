@@ -16,10 +16,10 @@
 package jetbrains.rsynk.flags
 
 enum class CompatFlags(val mask: Byte) {
-    INC_RECURSE(0b000001),
-    SYMLINK_TIMES(0b000010),
-    SYMLINK_ICONV(0b000100),
-    SAFE_FILE_LIST(0b001000),
-    AVOID_FILE_ATTRS_OPTIMIZATION(0b010000),
-    FIXED_CHECKSUM_SEED(0b100000)
+    INC_RECURSE                     (0b000001),
+    SYMLINK_TIMES                   (0b000010),
+    SYMLINK_ICONV                   (0b000100),
+    SAFE_FILE_LIST                  (0b001000),
+    AVOID_FILE_ATTRS_OPTIMIZATION   (0b010000),
+    FIXED_CHECKSUM_SEED             (0b100000)
 }
