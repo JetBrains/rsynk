@@ -39,6 +39,8 @@ import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
+import kotlin.experimental.and
+import kotlin.experimental.or
 
 
 internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader,
@@ -122,14 +124,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
     }
 
     private fun writeCompatFlags(arguments: RsyncRequestArguments, output: RsyncDataOutput) {
-        val cf = HashSet<CompatFlag>()
-        cf.addAll(RsyncProtocolStaticConfig.serverCompatFlags)
-        // TODO: merge static and dynamic compat flags setup
+        var flags = RsyncProtocolStaticConfig.serverCompatFlags
         if (arguments.checksumSeedOrderFix) {
-            cf += CompatFlag.FixChecksumSeed
+            flags = flags or CompatFlags.FIXED_CHECKSUM_SEED.mask
         }
-        val encoded = cf.encode()
-        output.writeByte(encoded)
+        output.writeByte(flags)
         output.flush()
     }
 
@@ -425,7 +424,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
                 index >= 0 -> {
 
-                    if (RsyncProtocolStaticConfig.serverCompatFlags.contains(CompatFlag.IncRecurse)) {
+                    if (CompatFlags.INC_RECURSE.mask and RsyncProtocolStaticConfig.serverCompatFlags != 0.toByte()) {
                         throw NotSupportedException("It's time to implement extra file list sending (sender.c line 234)")
                     }
 

@@ -15,18 +15,17 @@
  */
 package jetbrains.rsynk.protocol
 
-import jetbrains.rsynk.flags.CompatFlag
+import jetbrains.rsynk.flags.CompatFlags
+import kotlin.experimental.or
 
 object RsyncProtocolStaticConfig {
     val clientProtocolVersionMin = 31
     val serverProtocolVersion = 31
     val clientProtocolVersionMax = 31
-
-    val serverCompatFlags: Set<CompatFlag> = setOf(CompatFlag.SymlinkTimes,
-            CompatFlag.SymlinkIconv,
-            CompatFlag.SafeFilesList,
-            CompatFlag.AvoidFileAttributesOptimization)
-
+    val serverCompatFlags: Byte = CompatFlags.SYMLINK_TIMES.mask or
+            CompatFlags.SYMLINK_ICONV.mask or
+            CompatFlags.SAFE_FILE_LIST.mask or
+            CompatFlags.AVOID_FILE_ATTRS_OPTIMIZATION.mask
     val filesListPartitionLimit = 1024
     val chunkSize = 8 * 1024
 }

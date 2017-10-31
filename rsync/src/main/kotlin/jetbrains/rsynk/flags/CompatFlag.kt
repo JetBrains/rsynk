@@ -15,28 +15,11 @@
  */
 package jetbrains.rsynk.flags
 
-
-sealed class CompatFlag(val value: Int) {
-    object IncRecurse : CompatFlag(1)
-    object SymlinkTimes : CompatFlag(2)
-    object SymlinkIconv : CompatFlag(4)
-    object SafeFilesList : CompatFlag(8)
-    object AvoidFileAttributesOptimization : CompatFlag(16)
-    object FixChecksumSeed : CompatFlag(32)
-}
-
-fun Set<CompatFlag>.encode(): Byte {
-    return this.fold(0, { value, flag -> value.or(flag.value) }).toByte()
-}
-//TODO make separate encoder/decoder
-fun Byte.decodeCompatFlags(): Set<CompatFlag> {
-    val thisIntValue = this.toInt()
-    return listOf(CompatFlag.IncRecurse,
-            CompatFlag.SymlinkTimes,
-            CompatFlag.SymlinkIconv,
-            CompatFlag.SafeFilesList,
-            CompatFlag.AvoidFileAttributesOptimization,
-            CompatFlag.FixChecksumSeed)
-            .filter { flag -> thisIntValue.and(flag.value) == flag.value }
-            .toSet()
+enum class CompatFlags(val mask: Byte) {
+    INC_RECURSE(0b000001),
+    SYMLINK_TIMES(0b000010),
+    SYMLINK_ICONV(0b000100),
+    SAFE_FILE_LIST(0b001000),
+    AVOID_FILE_ATTRS_OPTIMIZATION(0b010000),
+    FIXED_CHECKSUM_SEED(0b100000)
 }
