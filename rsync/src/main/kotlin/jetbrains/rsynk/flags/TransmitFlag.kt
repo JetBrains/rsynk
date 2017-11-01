@@ -15,27 +15,21 @@
  */
 package jetbrains.rsynk.flags
 
-sealed class TransmitFlag(val value: Int) {
-    object TopDirectory : TransmitFlag(1)
-    object SameMode : TransmitFlag(2)
-    object ExtendedFlags : TransmitFlag(4)
-    object SameUserId : TransmitFlag(8)
-    object SameGroupId : TransmitFlag(16)
-    object SameName : TransmitFlag(32)
-    object SameLongName : TransmitFlag(64)
-    object SameLastModifiedTime : TransmitFlag(128)
-    object SameRdevMajor : TransmitFlag(256)
-    object NoContentDirs : TransmitFlag(256)
-    object HardLinked : TransmitFlag(512)
-    object UserNameFollows : TransmitFlag(1024)
-    object GroupNameFollows : TransmitFlag(2048)
-    object HardLinksFirst : TransmitFlag(4096)
-    object IoErrorEndList : TransmitFlag(4096)
-    object ModNsec : TransmitFlag(8192)
+enum class TransmitFlag(val mask: Int) {
+    TOP_DIRECTORY       (0b00000000000001),
+    SAME_MODE           (0b00000000000010),
+    EXTENDED_FLAGS      (0b00000000000100),
+    SAME_USER_ID        (0b00000000001000),
+    SAME_GROUP_ID       (0b00000000010000),
+    SAME_NAME           (0b00000000100000),
+    SAME_LONG_NAME      (0b00000001000000),
+    SAME_LAST_MODIFIED  (0b00000010000000),
+    SAME_RDEV_MAJOR     (0b00000100000000),
+    NO_CONTENT_DIRS     (0b00000100000000),
+    HARD_LINKED         (0b00001000000000),
+    USER_NAME_FOLLOWS   (0b00010000000000),
+    GROUP_NAME_FOLLOWS  (0b00100000000000),
+    HARD_LINKS_FIRST    (0b01000000000000),
+    IO_ERROR_END_LIST   (0b01000000000000),
+    MOD_NSEC            (0b10000000000000)
 }
-//TODO make separate encoder/decoder
-fun Set<TransmitFlag>.encode(): Int {
-    return this.fold(0, { value, flag -> value.or(flag.value) })
-}
-
-

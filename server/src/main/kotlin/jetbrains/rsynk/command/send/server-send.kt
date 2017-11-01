@@ -250,10 +250,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                              cache: PreviousFileSentFileInfoCache,
                              arguments: RsyncRequestArguments,
                              output: RsyncDataOutput) {
-        var flags: Set<TransmitFlag> = HashSet()
+        var flags = 0
 
         if (f.isDirectory) {
-            flags += TransmitFlag.TopDirectory
+            flags = flags or TransmitFlag.TOP_DIRECTORY.mask
         }
 
         if (f.isBlockDevice || f.isCharacterDevice || f.isSocket || f.isFIFO) {
@@ -262,7 +262,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         if (f.mode == cache.mode) {
-            flags += TransmitFlag.SameMode
+            flags = flags or TransmitFlag.SAME_MODE.mask
         }
 
         if (arguments.preserveUser && f.user != cache.user) {
@@ -270,10 +270,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     !arguments.numericIds &&
                     arguments.filesSelection is Option.FileSelection.Recurse &&
                     f.user in cache.sentUserNames) {
-                flags += TransmitFlag.UserNameFollows
+                flags = flags or TransmitFlag.USER_NAME_FOLLOWS.mask
             }
         } else {
-            flags += TransmitFlag.SameUserId
+            flags = flags or TransmitFlag.SAME_USER_ID.mask
         }
 
         if (arguments.preserveGroup && f.group != cache.group) {
@@ -281,14 +281,14 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                     !arguments.numericIds &&
                     arguments.filesSelection is Option.FileSelection.Recurse &&
                     f.group in cache.sendGroupNames) {
-                flags += TransmitFlag.GroupNameFollows
+                flags = flags or TransmitFlag.GROUP_NAME_FOLLOWS.mask
             }
         } else {
-            flags += TransmitFlag.SameGroupId
+            flags = flags or TransmitFlag.SAME_GROUP_ID.mask
         }
 
         if (f.lastModified == cache.lastModified) {
-            flags += TransmitFlag.SameLastModifiedTime
+            flags = flags or TransmitFlag.SAME_LAST_MODIFIED.mask
         }
 
         val fileNameBytes = f.path.fileName.toString().toByteArray()
@@ -296,29 +296,28 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         val suffix = Arrays.copyOfRange(fileNameBytes, commonPrefixLength, fileNameBytes.size)
 
         if (commonPrefixLength > 0) {
-            flags += TransmitFlag.SameName
+            flags = flags or TransmitFlag.SAME_NAME.mask
         }
         if (suffix.size > Byte.MAX_VALUE_UNSIGNED) {
-            flags += TransmitFlag.SameLongName
+            flags = flags or TransmitFlag.SAME_LONG_NAME.mask
         }
 
-        val encodedFlags = flags.encode()
-        if (encodedFlags == 0 && !f.isDirectory) {
-            flags += TransmitFlag.TopDirectory
+        if (flags == 0 && !f.isDirectory) {
+            flags = flags or TransmitFlag.TOP_DIRECTORY.mask
         }
 
-        if (encodedFlags == 0 || encodedFlags and 0xFF00 != 0) {
-            flags += TransmitFlag.ExtendedFlags
-            output.writeChar(encodedFlags.toChar())
+        if (flags == 0 || flags and 0xFF00 != 0) {
+            flags = flags or TransmitFlag.EXTENDED_FLAGS.mask
+            output.writeChar(flags.toChar())
         } else {
-            output.writeByte(encodedFlags.toByte())
+            output.writeByte(flags.toByte())
         }
 
-        if (TransmitFlag.SameName in flags) {
+        if (flags and TransmitFlag.SAME_NAME.mask != 0) {
             output.writeByte(commonPrefixLength.toByte())
         }
 
-        if (TransmitFlag.SameLongName in flags) {
+        if (flags and TransmitFlag.SAME_LONG_NAME.mask != 0) {
             output.writeBytes(VarintEncoder.varlong(suffix.size.toLong(), 1))
         } else {
             output.writeByte(suffix.size.toByte())
@@ -327,26 +326,26 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         output.writeBytes(VarintEncoder.varlong(f.size, 3))
 
-        if (TransmitFlag.SameLastModifiedTime !in flags) {
+        if (flags and TransmitFlag.SAME_LAST_MODIFIED.mask == 0) {
             output.writeBytes(VarintEncoder.varlong(f.lastModified, 4))
         }
 
         //missed thing flist.c line 569
 
-        if (TransmitFlag.SameMode !in flags) {
+        if (flags and TransmitFlag.SAME_MODE.mask == 0) {
             output.writeInt(f.mode)
         }
 
-        if (arguments.preserveUser && TransmitFlag.SameUserId !in flags) {
+        if (arguments.preserveUser && flags and TransmitFlag.SAME_USER_ID.mask == 0) {
             sendUserId(f.user.uid, output)
-            if (TransmitFlag.UserNameFollows in flags) {
+            if (flags and TransmitFlag.USER_NAME_FOLLOWS.mask != 0) {
                 sendUserName(f.user.name, output)
             }
         }
 
-        if (arguments.preserveGroup && TransmitFlag.SameGroupId !in flags) {
+        if (arguments.preserveGroup && flags and TransmitFlag.SAME_GROUP_ID.mask == 0) {
             sendGroupId(f.group.gid, output)
-            if (TransmitFlag.GroupNameFollows in flags) {
+            if (flags and TransmitFlag.GROUP_NAME_FOLLOWS.mask != 0) {
                 sendGroupName(f.group.name, output)
             }
         }
@@ -583,7 +582,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun decodeAndReadFilesListIndex(reader: RsyncDataInput, writer: RsyncDataOutput): Int {
         writer.flush()
-        val index = filesListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1)[0] })
+        val index = filesListIndexDecoder.readAndDecode(Supplier { reader.readBytes(1).first() })
         if (index == FilesListsIndex.done.code || index >= 0) {
             return index
         }
