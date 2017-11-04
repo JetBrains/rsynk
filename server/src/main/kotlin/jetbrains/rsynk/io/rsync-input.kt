@@ -139,7 +139,7 @@ class RsyncInput(
         return bytesReader.bytesRead
     }
 
-    override fun bytesAvailable(): Int { // TODO: Should it be in {link@RsyncDataInput} ?
+    override fun bytesAvailable(): Int { /** TODO: Shouldn't it be in [RsyncDataInput]? */
         return 0
     }
 }

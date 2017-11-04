@@ -59,8 +59,8 @@ data class FileInfo(
 
         val thisBytes = this.path.toUri().path.toByteArray()
         val otherBytes = other.path.toUri().path.toByteArray()
-        (thisBytes zip otherBytes).forEach { (a, b) ->
-            val result = a compare b
+        for (i in 0..Math.min(thisBytes.size, otherBytes.size)) {
+            val result = thisBytes[i] compare otherBytes[i]
             if (result != 0) {
                 return result
             }
