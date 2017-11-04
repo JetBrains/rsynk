@@ -4,20 +4,30 @@
 [![GitHub license](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 ![Repository Size](https://reposs.herokuapp.com/?path=JetBrains/rsynk)
 
-Consider work in progress. It's not yet ready to use.
-
 ### What it is ###
-An embeddable ssh server for [rsync client](https://rsync.samba.org).
+An embeddable ssh server for [rsync client](https://rsync.samba.org) with additional features.
 
 ### What it is not ###
 This is not an rsync re-implementation. Unlike server, client functionality is not an aim of project.
 
 ### Goals ###
-The goal is to make rsync server that allows rich files and their content manipulations. That means rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
+The goal is to make a server for rsync client and allows rich files content manipulations which is not implemented in original rsync. Rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
 
-### Supported rsync versions ###
+### Roadmap ###
+
+~Implement single file transmission~
+
+**Implement multiple files transmission**
+
+Support a rich set of rsync flags and options
+
+Implement dynamical tracked files boundaries
+
+// Completed steps are ~crossed out~. Currently developing step is **bold**
+
+### Supported client rsync versions ###
 Required minimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/)
-
+  
 ### Example ###
 **Rsynk** is able to dynamically choose which files to track:
 
