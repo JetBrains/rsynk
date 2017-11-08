@@ -27,24 +27,6 @@ import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicInteger
 
 class RsyncIntegrationTest {
-    companion object {
-        val freePort = IntegrationTestTools.findFreePort()
-
-        @JvmStatic
-        val rsynk = Rsynk.newBuilder().apply {
-            port = freePort
-            nioWorkers = 1
-            commandWorkers = 1
-            idleConnectionTimeoutMills = 30 * 1000
-            serverKeysProvider = IntegrationTestTools.getServerKey()
-        }.build()
-
-        @AfterClass
-        @JvmStatic
-        fun stopServer() = rsynk.close()
-
-        val id = AtomicInteger(0)
-    }
 
     @Before
     fun clearTrackingFiles() {
@@ -63,7 +45,7 @@ class RsyncIntegrationTest {
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, freePort, 10000, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkPort, 10000, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 
@@ -80,7 +62,7 @@ class RsyncIntegrationTest {
         val destinationFile = File(destinationDir, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, freePort, 10000, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkPort, 10000, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 
@@ -99,13 +81,13 @@ class RsyncIntegrationTest {
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
 
-        RsyncCommand.sync("localhost:${dataDirectory.absolutePath}/", destinationDir.absolutePath, freePort, 10, "rv")
+        RsyncCommand.sync("localhost:${dataDirectory.absolutePath}/", destinationDir.absolutePath, rsynkPort, 10, "rv")
 
         listOf(
                 File(destinationDir, sourceFile1.name),
                 File(destinationDir, sourceFile2.name)
         ).forEach { downloadedFile ->
-            Assert.assertTrue("${downloadedFile.name} was no downloaded", downloadedFile.isFile)
+            Assert.assertTrue("${downloadedFile.name} was not downloaded", downloadedFile.isFile)
             Assert.assertEquals("${downloadedFile.name} content is not identical to source",
                     IntegrationTestTools.loremIpsum,
                     downloadedFile.readText())
@@ -126,7 +108,7 @@ class RsyncIntegrationTest {
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
     }
 
@@ -143,7 +125,91 @@ class RsyncIntegrationTest {
         val destinationFile = File(destinationDir, "to.txt")
         destinationFile.writeText(IntegrationTestTools.loremIpsum.substring(0, IntegrationTestTools.loremIpsum.length / 2))
 
-        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        RsyncCommand.sync("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
+    }
+
+    @Test
+    fun transfer_several_files_test() {
+        val sourceRoot = Files.createTempDirectory("data-root").toFile()
+        val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
+        val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
+        val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
+        val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
+        rsynk.trackFiles(listOf(
+                RsynkFile(fileA1, { RsynkFileBoundaries(0, fileA1.length()) }),
+                RsynkFile(fileA2, { RsynkFileBoundaries(0, fileA2.length()) }),
+                RsynkFile(fileB1, { RsynkFileBoundaries(0, fileB1.length()) }))
+        )
+
+        val destinationRoot = Files.createTempDirectory("data").toFile()
+        RsyncCommand.sync("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+
+        assertDirectoriesContentSame(sourceRoot, destinationRoot)
+    }
+
+    @Test
+    fun transfer_several_files_incrementally_test() {
+        val sourceRoot = Files.createTempDirectory("data-root").toFile()
+        val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
+        val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
+        val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
+        val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
+        rsynk.trackFiles(listOf(
+                RsynkFile(fileA1, { RsynkFileBoundaries(0, fileA1.length()) }),
+                RsynkFile(fileA2, { RsynkFileBoundaries(0, fileA2.length()) }),
+                RsynkFile(fileB1, { RsynkFileBoundaries(0, fileB1.length()) }))
+        )
+
+        val destinationRoot = Files.createTempDirectory("data").toFile()
+        File(destinationRoot, "a1.txt").apply { writeText("ho") }
+        File(sourceSubDir, "a2.txt").apply { writeText("ho") }
+        File(sourceRoot, "b1.txt").apply { writeText("ho") }
+        RsyncCommand.sync("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+
+        assertDirectoriesContentSame(sourceRoot, destinationRoot)
+    }
+
+    private fun assertDirectoriesContentSame(a: File, b: File) {
+        if (!a.isDirectory) {
+            Assert.fail("${a.absolutePath} is not a directory")
+        }
+        if (!b.isDirectory) {
+            Assert.fail("${b.absolutePath} is not a directory")
+        }
+
+        val aDirectoryFiles = a.listFiles().sorted()
+        val bDirectoryFiles = b.listFiles().sorted()
+        Assert.assertEquals("Directories contain different set of files", aDirectoryFiles, bDirectoryFiles)
+        for (i in 0..aDirectoryFiles.size) {
+            if (aDirectoryFiles[i].isDirectory) {
+                assertDirectoriesContentSame(aDirectoryFiles[i], bDirectoryFiles[i])
+                continue
+            }
+            Assert.assertEquals(aDirectoryFiles[i].readText(), bDirectoryFiles[i].readText())
+        }
+    }
+
+    companion object {
+        val rsynkPort = IntegrationTestTools.findFreePort()
+
+        @JvmStatic
+        val rsynk = Rsynk.newBuilder().apply {
+            port = rsynkPort
+            nioWorkers = 1
+            commandWorkers = 1
+            idleConnectionTimeoutMills = 30 * 1000
+            serverKeysProvider = IntegrationTestTools.getServerKey()
+
+            if (IntegrationTestTools.isDebugProtocolEnabled()) {
+                idleConnectionTimeoutMills = Int.MAX_VALUE
+            }
+        }.build()
+
+        @AfterClass
+        @JvmStatic
+        fun stopServer() = rsynk.close()
+
+        val id = AtomicInteger(0)
     }
 }

@@ -18,6 +18,7 @@ package jetbrains.rsynk.server
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 import org.junit.Assert
 import java.io.IOException
+import java.lang.management.ManagementFactory
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.security.KeyFactory
@@ -57,6 +58,9 @@ object IntegrationTestTools {
         throw RuntimeException("Cannot find free port in range [16384, 65536]")
     }
 
+    fun isDebugProtocolEnabled(): Boolean {
+        return ManagementFactory.getRuntimeMXBean().inputArguments.any { it.contains("jdwp=") }
+    }
 }
 
 object RsyncCommand {

@@ -26,27 +26,6 @@ import java.io.ByteArrayOutputStream
 
 class ErrorCodesIntegrationTest {
 
-    companion object {
-
-        val freePort = IntegrationTestTools.findFreePort()
-
-        @JvmStatic
-        val rsynk = Rsynk.newBuilder().apply {
-            port = freePort
-            nioWorkers = 1
-            commandWorkers = 1
-            idleConnectionTimeoutMills = 30000
-            serverKeysProvider = IntegrationTestTools.getServerKey()
-        }.build()
-
-        val jsch = JSch()
-
-        @AfterClass
-        @JvmStatic
-        fun stopServer() = rsynk.close()
-
-    }
-
     @Test
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_old_test() {
         val session = jsch.getSession("voytovichs", "localhost", freePort)
@@ -134,5 +113,29 @@ class ErrorCodesIntegrationTest {
         Assert.assertTrue("Reported error '$reportedError' doesn't contain expected message",
                 reportedError.contains("File /not/existing/path is missing among files tracked by rsynk"))
         Assert.assertEquals(3 /* files selection error code */, channel.exitStatus)
+    }
+
+
+    companion object {
+        val freePort = IntegrationTestTools.findFreePort()
+
+        @JvmStatic
+        val rsynk = Rsynk.newBuilder().apply {
+            port = freePort
+            nioWorkers = 1
+            commandWorkers = 1
+            idleConnectionTimeoutMills = 30 * 1000
+            serverKeysProvider = IntegrationTestTools.getServerKey()
+
+            if (IntegrationTestTools.isDebugProtocolEnabled()) {
+                idleConnectionTimeoutMills = Int.MAX_VALUE
+            }
+        }.build()
+
+        val jsch = JSch()
+
+        @AfterClass
+        @JvmStatic
+        fun stopServer() = rsynk.close()
     }
 }

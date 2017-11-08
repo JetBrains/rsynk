@@ -40,7 +40,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
-        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.freePort, 10, "v")
+        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10), destinationFile.readText())
     }
 
@@ -58,7 +58,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(0, 20)
         })
 
-        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.freePort, 10, "v")
+        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 20), destinationFile.readText())
     }
 
@@ -76,7 +76,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, 30)
         })
 
-        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.freePort, 10, "v")
+        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 40), destinationFile.readText())
     }
 
@@ -94,7 +94,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(0, 10)
         })
 
-        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.freePort, 10, "v")
+        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 10), destinationFile.readText())
 
         rsynk.stopTrackingAllFiles()
@@ -103,7 +103,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, 20)
         })
 
-        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.freePort, 10, "v")
+        RsyncCommand.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 20), destinationFile.readText())
     }
 
@@ -115,8 +115,12 @@ class FileBoundariesIntegrationTest {
             port = freePort
             nioWorkers = 1
             commandWorkers = 1
-            idleConnectionTimeoutMills = 30000
+            idleConnectionTimeoutMills = 30 * 1000
             serverKeysProvider = IntegrationTestTools.getServerKey()
+
+            if (IntegrationTestTools.isDebugProtocolEnabled()) {
+                idleConnectionTimeoutMills = Int.MAX_VALUE
+            }
         }.build()
 
         @AfterClass
