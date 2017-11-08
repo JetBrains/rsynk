@@ -145,7 +145,10 @@ class RsyncIntegrationTest {
         val destinationRoot = Files.createTempDirectory("data").toFile()
         RsyncClientWrapper.sync("localhost:${fileA1.absolutePath} ${fileA2.absolutePath} ${fileB1.absolutePath}",
                 destinationRoot.absolutePath, rsynkPort, 10, "v")
-        assertDirectoriesContentSame(sourceRoot, destinationRoot)
+
+        Assert.assertEquals(fileA1.readText(), File(destinationRoot, fileA1.name).readText())
+        Assert.assertEquals(fileA2.readText(), File(destinationRoot, fileA2.name).readText())
+        Assert.assertEquals(fileB1.readText(), File(destinationRoot, fileB1.name).readText())
     }
 
     @Test
@@ -167,6 +170,49 @@ class RsyncIntegrationTest {
         File(sourceRoot, "b1.txt").apply { writeText("ho") }
         RsyncClientWrapper.sync("localhost:${fileA1.absolutePath} ${fileA2.absolutePath} ${fileB1.absolutePath}",
                 destinationRoot.absolutePath, rsynkPort, 10, "v")
+
+        Assert.assertEquals(fileA1.readText(), File(destinationRoot, fileA1.name).readText())
+        Assert.assertEquals(fileA2.readText(), File(destinationRoot, fileA2.name).readText())
+        Assert.assertEquals(fileB1.readText(), File(destinationRoot, fileB1.name).readText())
+    }
+
+    @Test
+    fun transfer_directory_test() {
+        val sourceRoot = Files.createTempDirectory("data-root").toFile()
+        val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
+        val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
+        val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
+        val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
+        rsynk.trackFiles(listOf(
+                RsynkFile(fileA1, { RsynkFileBoundaries(0, fileA1.length()) }),
+                RsynkFile(fileA2, { RsynkFileBoundaries(0, fileA2.length()) }),
+                RsynkFile(fileB1, { RsynkFileBoundaries(0, fileB1.length()) }))
+        )
+
+        val destinationRoot = Files.createTempDirectory("data").toFile()
+        RsyncClientWrapper.sync("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+
+        assertDirectoriesContentSame(sourceRoot, destinationRoot)
+    }
+
+    @Test
+    fun transfer_directory_incrementally_test() {
+        val sourceRoot = Files.createTempDirectory("data-root").toFile()
+        val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
+        val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
+        val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
+        val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
+        rsynk.trackFiles(listOf(
+                RsynkFile(fileA1, { RsynkFileBoundaries(0, fileA1.length()) }),
+                RsynkFile(fileA2, { RsynkFileBoundaries(0, fileA2.length()) }),
+                RsynkFile(fileB1, { RsynkFileBoundaries(0, fileB1.length()) }))
+        )
+
+        val destinationRoot = Files.createTempDirectory("data").toFile()
+        File(destinationRoot, "a1.txt").apply { writeText("ho") }
+        File(sourceSubDir, "a2.txt").apply { writeText("ho") }
+        File(sourceRoot, "b1.txt").apply { writeText(fileB1.readText()) }
+        RsyncClientWrapper.sync("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
 
         assertDirectoriesContentSame(sourceRoot, destinationRoot)
     }
