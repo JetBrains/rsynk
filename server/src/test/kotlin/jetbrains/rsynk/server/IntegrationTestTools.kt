@@ -63,7 +63,7 @@ object IntegrationTestTools {
     }
 }
 
-object RsyncCommand {
+object RsyncClientWrapper {
     fun sync(from: String, to: String, port: Int, timeoutSec: Long, _params: String): String {
         val params = if (_params.isEmpty()) "" else "-$_params"
         val args = listOf(rsyncPath, params, "--protocol", "31", "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)

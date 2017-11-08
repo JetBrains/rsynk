@@ -124,7 +124,7 @@ class ErrorCodesIntegrationTest {
             port = freePort
             nioWorkers = 1
             commandWorkers = 1
-            idleConnectionTimeoutMills = 30 * 1000
+            idleConnectionTimeoutMills = 5 * 1000
             serverKeysProvider = IntegrationTestTools.getServerKey()
 
             if (IntegrationTestTools.isDebugProtocolEnabled()) {
