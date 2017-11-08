@@ -143,8 +143,8 @@ class RsyncIntegrationTest {
         )
 
         val destinationRoot = Files.createTempDirectory("data").toFile()
-        RsyncClientWrapper.sync("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
-
+        RsyncClientWrapper.sync("localhost:${fileA1.absolutePath} ${fileA2.absolutePath} ${fileB1.absolutePath}",
+                destinationRoot.absolutePath, rsynkPort, 10, "v")
         assertDirectoriesContentSame(sourceRoot, destinationRoot)
     }
 
@@ -165,7 +165,8 @@ class RsyncIntegrationTest {
         File(destinationRoot, "a1.txt").apply { writeText("ho") }
         File(sourceSubDir, "a2.txt").apply { writeText("ho") }
         File(sourceRoot, "b1.txt").apply { writeText("ho") }
-        RsyncClientWrapper.sync("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+        RsyncClientWrapper.sync("localhost:${fileA1.absolutePath} ${fileA2.absolutePath} ${fileB1.absolutePath}",
+                destinationRoot.absolutePath, rsynkPort, 10, "v")
 
         assertDirectoriesContentSame(sourceRoot, destinationRoot)
     }
