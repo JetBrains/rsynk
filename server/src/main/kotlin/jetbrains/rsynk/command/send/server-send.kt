@@ -427,13 +427,14 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                         throw NotSupportedException("It's time to implement extra file list sending (sender.c line 234)")
                     }
 
-                    val file = /*if (index - block.begin >= 0) {
+                    /*if (index - block.begin >= 0) {
                         block.files[index - block.begin]
                     } else {
                         //blocks.peekBlock(block.parent.files(index))
                         throw UnsupportedOperationException("Store parent index in blocks")
                     }*/ // <---- correct code for future
-                            blocks.popBlock()!!.files[0]!!
+                    val block = blocks.peekBlock(0)!!
+                    val file = block.files[index]!!
 
                     if (iflags and ItemFlag.TRANSFER.mask == 0) {
                         filesListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
