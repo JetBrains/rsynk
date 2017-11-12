@@ -121,20 +121,68 @@ data class ChecksumChunk(
         val longChecksumChunk: LongChecksumChunk
 )
 
-class Checksum(val header: ChecksumHeader) {
+data class Checksum(val header: ChecksumHeader) {
 
-    private val chunks = ArrayList<ChecksumChunk>()
+    private val rollingChecksumToChunk = HashMap<Int, ArrayList<ChecksumChunk>>()
 
+    @Synchronized
     operator fun plusAssign(chunk: ChecksumChunk) {
-        chunks.add(chunk)
+        val list = rollingChecksumToChunk[chunk.rollingChecksumChunk.checksum]
+        if (list == null) {
+            rollingChecksumToChunk.put(chunk.rollingChecksumChunk.checksum,
+                    ArrayList<ChecksumChunk>().apply { add(chunk) })
+            return
+        }
+        list.add(chunk)
+    }
+
+    @Synchronized
+    fun getChunks(chunkRollingChecksum: Int): List<ChecksumChunk> {
+        return rollingChecksumToChunk[chunkRollingChecksum] ?: emptyList()
     }
 }
 
 class ChecksumMatcher(private val checksum: Checksum) {
 
-    fun getMatches(rollingChecksumChunk: Int,
+    fun getMatches(chunkRollingChecksum: Int,
                    length: Int,
                    preferredChunkIndex: Int): List<ChecksumChunk> {
-        TODO()
+        val chunks = checksum.getChunks(chunkRollingChecksum)
+        if (chunks.isEmpty()) {
+            return chunks
+        }
+        val lowerBoundIndex = chunks.sortedBy { it.chunkIndex }.lowerBound(preferredChunkIndex)
+        val index = if (lowerBoundIndex < 0) {
+            val insertionPoint = -lowerBoundIndex - 1
+            Math.min(chunks.size - 1, insertionPoint)
+        } else {
+            lowerBoundIndex
+        }
+        return listOf(chunks[index]) + chunks
+    }
+
+    /**
+     * Find index of element whose [ChecksumChunk.chunkIndex]
+     * is lower or equal to [preferredChunkIndex].
+     * Returns -1 if there's no such element.
+     */
+    private fun List<ChecksumChunk>.lowerBound(preferredChunkIndex: Int): Int {
+        var left = 0
+        var right = size - 1
+
+        while (left <= right) {
+            val middle = (left + right) / 2
+            val correspondingIdx = this[middle].chunkIndex
+            if (correspondingIdx == preferredChunkIndex) {
+                return middle
+            }
+            if (correspondingIdx < preferredChunkIndex) {
+                left = middle + 1
+            } else {
+                right = middle - 1
+            }
+        }
+
+        return -left - 1
     }
 }

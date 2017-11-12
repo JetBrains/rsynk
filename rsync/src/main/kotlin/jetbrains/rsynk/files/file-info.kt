@@ -72,10 +72,10 @@ data class FileInfo(
 
         val callerPathIsShorter = thisBytes.size < otherBytes.size
         if (this.isDirectory && other.isDirectory) {
-            if (callerPathIsShorter) {
-                return '/'.toByte() compare otherBytes[thisBytes.size]
+            return if (callerPathIsShorter) {
+                '/'.toByte() compare otherBytes[thisBytes.size]
             } else {
-                return thisBytes[otherBytes.size] compare '/'.toByte()
+                thisBytes[otherBytes.size] compare '/'.toByte()
             }
         }
 

@@ -25,7 +25,10 @@ import jetbrains.rsynk.exitvalues.UnsupportedProtocolException
 import jetbrains.rsynk.extensions.MAX_VALUE_UNSIGNED
 import jetbrains.rsynk.extensions.toLittleEndianBytes
 import jetbrains.rsynk.files.*
-import jetbrains.rsynk.flags.*
+import jetbrains.rsynk.flags.CompatFlags
+import jetbrains.rsynk.flags.ItemFlag
+import jetbrains.rsynk.flags.ItemFlagsValidator
+import jetbrains.rsynk.flags.TransmitFlag
 import jetbrains.rsynk.io.*
 import jetbrains.rsynk.options.Option
 import jetbrains.rsynk.options.RsyncRequestArguments
