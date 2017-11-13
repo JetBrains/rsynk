@@ -20,6 +20,7 @@ import org.junit.Assert
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.net.ServerSocket
+import java.net.URL
 import java.nio.file.Files
 import java.security.KeyFactory
 import java.security.KeyPair
@@ -29,11 +30,19 @@ import java.util.concurrent.TimeUnit
 
 
 object IntegrationTestTools {
+
+    private fun getTestResourceUrl(relativePath: String): URL {
+        return javaClass.classLoader.getResource(relativePath)
+    }
+
+    fun readTestResouceText(relativePath: String): String {
+        return javaClass.classLoader.getResource(relativePath).readText()
+    }
+
     fun getServerKey(): KeyPairProvider {
-        javaClass.classLoader.getResource("private_key.der")
-        val privateBytes = javaClass.classLoader.getResource("private_key.der").readBytes()
+        val privateBytes = getTestResourceUrl("private_key.der").readBytes()
         val privateKey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(privateBytes))
-        val publicBytes = javaClass.classLoader.getResource("public_key.der").readBytes()
+        val publicBytes = getTestResourceUrl("public_key.der").readBytes()
         val publicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(publicBytes))
         return KeyPairProvider { listOf(KeyPair(publicKey, privateKey)) }
     }
@@ -77,7 +86,7 @@ object RsyncClientWrapper {
         process.outputStream.close()
         try {
             process.waitFor(timeoutSec, TimeUnit.SECONDS)
-        } catch(e: InterruptedException) {
+        } catch (e: InterruptedException) {
             throw Error("Rsync process is running longer than $timeoutSec sec, aborting...", e)
         }
         Assert.assertEquals("Rsync exit code not equals to 0\n" +

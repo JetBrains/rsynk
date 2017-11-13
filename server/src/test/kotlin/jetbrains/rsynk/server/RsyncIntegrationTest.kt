@@ -130,6 +130,26 @@ class RsyncIntegrationTest {
     }
 
     @Test
+    fun incremental_file_transfer_8kb_test() {
+        val sourceRoot = Files.createTempDirectory("data-root").toFile()
+        val srcFile = File(sourceRoot, "file.txt")
+
+        val content = IntegrationTestTools.readTestResouceText("8kb.txt").toByteArray()
+        srcFile.writeBytes(content)
+        rsynk.trackFile(RsynkFile(srcFile, { RsynkFileBoundaries(0, srcFile.length()) }))
+        val destRoot = Files.createTempDirectory("data-root").toFile()
+        val destFile = File(destRoot, "file.txt")
+
+        destFile.writeBytes(content.copyOfRange(0, content.size / 3))
+        destFile.appendBytes(content.copyOfRange(content.size * 2 / 3 + 1, content.size))
+
+        RsyncClientWrapper.sync("localhost:${srcFile.absolutePath}",
+                destFile.absolutePath, rsynkPort, 10, "v")
+
+        Assert.assertEquals(srcFile.readText(), destFile.readText())
+    }
+
+    @Test
     fun transfer_several_files_test() {
         val sourceRoot = Files.createTempDirectory("data-root").toFile()
         val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
