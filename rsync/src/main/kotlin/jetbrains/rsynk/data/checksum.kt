@@ -125,7 +125,6 @@ data class Checksum(val header: ChecksumHeader) {
 
     private val rollingChecksumToChunk = HashMap<Int, ArrayList<ChecksumChunk>>()
 
-    @Synchronized
     operator fun plusAssign(chunk: ChecksumChunk) {
         val list = rollingChecksumToChunk[chunk.rollingChecksumChunk.checksum]
         if (list == null) {
@@ -136,7 +135,6 @@ data class Checksum(val header: ChecksumHeader) {
         list.add(chunk)
     }
 
-    @Synchronized
     fun getChunks(chunkRollingChecksum: Int): List<ChecksumChunk> {
         return rollingChecksumToChunk[chunkRollingChecksum] ?: emptyList()
     }
@@ -144,10 +142,13 @@ data class Checksum(val header: ChecksumHeader) {
 
 class ChecksumMatcher(private val checksum: Checksum) {
 
+    @Suppress("UNUSED_PARAMETER")
     fun getMatches(chunkRollingChecksum: Int,
                    length: Int,
                    preferredChunkIndex: Int): List<ChecksumChunk> {
         val chunks = checksum.getChunks(chunkRollingChecksum)
+        //TODO: this algorithm has to be tested (it does seem correct though)
+        /*
         if (chunks.isEmpty()) {
             return chunks
         }
@@ -159,6 +160,8 @@ class ChecksumMatcher(private val checksum: Checksum) {
             lowerBoundIndex
         }
         return listOf(chunks[index]) + chunks
+        */
+        return chunks
     }
 
     /**
@@ -166,6 +169,7 @@ class ChecksumMatcher(private val checksum: Checksum) {
      * is lower or equal to [preferredChunkIndex].
      * Returns -1 if there's no such element.
      */
+    @Suppress("unused")
     private fun List<ChecksumChunk>.lowerBound(preferredChunkIndex: Int): Int {
         var left = 0
         var right = size - 1
