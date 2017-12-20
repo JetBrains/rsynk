@@ -27,7 +27,7 @@ internal data class ServerSendRequestData(
         val checksumSeed: Int
 )
 
-private enum class ArgumentType { RSYNC, Option, FILE }
+private enum class ArgumentType { RSYNC, OPTION, FILE }
 
 internal object ServerSendRequestDataParser {
 
@@ -37,17 +37,17 @@ internal object ServerSendRequestDataParser {
         val files = ArrayList<String>()
 
         var next = ArgumentType.RSYNC
-        args.forEach { arg ->
 
+        args.forEach { arg ->
             when (next) {
                 ArgumentType.RSYNC -> {
                     if (arg != "rsync") {
                         throw ArgsParingException("'rsync' argument must be sent first, but was $arg")
                     }
-                    next = ArgumentType.Option
+                    next = ArgumentType.OPTION
                 }
 
-                ArgumentType.Option -> {
+                ArgumentType.OPTION -> {
                     if (isLongArgument(arg)) {
                         options.add(parseLongArgument(arg))
                         return@forEach
