@@ -672,7 +672,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         val matcher = ChecksumMatcher(checksum)
 
         var preferredIndex = 0
-        var currentLongChecksum: ByteArray? = null
+        var localChunkLongChecksum: ByteArray? = null
         var currentRollingChecksum = RollingChecksum.calculate(fileRepresentation.bytes,
                 fileRepresentation.offset,
                 fileRepresentation.currentWindowLength)
@@ -681,20 +681,15 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
             val matches = matcher.getMatches(currentRollingChecksum, fileRepresentation.currentWindowLength, preferredIndex)
 
-            findingMatchesLoop@ for (chunk in matches) {
+            for (chunk in matches) {
 
-                val currentLongChecksumValue = currentLongChecksum
-                val currentLongChecksumNotNull = if (currentLongChecksumValue != null) {
-                    currentLongChecksumValue
-                } else {
+                if (localChunkLongChecksum == null) {
                     chunkChecksum.update(fileRepresentation.bytes, fileRepresentation.offset, fileRepresentation.currentWindowLength)
                     chunkChecksum.update(checksumSeed.toLittleEndianBytes())
-                    val new = Arrays.copyOf(chunkChecksum.digest(), chunk.longChecksumChunk.checksum.size)
-                    currentLongChecksum = new
-                    new
+                    localChunkLongChecksum = Arrays.copyOf(chunkChecksum.digest(), chunk.longChecksumChunk.checksum.size)
                 }
 
-                if (Arrays.equals(currentLongChecksumNotNull, chunk.longChecksumChunk.checksum)) {
+                if (Arrays.equals(localChunkLongChecksum, chunk.longChecksumChunk.checksum)) {
                     val bytesMarked = fileRepresentation.markedBytesCount
                     sendData(fileRepresentation.bytes, fileRepresentation.offset, bytesMarked, writer)
 
@@ -710,8 +705,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                             fileRepresentation.offset,
                             fileRepresentation.currentWindowLength)
 
-                    currentLongChecksum = null
-                    break@findingMatchesLoop
+                    localChunkLongChecksum = null
+                    break
                 }
             }
 
