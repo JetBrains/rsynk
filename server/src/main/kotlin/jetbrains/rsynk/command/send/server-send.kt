@@ -475,7 +475,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
                     val blockSize = if (checksumHeader.isNewFile) FilesTransmission.defaultBlockSize else checksumHeader.blockLength
                     val bufferSizeMultiplier = if (checksumHeader.isNewFile) 1 else 10
-                    FilesTransmission().runWithOpenedFile(file.path,
+                    FilesTransmission.runWithOpenedFile(file.path,
                             file.size,
                             blockSize,
                             blockSize * bufferSizeMultiplier) { fileRepr ->
@@ -668,7 +668,11 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         fileRepresentation.setMarkOffsetRelativetlyToStart(0)
 
-        val smallestChunk = checksum.header.remainder - checksum.header.blockLength
+        val smallestChunk = if (checksum.header.remainder > 0) {
+            checksum.header.remainder
+        } else  {
+            checksum.header.blockLength
+        }
         val matcher = ChecksumMatcher(checksum)
 
         var preferredIndex = 0

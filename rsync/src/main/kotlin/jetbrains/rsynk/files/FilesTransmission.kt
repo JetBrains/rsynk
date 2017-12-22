@@ -135,10 +135,8 @@ class TransmissionFileRepresentation internal constructor(private val filePath: 
     }
 }
 
-class FilesTransmission {
-    companion object {
-        val defaultBlockSize = 8 * 1024
-    }
+object FilesTransmission {
+    val defaultBlockSize = 8 * 1024
 
     fun <T> runWithOpenedFile(filePath: Path,
                               fileSize: Long,
