@@ -24,7 +24,7 @@ import jetbrains.rsynk.server.RsynkSshServer
 import jetbrains.rsynk.server.SSHSessionFactory
 import jetbrains.rsynk.server.SSHSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
-import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoCloseable {
 
@@ -33,9 +33,11 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     private val server: RsynkSshServer
-    private val trackedFiles = LinkedHashSet<RsynkFile>()
-    private val filesProvider = object : TrackedFilesProvider {
-        override fun getTrackedFiles(): List<RsynkFile> = trackedFiles.toList()
+    private val trackedFiles = CopyOnWriteArrayList<RsynkFile>()
+    private val filesProvider= object : TrackedFilesProvider {
+        override fun getTrackedFiles(): List<RsynkFile> {
+            return trackedFiles
+        }
     }
 
     init {
@@ -63,25 +65,20 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     fun trackFiles(files: List<RsynkFile>): Rsynk {
-        synchronized(trackedFiles) {
-            trackedFiles.addAll(files)
-            return this
-        }
+        trackedFiles.addAll(files)
+        return this
     }
 
     fun stopTrackingFile(file: RsynkFile) {
-        synchronized(trackedFiles) {
-            if (!trackedFiles.remove(file)) {
-                val boundaries = file.getBoundariesCallable()
-                throw IllegalArgumentException("File (${file.file}, offset=${boundaries.offset}, length=${boundaries.length} is not tracked by rsynk")
-            }
+        if (!trackedFiles.remove(file)) {
+            val boundaries = file.getBoundariesCallable()
+            throw IllegalArgumentException("File (${file.file}, offset=${boundaries.offset}, length=${boundaries.length} is not tracked by rsynk")
         }
     }
 
     fun stopTrackingAllFiles() {
-        synchronized(trackedFiles) {
-            this.trackedFiles.clear()
-        }
+        trackedFiles.clear()
+        //this.trackedFiles.clear()
     }
 
     override fun close() {
