@@ -15,31 +15,34 @@
  */
 package jetbrains.rsynk
 
-import jetbrains.rsynk.extensions.use
-import jetbrains.rsynk.files.TransmissionFileRepresentation
+import jetbrains.rsynk.files.FilesTransmission
 import org.junit.Assert
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 
-class TransmissionFileRepresentationTest {
+class FileInTransmission {
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun do_not_transmit_empty_file_test() = withFile(byteArrayOf()) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 100, 200)
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { r ->
+            Assert.assertEquals(0, r.array.size)
+        }
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun set_windows_size_less_than_buffer_test() = withFile(byteArrayOf()) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 100, 10)
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 10) {t ->
+
+        }
     }
 
     @Test
     fun get_unchanged_bytes_test() = withFile(content) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 100, 200).use { tr ->
-            Assert.assertEquals(100, tr.totalBytes)
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
+            Assert.assertEquals(100, tr.getTotalBytes())
 
-            val bytes = tr.bytes
+            val bytes = tr.array
             Assert.assertEquals(200, bytes.size)
             Assert.assertArrayEquals(byteArrayOf(79, 110, 99, 101, 32, 97, 32, 98, 111, 121, 32, 97, 32, 82, 111, 115, 101,
                     98, 117, 100, 32, 115, 112, 105, 101, 100, 44, 10, 72, 101, 97, 116, 104, 114, 111, 115, 101, 32, 102,
@@ -57,73 +60,70 @@ class TransmissionFileRepresentationTest {
 
     @Test
     fun init_values_test() = withFile(content) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 100, 200).use { tr ->
-            Assert.assertEquals(-1, tr.markOffset)
-            Assert.assertEquals(99, tr.endOffset)
-            Assert.assertEquals(0, tr.markedBytesCount)
-            Assert.assertEquals(0, tr.offset)
-            Assert.assertEquals(0, tr.getSmallestOffset())
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
+            Assert.assertEquals(-1, tr.getMarkOffset())
+            Assert.assertEquals(99, tr.getEndOffset())
+            Assert.assertEquals(0, tr.getStartOffset())
+            Assert.assertEquals(0, tr.getFirstOffset())
         }
     }
 
     @Test
     fun slide_values_margin_is_less_than_window_size_test() = withFile(content) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 100, 200).use { tr ->
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
             tr.slide(80)
 
-            Assert.assertEquals(-1, tr.markOffset)
-            Assert.assertEquals(179, tr.endOffset)
-            Assert.assertEquals(0, tr.markedBytesCount)
-            Assert.assertEquals(80, tr.offset)
-            Assert.assertEquals(80, tr.getSmallestOffset())
+            Assert.assertEquals(-1, tr.getMarkOffset())
+            Assert.assertEquals(179, tr.getEndOffset())
+            Assert.assertEquals(80, tr.getStartOffset())
+            Assert.assertEquals(80, tr.getFirstOffset())
         }
     }
 
     @Test
     fun slide_values_margin_is_bigger_than_window_size_test() = withFile(content) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 100, 200).use { tr ->
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
             tr.slide(180)
 
-            Assert.assertEquals(-1, tr.markOffset)
-            Assert.assertEquals(21, tr.endOffset)
-            Assert.assertEquals(0, tr.markedBytesCount)
-            Assert.assertEquals(0, tr.offset)
-            Assert.assertEquals(0, tr.getSmallestOffset())
+            Assert.assertEquals(-1, tr.getMarkOffset())
+            Assert.assertEquals(21, tr.getEndOffset())
+            Assert.assertEquals(0, tr.getMarkOffset())
+            Assert.assertEquals(0, tr.getStartOffset())
+            Assert.assertEquals(0, tr.getFirstOffset())
         }
     }
 
     @Test
     fun mark_offset_test() = withFile(content) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 50, 60).use { tr ->
-            tr.setMarkOffsetRelativetlyToStart(10)
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 50, 60) { tr ->
+            tr.setMarkOffsetRelativeToStart(10)
             Assert.assertArrayEquals(byteArrayOf(79, 110, 99, 101, 32, 97, 32, 98, 111, 121, 32,
                     97, 32, 82, 111, 115, 101, 98, 117, 100, 32, 115, 112, 105, 101, 100, 44, 10,
                     72, 101, 97, 116, 104, 114, 111, 115, 101, 32, 102, 97, 105, 114, 32, 97, 110,
-                    100, 32, 116, 101, 110, 100, 101, 114, 44, 10, 65, 108, 108, 32, 97), tr.bytes)
+                    100, 32, 116, 101, 110, 100, 101, 114, 44, 10, 65, 108, 108, 32, 97), tr.array)
         }
     }
 
     @Test
     fun shrink_read_bytes_test() = withFile(content) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 20, 25).use { tr ->
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 20, 25) { tr ->
             tr.slide(20)
             tr.slide(20)
             Assert.assertArrayEquals(byteArrayOf(105, 114, 32, 97, 110, 100, 32, 116, 101, 110, 100, 101,
-                    114, 44, 10, 65, 108, 108, 32, 97, 114, 114, 97, 121, 39), tr.bytes)
+                    114, 44, 10, 65, 108, 108, 32, 97, 114, 114, 97, 121, 39), tr.array)
         }
     }
 
     @Test
     fun values_after_shrinking_test() = withFile(content) { file ->
-        TransmissionFileRepresentation(file.toPath(), file.length(), 20, 25).use { tr ->
+        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 20, 25) { tr ->
             tr.slide(18)
             tr.slide(17)
 
-            Assert.assertEquals(-1, tr.markOffset)
-            Assert.assertEquals(19, tr.endOffset)
-            Assert.assertEquals(0, tr.markedBytesCount)
-            Assert.assertEquals(0, tr.offset)
-            Assert.assertEquals(0, tr.getSmallestOffset())
+            Assert.assertEquals(-1, tr.getMarkOffset())
+            Assert.assertEquals(19, tr.getEndOffset())
+            Assert.assertEquals(0, tr.getStartOffset())
+            Assert.assertEquals(0, tr.getFirstOffset())
         }
     }
 

@@ -487,6 +487,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                                 sendMatchesAndGetChecksum(fileRepr, checksum, requestData.checksumSeed, writer)
                             }
                         } catch (t: Throwable) {
+                            logger.error { "Failed to calculate checksum: ${t.message}, $t" }
                             byteArrayOf() //TODO
                         }
 
@@ -617,7 +618,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                                 reader: RsyncDataInput): Checksum {
         val checksum = Checksum(header)
 
-        for (chunkIndex in 0..header.chunkCount - 1) {
+        for (chunkIndex in 0 until header.chunkCount) {
             val rollingChecksum = RollingChecksumChunk(reader.readInt())
             val longChecksum = LongChecksumChunk(reader.readBytes(header.digestLength))
             checksum += ChecksumChunk(chunkIndex,
@@ -627,17 +628,17 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return checksum
     }
 
-    private fun skipMatchesAndGetChecksum(fileRepresentation: TransmissionFileRepresentation,
+    private fun skipMatchesAndGetChecksum(fileRepresentation: FileInTransmission,
                                           fileInfo: FileInfo,
                                           writer: RsyncDataOutput): ByteArray {
         val md = LongChecksum.newMessageDigestInstance()
         var bytesSent = 0
 
-        while (fileRepresentation.currentWindowLength > 0) {
+        while (fileRepresentation.getWindowLength() > 0) {
 
-            val bytes = fileRepresentation.bytes
-            val offset = fileRepresentation.offset
-            val windowLength = fileRepresentation.currentWindowLength
+            val bytes = fileRepresentation.array
+            val offset = fileRepresentation.getStartOffset()
+            val windowLength = fileRepresentation.getWindowLength()
 
             sendData(bytes,
                     offset,
@@ -658,7 +659,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         return md.digest()
     }
 
-    private fun sendMatchesAndGetChecksum(fileRepresentation: TransmissionFileRepresentation,
+    private fun sendMatchesAndGetChecksum(fileRepresentation: FileInTransmission,
                                           checksum: Checksum,
                                           checksumSeed: Int,
                                           writer: RsyncDataOutput): ByteArray {
@@ -666,7 +667,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         val fileChecksum = LongChecksum.newMessageDigestInstance()
         val chunkChecksum = LongChecksum.newMessageDigestInstance()
 
-        fileRepresentation.setMarkOffsetRelativetlyToStart(0)
+        fileRepresentation.setMarkOffsetRelativeToStart(0)
 
         val smallestChunk = if (checksum.header.remainder > 0) {
             checksum.header.remainder
@@ -677,73 +678,69 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         var preferredIndex = 0
         var localChunkLongChecksum: ByteArray? = null
-        var currentRollingChecksum = RollingChecksum.calculate(fileRepresentation.bytes,
-                fileRepresentation.offset,
-                fileRepresentation.currentWindowLength)
+        var currentRollingChecksum = RollingChecksum.calculate(fileRepresentation.array,
+                fileRepresentation.getStartOffset(),
+                fileRepresentation.getWindowLength())
 
-        while (fileRepresentation.currentWindowLength >= smallestChunk) {
+        while (fileRepresentation.getWindowLength() >= smallestChunk) {
 
-            val matches = matcher.getMatches(currentRollingChecksum, fileRepresentation.currentWindowLength, preferredIndex)
-
-            for (chunk in matches) {
-
+            for (chunk in matcher.getMatches(currentRollingChecksum, fileRepresentation.getWindowLength(), preferredIndex)) {
                 if (localChunkLongChecksum == null) {
-                    chunkChecksum.update(fileRepresentation.bytes, fileRepresentation.offset, fileRepresentation.currentWindowLength)
+                    chunkChecksum.update(fileRepresentation.array, fileRepresentation.getStartOffset(), fileRepresentation.getWindowLength())
                     chunkChecksum.update(checksumSeed.toLittleEndianBytes())
                     localChunkLongChecksum = Arrays.copyOf(chunkChecksum.digest(), chunk.longChecksumChunk.checksum.size)
                 }
 
                 if (Arrays.equals(localChunkLongChecksum, chunk.longChecksumChunk.checksum)) {
-                    val bytesMarked = fileRepresentation.markedBytesCount
-                    sendData(fileRepresentation.bytes, fileRepresentation.offset, bytesMarked, writer)
+                    val bytesMarked = fileRepresentation.getMarkOffset()
+                    sendData(fileRepresentation.array, fileRepresentation.getStartOffset(), bytesMarked, writer)
 
-                    fileChecksum.update(fileRepresentation.bytes, fileRepresentation.markOffset, fileRepresentation.totalBytes)
+                    fileChecksum.update(fileRepresentation.array, fileRepresentation.getMarkOffset(), fileRepresentation.getTotalBytes())
 
                     preferredIndex = chunk.chunkIndex + 1
                     writer.writeInt(-1 * preferredIndex)
 
-                    fileRepresentation.setMarkOffsetRelativetlyToStart(fileRepresentation.currentWindowLength)
-                    fileRepresentation.slide(fileRepresentation.currentWindowLength - 1)
+                    fileRepresentation.setMarkOffsetRelativeToStart(fileRepresentation.getWindowLength())
+                    fileRepresentation.slide(fileRepresentation.getWindowLength() - 1)
 
-                    currentRollingChecksum = RollingChecksum.calculate(fileRepresentation.bytes,
-                            fileRepresentation.offset,
-                            fileRepresentation.currentWindowLength)
+                    currentRollingChecksum = RollingChecksum.calculate(fileRepresentation.array,
+                            fileRepresentation.getStartOffset(),
+                            fileRepresentation.getWindowLength())
 
                     localChunkLongChecksum = null
                     break
                 }
             }
 
-            RollingChecksum.rollBack(currentRollingChecksum,
-                    fileRepresentation.currentWindowLength,
-                    fileRepresentation.bytes[fileRepresentation.offset])
+            currentRollingChecksum = RollingChecksum.rollBack(currentRollingChecksum,
+                    fileRepresentation.getWindowLength(),
+                    fileRepresentation.array[fileRepresentation.getStartOffset()])
 
-            if (fileRepresentation.totalBytes == fileRepresentation.bytes.size) {
+            if (fileRepresentation.isFull()) {
+                sendData(fileRepresentation.array, fileRepresentation.getFirstOffset(), fileRepresentation.getTotalBytes(), writer)
 
-                sendData(fileRepresentation.bytes, fileRepresentation.getSmallestOffset(), fileRepresentation.totalBytes, writer)
+                fileChecksum.update(fileRepresentation.array,
+                        fileRepresentation.getFirstOffset(),
+                        fileRepresentation.getTotalBytes())
 
-                fileChecksum.update(fileRepresentation.bytes,
-                        fileRepresentation.getSmallestOffset(),
-                        fileRepresentation.totalBytes)
-
-                fileRepresentation.setMarkOffsetRelativetlyToStart(fileRepresentation.currentWindowLength)
-                fileRepresentation.slide(fileRepresentation.currentWindowLength)
+                fileRepresentation.setMarkOffsetRelativeToStart(fileRepresentation.getWindowLength())
+                fileRepresentation.slide(fileRepresentation.getWindowLength())
             } else {
                 fileRepresentation.slide(1)
             }
 
-            if (fileRepresentation.currentWindowLength == checksum.header.blockLength) {
+            if (fileRepresentation.getWindowLength() == checksum.header.blockLength) {
                 currentRollingChecksum = RollingChecksum.rollForward(currentRollingChecksum,
-                        fileRepresentation.bytes[fileRepresentation.endOffset])
+                        fileRepresentation.array[fileRepresentation.getEndOffset()])
             }
         }
 
-        sendData(fileRepresentation.bytes,
-                fileRepresentation.getSmallestOffset(),
-                fileRepresentation.totalBytes,
+        sendData(fileRepresentation.array,
+                fileRepresentation.getFirstOffset(),
+                fileRepresentation.getTotalBytes(),
                 writer)
 
-        fileChecksum.update(fileRepresentation.bytes, fileRepresentation.getSmallestOffset(), fileRepresentation.totalBytes)
+        fileChecksum.update(fileRepresentation.array, fileRepresentation.getFirstOffset(), fileRepresentation.getTotalBytes())
         writer.writeInt(0)
 
         return fileChecksum.digest()
