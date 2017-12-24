@@ -20,22 +20,22 @@ import jetbrains.rsynk.exitvalues.RsyncExitCodes.RequestActionNotSupported
 import jetbrains.rsynk.exitvalues.RsyncExitCodes.RsyncProtocolDataStreamError
 import jetbrains.rsynk.exitvalues.RsyncExitCodes.SelectInputFilesError
 
-open class RsynkException(message: String, val exitCode: Int) : RuntimeException(message)
+open class RsynkException(message: String, val exitCode: Int, cause: Throwable?) : RuntimeException(message, cause)
 
-class ProtocolException(message: String, exitCode: Int = RsyncProtocolDataStreamError) :
-        RsynkException(message, exitCode)
+class ProtocolException(message: String, exitCode: Int = RsyncProtocolDataStreamError, cause: Throwable? = null) :
+        RsynkException(message, exitCode, cause)
 
-class ArgsParingException(message: String, exitCode: Int = RsyncProtocolDataStreamError) :
-        RsynkException(message, exitCode)
+class ArgsParingException(message: String, exitCode: Int = RsyncProtocolDataStreamError, cause: Throwable? = null) :
+        RsynkException(message, exitCode, cause)
 
-class UnsupportedProtocolException(message: String) :
-        RsynkException(message, ProtocolIncompatibility)
+class UnsupportedProtocolException(message: String, cause: Throwable? = null) :
+        RsynkException(message, ProtocolIncompatibility, cause)
 
-class ModuleNotFoundException(message: String) :
-        RsynkException(message, SelectInputFilesError)
+class ModuleNotFoundException(message: String, cause: Throwable? = null) :
+        RsynkException(message, SelectInputFilesError, cause)
 
-class InvalidFileException(message: String) :
-        RsynkException(message, SelectInputFilesError)
+class InvalidFileException(message: String, cause: Throwable? = null) :
+        RsynkException(message, SelectInputFilesError, cause)
 
-class NotSupportedException(message: String) :
-        RsynkException(message, RequestActionNotSupported)
+class NotSupportedException(message: String, cause: Throwable? = null) :
+        RsynkException(message, RequestActionNotSupported, cause)
