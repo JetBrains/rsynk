@@ -39,13 +39,13 @@ class CommandsResolverTest {
 
     @Test
     fun can_resolve_rsync_server_send_command_test() {
-        val args = listOf("rsync", "--server", "--sender")
+        val args = listOf("rsync", "--server", "--sender", ".")
         rsyncCommandsHolder.resolve(args)
     }
 
     @Test(expected = CommandNotFoundException::class)
     fun do_not_resolve_server_send_command_for_client_in_daemon_mode_test() {
-        val args = listOf("rsync", "--server", "--sender", "--daemon")
+        val args = listOf("rsync", "--server", "--sender", "--daemon", ".")
         rsyncCommandsHolder.resolve(args)
     }
 }
