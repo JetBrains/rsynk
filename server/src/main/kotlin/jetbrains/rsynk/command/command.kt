@@ -18,13 +18,8 @@ package jetbrains.rsynk.command
 import java.io.InputStream
 import java.io.OutputStream
 
-
 internal interface Command {
     fun execute(args: List<String>,
                 stdIn: InputStream,
                 stdOut: OutputStream)
-}
-
-internal interface RsyncCommand : Command {
-    fun matchArguments(args: List<String>): Boolean
 }

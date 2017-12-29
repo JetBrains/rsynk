@@ -15,8 +15,8 @@
  */
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.command.AllCommandsResolver
 import jetbrains.rsynk.command.CommandNotFoundException
+import jetbrains.rsynk.command.CommandResolver
 import jetbrains.rsynk.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.exitvalues.RsynkException
 import jetbrains.rsynk.files.FileInfoReader
@@ -38,7 +38,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
 
     companion object : KLogging()
 
-    private val commands = AllCommandsResolver(fileInfoReader, trackedFiles)
+    private val commandsResolver = CommandResolver(fileInfoReader, trackedFiles)
 
     private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
         val newThread = Thread(runnable, "ssh-command")
@@ -61,7 +61,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                 val args = cmd.split(" ")
 
                 val command = try {
-                    commands.resolve(args)
+                    commandsResolver.resolve(args)
                 } catch (e: CommandNotFoundException) {
                     exit(RsyncExitCodes.RsyncProtocolDataStreamError, "Unknown command: ${e.message}\n")
                     return

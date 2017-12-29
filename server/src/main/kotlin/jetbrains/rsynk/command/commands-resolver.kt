@@ -16,25 +16,31 @@
 package jetbrains.rsynk.command
 
 import jetbrains.rsynk.command.send.RsyncServerSendCommand
+import jetbrains.rsynk.command.send.RsyncServerSendCommandResolver
 import jetbrains.rsynk.files.FileInfoReader
 import jetbrains.rsynk.files.TrackedFilesProvider
 
 
-internal interface CommandsResolver {
-    fun resolve(args: List<String>): Command
+internal interface CommandArgumentsMatcher {
+    fun matches(args: List<String>): Boolean
 }
 
-internal class AllCommandsResolver(fileInfoReader: FileInfoReader,
-                                   trackedFiles: TrackedFilesProvider
-) : CommandsResolver {
+internal interface CommandFactory {
+    fun create(): Command
+}
 
-    private val rsyncCommandsResolver = RsyncCommandsResolver(fileInfoReader, trackedFiles)
+internal class CommandResolver(fileInfoReader: FileInfoReader,
+                               trackedFiles: TrackedFilesProvider
+) {
 
-    override fun resolve(args: List<String>): Command {
+    private val rsyncCommandsResolver = RsyncCommandResolver(fileInfoReader, trackedFiles)
 
+    fun resolve(args: List<String>): Command {
+
+        /* rsync commands */
         args.firstOrNull()?.let {
             if (it == "rsync") {
-                return rsyncCommandsResolver.resolve(args)
+                return rsyncCommandsResolver.resolveCommand(args)
             }
         }
 
@@ -44,24 +50,30 @@ internal class AllCommandsResolver(fileInfoReader: FileInfoReader,
 
 }
 
-internal class RsyncCommandsResolver(fileInfoReader: FileInfoReader,
-                                     trackedFiles: TrackedFilesProvider
-) : CommandsResolver {
+private class RsyncCommandResolver(fileInfoReader: FileInfoReader,
+                                   trackedFiles: TrackedFilesProvider
+) {
 
-    private val commands: List<RsyncCommand> = listOf(
-            RsyncServerSendCommand(fileInfoReader, trackedFiles)
+    private val serverSendCommandFactory = object : CommandFactory {
+        override fun create(): Command {
+            return RsyncServerSendCommand(fileInfoReader, trackedFiles)
+        }
+    }
+
+    private val matchers: List<Pair<CommandArgumentsMatcher, CommandFactory>> = listOf(
+            Pair(RsyncServerSendCommandResolver(), serverSendCommandFactory)
     )
 
-    override fun resolve(args: List<String>): Command {
+    fun resolveCommand(args: List<String>): Command {
 
-        val matchedCommands = commands.filter { it.matchArguments(args) }
+        val matchedCommands = matchers.filter { it.first.matches(args) }
 
         if (matchedCommands.isEmpty() || matchedCommands.size > 1) {
             throw CommandNotFoundException("Zero or more than one command match given args "
                     + args.joinToString(prefix = "[", postfix = "]", separator = ", "))
         }
 
-        return matchedCommands.first()
+        return matchedCommands.single().second.create()
     }
 }
 

@@ -15,8 +15,9 @@
  */
 package jetbrains.rsynk.command.send
 
+import jetbrains.rsynk.command.Command
 import jetbrains.rsynk.command.CommandExecutionTimer
-import jetbrains.rsynk.command.RsyncCommand
+import jetbrains.rsynk.command.CommandArgumentsMatcher
 import jetbrains.rsynk.data.*
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
@@ -45,24 +46,26 @@ import java.util.function.Supplier
 import kotlin.experimental.and
 import kotlin.experimental.or
 
+internal class RsyncServerSendCommandResolver: CommandArgumentsMatcher {
+    override fun matches(args: List<String>): Boolean {
+            if (args.size < 4) {
+                return false
+            }
+            if (args.any { it == "--daemon" || it == "daemon" }) {
+                return false
+            }
+            return args[1] == "--server" && args[2] == "--sender"
+    }
+}
 
 internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader,
-                                      private val trackedFiles: TrackedFilesProvider) : RsyncCommand {
+                                      private val trackedFiles: TrackedFilesProvider) : Command {
 
     companion object : KLogging()
 
     private val filesListIndexDecoder = FilesListIndexDecoder()
     private val filesListIndexEncoder = FilesListIndexEncoder()
 
-    override fun matchArguments(args: List<String>): Boolean {
-        if (args.size < 4) {
-            return false
-        }
-        if (args.any { it == "--daemon" || it == "daemon" }) {
-            return false
-        }
-        return args[1] == "--server" && args[2] == "--sender"
-    }
 
     /**
      * Perform negotiation and send requested file.
