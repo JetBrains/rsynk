@@ -30,20 +30,6 @@ data class FilesListBlock(val rootDirectory: FileInfo?,
                           val end: Int,
                           val filesSize: Long) : Comparable<FilesListBlock> {
 
-    private val deletedFiles = HashSet<Int>()
-
-    //TODO: mark as sent and not deleted?
-    fun markFileDeleted(index: Int) {
-        if (index !in begin..end) {
-            throw IndexOutOfBoundsException("Requested index $index is out of block bounds [$begin, $end]")
-        }
-        deletedFiles += index
-    }
-
-    fun isFileDeleted(index: Int): Boolean {
-        return index in deletedFiles
-    }
-
     override fun compareTo(other: FilesListBlock): Int {
         return begin.compareTo(other.begin)
     }

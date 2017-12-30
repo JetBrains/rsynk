@@ -16,8 +16,8 @@
 package jetbrains.rsynk.command.send
 
 import jetbrains.rsynk.command.Command
-import jetbrains.rsynk.command.CommandExecutionTimer
 import jetbrains.rsynk.command.CommandArgumentsMatcher
+import jetbrains.rsynk.command.CommandExecutionTimer
 import jetbrains.rsynk.data.*
 import jetbrains.rsynk.exitvalues.InvalidFileException
 import jetbrains.rsynk.exitvalues.NotSupportedException
@@ -46,15 +46,15 @@ import java.util.function.Supplier
 import kotlin.experimental.and
 import kotlin.experimental.or
 
-internal class RsyncServerSendCommandResolver: CommandArgumentsMatcher {
+internal class RsyncServerSendCommandResolver : CommandArgumentsMatcher {
     override fun matches(args: List<String>): Boolean {
-            if (args.size < 4) {
-                return false
-            }
-            if (args.any { it == "--daemon" || it == "daemon" }) {
-                return false
-            }
-            return args[1] == "--server" && args[2] == "--sender"
+        if (args.size < 4) {
+            return false
+        }
+        if (args.any { it == "--daemon" || it == "daemon" }) {
+            return false
+        }
+        return args[1] == "--server" && args[2] == "--sender"
     }
 }
 
@@ -410,7 +410,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
             val index = decodeAndReadFilesListIndex(reader, writer)
             val iflags = if (index == FilesListsIndex.done.code) {
-                0 // don't read flags if index is done
+                0
             } else {
                 reader.readChar().toInt()
             }
@@ -433,14 +433,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                         throw NotSupportedException("It's time to implement extra file list sending (sender.c line 234)")
                     }
 
-                    /*if (index - block.begin >= 0) {
-                        block.files[index - block.begin]
-                    } else {
-                        //blocks.peekBlock(block.parent.files(index))
-                        throw UnsupportedOperationException("Store parent index in blocks")
-                    }*/ // <---- correct code for future
-                    val block = blocks.peekBlock(0)!!
-                    val file = block.files[index]!!
+                    val block = blocks.peekBlock(0) ?: blocks.peekBlock(index)
+                            ?: throw ProtocolException("Invalid file index received: cannot find corresponding block (blocks=$blocks, index=$index)")
+                    val file = block.files[index]
+                            ?: throw ProtocolException("Invalid file index received: cannot find corresponding file (files=${block.files}, index=$index)")
 
                     if (iflags and ItemFlag.TRANSFER.mask == 0) {
                         filesListIndexEncoder.encodeAndSend(index, Consumer { b -> writer.writeByte(b) })
@@ -674,7 +670,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         val smallestChunk = if (checksum.header.remainder > 0) {
             checksum.header.remainder
-        } else  {
+        } else {
             checksum.header.blockLength
         }
         val matcher = ChecksumMatcher(checksum)
