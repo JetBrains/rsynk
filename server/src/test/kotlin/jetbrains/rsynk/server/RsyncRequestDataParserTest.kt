@@ -42,16 +42,16 @@ class RsyncRequestDataParserTest {
     fun parse_files_test() {
         val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/first/file",
                 "path/to/second-file"))
-        Assert.assertEquals(data.files.joinToString(), 3, data.files.size)
+        Assert.assertEquals(data.files.joinToString(), 2, data.files.size)
         Assert.assertTrue(data.files.contains("/path/to/first/file"))
         Assert.assertTrue(data.files.contains("path/to/second-file"))
     }
 
     @Test
-    fun include_dot_dir_as_as_file_test() {
+    fun do_not_include_dot_dir_as_as_file_test() {
         val data = ServerSendRequestDataParser.parse(listOf("rsync", "--server", "--sender", "-Ld", ".", "/path/to/file"))
-        Assert.assertEquals(data.files  .joinToString(), 2, data.files.size)
-        Assert.assertTrue(data.files.contains("."))
+        Assert.assertEquals(data.files  .joinToString(), 1, data.files.size)
+        Assert.assertFalse(data.files.contains("."))
     }
 
     @Test
