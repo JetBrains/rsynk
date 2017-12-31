@@ -91,6 +91,15 @@ data class ChecksumHeader(val chunkCount: Int,
                           val remainder: Int
 ) {
     val isNewFile = blockLength == 0
+
+    fun getChunkLength(index: Int): Int {
+        val isLast = (chunkCount - 1 == index)
+
+        if (isLast && remainder > 0) {
+            return remainder
+        }
+        return blockLength
+    }
 }
 
 data class RollingChecksumChunk(
@@ -142,26 +151,38 @@ data class Checksum(val header: ChecksumHeader) {
 
 class ChecksumMatcher(private val checksum: Checksum) {
 
-    @Suppress("UNUSED_PARAMETER")
     fun getMatches(chunkRollingChecksum: Int,
                    length: Int,
                    preferredChunkIndex: Int): List<ChecksumChunk> {
         val chunks = checksum.getChunks(chunkRollingChecksum)
-        //TODO: this algorithm has to be tested (it does seem correct though)
-        /*
         if (chunks.isEmpty()) {
-            return chunks
+            return emptyList()
         }
         val lowerBoundIndex = chunks.sortedBy { it.chunkIndex }.lowerBound(preferredChunkIndex)
-        val index = if (lowerBoundIndex < 0) {
+        val initialIndex = if (lowerBoundIndex < 0) {
             val insertionPoint = -lowerBoundIndex - 1
             Math.min(chunks.size - 1, insertionPoint)
         } else {
             lowerBoundIndex
         }
-        return listOf(chunks[index]) + chunks
-        */
-        return chunks
+
+        if (initialIndex >= chunks.size) {
+            return chunks.filter { checksum.header.getChunkLength(it.chunkIndex) == length }
+        }
+
+        val result = ArrayList<ChecksumChunk>()
+        result.add(chunks[initialIndex])
+
+        for (i in 0 until chunks.size) {
+            if (i == initialIndex) {
+                continue
+            }
+            if (checksum.header.getChunkLength(chunks[i].chunkIndex) != length) {
+                continue
+            }
+            result.add(chunks[i])
+        }
+        return result
     }
 
     /**
@@ -169,7 +190,6 @@ class ChecksumMatcher(private val checksum: Checksum) {
      * is lower or equal to [preferredChunkIndex].
      * Returns -1 if there's no such element.
      */
-    @Suppress("unused")
     private fun List<ChecksumChunk>.lowerBound(preferredChunkIndex: Int): Int {
         var left = 0
         var right = size - 1
