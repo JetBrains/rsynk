@@ -20,37 +20,36 @@ task wrapper(type: Wrapper) {
     gradleVersion = '3.5'
 }
 
-subprojects {
-    apply plugin: 'license'
-    apply plugin: 'java'
-    apply plugin: 'kotlin'
+apply plugin: 'license'
+apply plugin: 'java'
+apply plugin: 'kotlin'
 
-    license {
-        header rootProject.file('copyright.ftl')
-        strictCheck true
-        ext.inceptionYear = 2016
-        ext.year = Calendar.getInstance().get(Calendar.YEAR)
-        ext.owner = 'JetBrains s.r.o.'
-        include "**/*.kt"
-        mapping {
-            kt = 'JAVADOC_STYLE'
-        }
-    }
-
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-
-        compile "org.codehaus.groovy:groovy-all:2.3.11"
-        compile "org.slf4j:slf4j-simple:1.7.21"
-        compile 'io.github.microutils:kotlin-logging:1.4.3'
-        compile "org.apache.sshd:sshd-core:1.3.0"
-
-        testCompile "junit:junit:4.11"
-        testCompile "com.jcraft:jsch:0.1.54"
+license {
+    header rootProject.file('copyright.ftl')
+    strictCheck true
+    ext.inceptionYear = 2016
+    ext.year = Calendar.getInstance().get(Calendar.YEAR)
+    ext.owner = 'JetBrains s.r.o.'
+    include "**/*.kt"
+    mapping {
+        kt = 'JAVADOC_STYLE'
     }
 }
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
+    compile "org.codehaus.groovy:groovy-all:2.3.11"
+    compile "org.slf4j:slf4j-simple:1.7.21"
+    compile 'io.github.microutils:kotlin-logging:1.4.3'
+    compile "org.apache.sshd:sshd-core:1.3.0"
+
+    testCompile "junit:junit:4.11"
+    testCompile "com.jcraft:jsch:0.1.54"
+}
+

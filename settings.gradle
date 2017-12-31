@@ -1,5 +1,3 @@
 rootProject.name = 'rsynk'
 
-include 'server'
-include 'rsync'
 
