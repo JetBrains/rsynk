@@ -404,9 +404,10 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                           writer: RsyncDataOutput) {
 
 
-        val state = TransferState()
+        val state = TransferStateMachine()
 
-        stateLoop@ while (state.current != TransferState.State.Stop) {
+        stateLoop@ while (state.value != TransferStateMachine.State.Stop) {
+
 
             val index = decodeAndReadFilesListIndex(reader, writer)
             val iflags = if (index == FilesListsIndex.done.code) {
@@ -420,8 +421,8 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
             when {
                 index == FilesListsIndex.done.code -> {
-                    state.nextState()
-                    if (state.current != TransferState.State.Stop) {
+                    state.next()
+                    if (state.value != TransferStateMachine.State.Stop) {
                         encodeAndSendFilesListIndex(FilesListsIndex.done.code, writer)
                     }
                     continue@stateLoop
@@ -781,7 +782,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 }
 
 
-private class TransferState {
+private class TransferStateMachine  {
 
     sealed class State {
         object Transfer : State()
@@ -790,17 +791,19 @@ private class TransferState {
         object Stop : State()
     }
 
-    var current: State = State.Transfer
-        private set
+    private var currentState: State = State.Transfer
 
-    fun nextState() {
-        val newState = when (current) {
+    val value: State
+        get() = currentState
+
+    fun next() {
+        val newState = when (currentState) {
             State.Transfer -> State.TearDownOne
             State.TearDownOne -> State.TearDownTwo
             State.TearDownTwo -> State.Stop
             State.Stop -> throw IllegalStateException("State iterator exhausted (`Stop` was already set)")
         }
-        current = newState
+        currentState = newState
     }
 }
 
