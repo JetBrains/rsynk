@@ -16,6 +16,8 @@
 package jetbrains.rsynk.rsync
 
 import jetbrains.rsynk.rsync.files.FileInfoReader
+import jetbrains.rsynk.rsync.files.RsynkFile
+import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
 import jetbrains.rsynk.rsync.files.UnixDefaultFileSystemInfo
 import org.junit.Assert
 import org.junit.Assume
@@ -32,7 +34,7 @@ class FileInfoReaderTest {
 
         val dirPath = Files.createTempDirectory("test-dir")
         val reader = FileInfoReader(unixFS)
-        val dirFileInfo = reader.getFileInfo(dirPath)
+        val dirFileInfo = reader.getFileInfo(RsynkFile(dirPath.toString(), { RsynkFileBoundaries(0, 0) }))
 
         Assert.assertTrue(dirFileInfo.isDirectory)
 
@@ -51,7 +53,7 @@ class FileInfoReaderTest {
 
         val dirPath = Files.createTempFile("test-file", ".hoho")
         val reader = FileInfoReader(unixFS)
-        val dirFileInfo = reader.getFileInfo(dirPath)
+        val dirFileInfo = reader.getFileInfo(RsynkFile(dirPath.toString(), { RsynkFileBoundaries(0, 0) }))
 
         Assert.assertTrue(dirFileInfo.isReqularFile)
 

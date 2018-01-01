@@ -20,11 +20,9 @@ import jetbrains.rsynk.rsync.extensions.use
 import mu.KLogging
 import java.io.InputStream
 import java.nio.file.Files
-import java.nio.file.Path
 
 class FileInTransmission(
-        filePath: Path,
-        private val fileSize: Long,
+        private val fileInfo: FileInfo,
         windowSize: Int,
         bufferSize: Int = 8 * 1024
 ) : AutoCloseable {
@@ -34,7 +32,7 @@ class FileInTransmission(
     private val stream: InputStream
     val array: ByteArray
 
-    private var remainingBytes = fileSize
+    private var remainingBytes = fileInfo.size
     private var windowLength: Int
 
     private var startOffset = 0
@@ -43,11 +41,12 @@ class FileInTransmission(
     private var readOffset = -1
 
     init {
-        if (fileSize > 0) {
+        if (fileInfo.size > 0) {
             try {
-                stream = Files.newInputStream(filePath)
+                stream = Files.newInputStream(fileInfo.path)
+                stream.skip(fileInfo.offset)
             } catch (t: Throwable) {
-                val message = "Failed to open the file $filePath: ${t.message}"
+                val message = "Failed to open the file ${fileInfo.path}: ${t.message}"
                 logger.error(t, { message })
                 throw InvalidFileException(message, t)
             }
@@ -116,7 +115,7 @@ class FileInTransmission(
         while (numBytesRead < min) {
             val len = stream.read(array, readOffset + 1, max - numBytesRead)
             if (len <= 0) {
-                throw InvalidFileException("File ended prematurely ($len of $fileSize read)")
+                throw InvalidFileException("File ended prematurely ($len of ${fileInfo.size} read)")
             }
             numBytesRead += len
             readOffset += len
@@ -159,13 +158,12 @@ class FileInTransmission(
 object FilesTransmission {
     val defaultBlockSize = 8 * 1024
 
-    fun <T> runWithOpenedFile(filePath: Path,
-                              fileSize: Long,
+    fun <T> runWithOpenedFile(file: FileInfo,
                               windowLength: Int,
                               bufferSize: Int,
                               action: (FileInTransmission) -> T): T {
-        FileInTransmission(filePath, fileSize, windowLength, bufferSize).use { file ->
-            return action(file)
+        FileInTransmission(file, windowLength, bufferSize).use { f ->
+            return action(f)
         }
     }
 }

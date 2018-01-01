@@ -16,9 +16,9 @@
 package jetbrains.rsynk.rsync.files
 
 import mu.KLogging
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
-import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.TimeUnit
 
@@ -41,32 +41,33 @@ class FileInfoReader(private val fs: FileSystemInfo) {
 
     companion object : KLogging()
 
-    fun getFileInfo(file: Path): FileInfo {
-
-        val attributes = Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+    fun getFileInfo(rsynkFile: RsynkFile): FileInfo {
+        val path = File(rsynkFile.path).toPath()
+        val attributes = Files.readAttributes(path, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
         val mode = getFileMode(attributes)
         val user = try {
-            fs.getOwner(file)
+            fs.getOwner(path)
         } catch(t: Throwable) {
-            logger.error(t, { "Cannot read file owner uid and name for $file: ${t.message}" })
+            logger.error(t, { "Cannot read file owner uid and name for $path: ${t.message}" })
             fs.defaultUser
         }
 
         val group = try {
-            fs.getGroup(file)
+            fs.getGroup(path)
         } catch(t: Throwable) {
-            logger.error(t, { "Cannot read file gid and group name for $file: ${t.message}" })
+            logger.error(t, { "Cannot read file gid and group name for $path: ${t.message}" })
             fs.defaultGroup
         }
 
+        val boundaries = rsynkFile.getBoundaries()
         return FileInfo(
-                file,
+                path,
                 mode,
-                attributes.size(),
+                boundaries.offset,
+                boundaries.length,
                 attributes.lastModifiedTime().to(TimeUnit.SECONDS),
                 user,
-                group
-        )
+                group)
     }
 
     private fun getFileMode(attributes: BasicFileAttributes): Int {

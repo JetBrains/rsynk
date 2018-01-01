@@ -15,9 +15,6 @@
  */
 package jetbrains.rsynk.server.command.send
 
-import jetbrains.rsynk.server.command.Command
-import jetbrains.rsynk.server.command.CommandArgumentsMatcher
-import jetbrains.rsynk.server.command.CommandExecutionTimer
 import jetbrains.rsynk.rsync.data.*
 import jetbrains.rsynk.rsync.exitvalues.InvalidFileException
 import jetbrains.rsynk.rsync.exitvalues.NotSupportedException
@@ -30,15 +27,17 @@ import jetbrains.rsynk.rsync.flags.CompatFlags
 import jetbrains.rsynk.rsync.flags.ItemFlag
 import jetbrains.rsynk.rsync.flags.ItemFlagsValidator
 import jetbrains.rsynk.rsync.flags.TransmitFlag
-import jetbrains.rsynk.server.io.*
 import jetbrains.rsynk.rsync.options.Option
 import jetbrains.rsynk.rsync.options.RsyncRequestArguments
 import jetbrains.rsynk.rsync.protocol.RsyncProtocolStaticConfig
+import jetbrains.rsynk.server.command.Command
+import jetbrains.rsynk.server.command.CommandArgumentsMatcher
+import jetbrains.rsynk.server.command.CommandExecutionTimer
+import jetbrains.rsynk.server.io.*
 import mu.KLogging
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer
@@ -475,8 +474,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
                     val blockSize = if (checksumHeader.isNewFile) FilesTransmission.defaultBlockSize else checksumHeader.blockLength
                     val bufferSizeMultiplier = if (checksumHeader.isNewFile) 1 else 10
-                    FilesTransmission.runWithOpenedFile(file.path,
-                            file.size,
+                    FilesTransmission.runWithOpenedFile(file,
                             blockSize,
                             blockSize * bufferSizeMultiplier) { fileRepr ->
 
@@ -504,6 +502,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         encodeAndSendFilesListIndex(FilesListsIndex.done.code, writer)
     }
 
+    /* TODO: implement recursive sending
     private fun expandAndSendStubDirectories(filesListBlocks: FilesListBlocks,
                                              blockInTransmission: Int,
                                              sentFilesLimit: Int,
@@ -530,7 +529,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         return StubDirectoriesExpandingResult(filesSent, currentBlock - blockInTransmission)
     }
+    */
 
+    /*
     private fun expandStubDirectory(directory: FileInfo,
                                     requestData: ServerSendRequestData): List<FileInfo> {
         val root = locateRootDirectoryPath(directory)
@@ -565,6 +566,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
         return list
     }
+    */
 
 
     //TODO: move to FileInfo

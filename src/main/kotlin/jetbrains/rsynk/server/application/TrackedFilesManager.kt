@@ -12,6 +12,8 @@ internal class TrackedFilesManager : FilesRegistry, TrackedFilesProvider {
 
     companion object : KLogging()
 
+    private val id = System.currentTimeMillis()
+
     private val pathToFile = HashMap<String, RsynkFile>()
     private val lock = ReentrantLock()
 

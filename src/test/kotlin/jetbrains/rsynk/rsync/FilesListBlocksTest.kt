@@ -32,9 +32,9 @@ class FilesListBlocksTest {
         private val regularFileMode = 33416
         private val directoryMode = 17161
 
-        val dotDirectory = FileInfo(Paths.get("."), directoryMode, 0, 0, User("nobody", 0), Group("nobody", 0))
-        val directory = FileInfo(Paths.get("haha"), directoryMode, 42, System.currentTimeMillis(), user, group)
-        val file = FileInfo(Paths.get("haha/hoho"), regularFileMode, 42, System.currentTimeMillis(), user, group)
+        val dotDirectory = FileInfo(Paths.get("."), directoryMode, 0, 0, 0, User("nobody", 0), Group("nobody", 0))
+        val directory = FileInfo(Paths.get("haha"), directoryMode, 0, 42, System.currentTimeMillis(), user, group)
+        val file = FileInfo(Paths.get("haha/hoho"), regularFileMode, 0, 42, System.currentTimeMillis(), user, group)
     }
 
     @Test

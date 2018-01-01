@@ -31,7 +31,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     private val server: RsynkSshServer
-    private val fileManager = TrackedFilesManager()
+    private val fileManager: TrackedFilesManager
 
     init {
         val sshSettings = object : SSHSettings {
@@ -44,6 +44,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
             override val applicationNameNoSpaces: String = "rsynk"
         }
 
+        fileManager = TrackedFilesManager()
         server = RsynkSshServer(
                 sshSettings,
                 ExplicitCommandFactory(sshSettings, fileInfoReader, fileManager),

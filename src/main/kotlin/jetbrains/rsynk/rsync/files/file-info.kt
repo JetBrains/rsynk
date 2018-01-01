@@ -15,7 +15,6 @@
  */
 package jetbrains.rsynk.rsync.files
 
-import java.io.File
 import java.nio.file.Path
 
 data class User(
@@ -35,6 +34,7 @@ data class Group(
 data class FileInfo(
         val path: Path,
         val mode: Int,
+        val offset: Long,
         val size: Long,
         val lastModified: Long,
         val user: User,

@@ -15,31 +15,30 @@
  */
 package jetbrains.rsynk.rsync
 
-import jetbrains.rsynk.rsync.files.FilesTransmission
+import jetbrains.rsynk.rsync.files.*
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 import java.nio.file.Files
 
 class FileInTransmission {
 
     @Test
     fun do_not_transmit_empty_file_test() = withFile(byteArrayOf()) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { r ->
+        FilesTransmission.runWithOpenedFile(file, 100, 200) { r ->
             Assert.assertEquals(0, r.array.size)
         }
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun set_windows_size_less_than_buffer_test() = withFile(byteArrayOf()) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 10) {t ->
+        FilesTransmission.runWithOpenedFile(file, 100, 10) { t ->
 
         }
     }
 
     @Test
     fun get_unchanged_bytes_test() = withFile(content) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
+        FilesTransmission.runWithOpenedFile(file, 100, 200) { tr ->
             Assert.assertEquals(100, tr.getTotalBytes())
 
             val bytes = tr.array
@@ -60,7 +59,7 @@ class FileInTransmission {
 
     @Test
     fun init_values_test() = withFile(content) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
+        FilesTransmission.runWithOpenedFile(file, 100, 200) { tr ->
             Assert.assertEquals(-1, tr.getMarkOffset())
             Assert.assertEquals(99, tr.getEndOffset())
             Assert.assertEquals(0, tr.getStartOffset())
@@ -70,7 +69,7 @@ class FileInTransmission {
 
     @Test
     fun slide_values_margin_is_less_than_window_size_test() = withFile(content) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
+        FilesTransmission.runWithOpenedFile(file, 100, 200) { tr ->
             tr.slide(80)
 
             Assert.assertEquals(-1, tr.getMarkOffset())
@@ -82,7 +81,7 @@ class FileInTransmission {
 
     @Test
     fun slide_values_margin_is_bigger_than_window_size_test() = withFile(content) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 100, 200) { tr ->
+        FilesTransmission.runWithOpenedFile(file, 100, 200) { tr ->
             tr.slide(180)
 
             Assert.assertEquals(-1, tr.getMarkOffset())
@@ -95,7 +94,7 @@ class FileInTransmission {
 
     @Test
     fun mark_offset_test() = withFile(content) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 50, 60) { tr ->
+        FilesTransmission.runWithOpenedFile(file, 50, 60) { tr ->
             tr.setMarkOffsetRelativeToStart(10)
             Assert.assertArrayEquals(byteArrayOf(79, 110, 99, 101, 32, 97, 32, 98, 111, 121, 32,
                     97, 32, 82, 111, 115, 101, 98, 117, 100, 32, 115, 112, 105, 101, 100, 44, 10,
@@ -106,7 +105,7 @@ class FileInTransmission {
 
     @Test
     fun shrink_read_bytes_test() = withFile(content) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 20, 25) { tr ->
+        FilesTransmission.runWithOpenedFile(file, 20, 25) { tr ->
             tr.slide(20)
             tr.slide(20)
             Assert.assertArrayEquals(byteArrayOf(105, 114, 32, 97, 110, 100, 32, 116, 101, 110, 100, 101,
@@ -116,7 +115,7 @@ class FileInTransmission {
 
     @Test
     fun values_after_shrinking_test() = withFile(content) { file ->
-        FilesTransmission.runWithOpenedFile(file.toPath(), file.length(), 20, 25) { tr ->
+        FilesTransmission.runWithOpenedFile(file, 20, 25) { tr ->
             tr.slide(18)
             tr.slide(17)
 
@@ -136,12 +135,15 @@ class FileInTransmission {
             "Rosebud, rosebud, rosebud red,\n" +
             "Heathrose fair and tender!\n").toByteArray()
 
-    private fun withFile(fileContent: ByteArray, action: (File) -> Unit) {
+    private val fileInfoReader = FileInfoReader(UnixDefaultFileSystemInfo()) //TODO: windows?
+
+    private fun withFile(fileContent: ByteArray, action: (FileInfo) -> Unit) {
         val dir = Files.createTempDirectory("file-repr-test")
         try {
             val file = Files.createTempFile(dir, "file-repr-test", "file").toFile()
             file.writeBytes(fileContent)
-            action(file)
+            val fileInfo = fileInfoReader.getFileInfo(RsynkFile(file.absolutePath, { RsynkFileBoundaries(0, file.length()) }))
+            action(fileInfo)
         } finally {
             dir.toFile().deleteRecursively()
         }
