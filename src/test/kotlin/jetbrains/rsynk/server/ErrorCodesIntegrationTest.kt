@@ -111,7 +111,7 @@ class ErrorCodesIntegrationTest {
         session.disconnect()
 
         Assert.assertTrue("Reported error '$reportedError' doesn't contain expected message",
-                reportedError.contains("File /not/existing/path is missing among files tracked by rsynk"))
+                reportedError.contains("Cannot resolve file '/not/existing/path': file is not tracked"))
         Assert.assertEquals(3 /* files selection error code */, channel.exitStatus)
     }
 
