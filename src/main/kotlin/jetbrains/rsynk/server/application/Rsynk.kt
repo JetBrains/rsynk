@@ -17,14 +17,12 @@ package jetbrains.rsynk.server.application
 
 import jetbrains.rsynk.rsync.files.FileInfoReader
 import jetbrains.rsynk.rsync.files.RsynkFile
-import jetbrains.rsynk.rsync.files.TrackedFilesProvider
 import jetbrains.rsynk.rsync.files.UnixDefaultFileSystemInfo
 import jetbrains.rsynk.server.ssh.ExplicitCommandFactory
 import jetbrains.rsynk.server.ssh.RsynkSshServer
 import jetbrains.rsynk.server.ssh.SSHSessionFactory
 import jetbrains.rsynk.server.ssh.SSHSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
-import java.util.concurrent.CopyOnWriteArrayList
 
 class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoCloseable {
 
@@ -33,12 +31,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     private val server: RsynkSshServer
-    private val trackedFiles = CopyOnWriteArrayList<RsynkFile>()
-    private val filesProvider= object : TrackedFilesProvider {
-        override fun getTrackedFiles(): List<RsynkFile> {
-            return trackedFiles
-        }
-    }
+    private val fileManager = TrackedFilesManager()
 
     init {
         val sshSettings = object : SSHSettings {
@@ -53,7 +46,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
 
         server = RsynkSshServer(
                 sshSettings,
-                ExplicitCommandFactory(sshSettings, fileInfoReader, filesProvider),
+                ExplicitCommandFactory(sshSettings, fileInfoReader, fileManager),
                 SSHSessionFactory()
         )
 
@@ -61,24 +54,17 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
     }
 
     fun trackFile(file: RsynkFile): Rsynk {
-        return trackFiles(listOf(file))
-    }
-
-    fun trackFiles(files: List<RsynkFile>): Rsynk {
-        trackedFiles.addAll(files)
+        fileManager.add(listOf(file))
         return this
     }
 
-    fun stopTrackingFile(file: RsynkFile) {
-        if (!trackedFiles.remove(file)) {
-            val boundaries = file.getBoundariesCallable()
-            throw IllegalArgumentException("File (${file.file}, offset=${boundaries.offset}, length=${boundaries.length} is not tracked by rsynk")
-        }
+    fun trackFiles(files: List<RsynkFile>): Rsynk {
+        fileManager.add(files)
+        return this
     }
 
     fun stopTrackingAllFiles() {
-        trackedFiles.clear()
-        //this.trackedFiles.clear()
+        fileManager.removeAll()
     }
 
     override fun close() {

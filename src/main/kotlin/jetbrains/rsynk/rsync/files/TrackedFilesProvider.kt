@@ -16,5 +16,16 @@
 package jetbrains.rsynk.rsync.files
 
 interface TrackedFilesProvider {
-    fun getTrackedFiles(): List<RsynkFile>
+    fun resolve(path: String): RsynkFile? = resolve(listOf(path)).values.firstOrNull()
+
+    /**
+     * Return file paths mapped to corresponding
+     * tracked files only if all requested files are tracked
+     * by rsynk.
+     * If at least one file is not tracked by rsynk - throw
+     * [jetbrains.rsynk.rsync.exitvalues.InvalidFileException]
+     *
+     * [paths] are absolute paths requested by the client.
+     */
+    fun resolve(paths: List<String>): Map<String, RsynkFile>
 }

@@ -33,7 +33,7 @@ class FileResolver(private val fileInfoReader: FileInfoReader,
                     "has at least one file with wildcard (paths expanding is not supported)")
         }
 
-        val trackedFiles = trackedFilesProvider.getTrackedFiles().map { it.file.absolutePath to it }.toMap()
+        val trackedFiles = trackedFilesProvider.resolve(paths)
         return paths.map {
             val path = File(it).absolutePath
             val trackedFile = trackedFiles[path] ?: throw InvalidFileException("File $path is missing among files tracked by rsynk")

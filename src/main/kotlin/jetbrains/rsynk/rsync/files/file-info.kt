@@ -109,7 +109,7 @@ data class RsynkFileBoundaries(val offset: Long,
                                val length: Long)
 
 data class RsynkFile(val file: File,
-                     val getBoundariesCallable: () -> RsynkFileBoundaries)
+                     val getBoundaries: () -> RsynkFileBoundaries)
 
 data class RsynkFileWithInfo(val rsynkFile: RsynkFile,
                              val info: FileInfo) : Comparable<RsynkFileWithInfo> {

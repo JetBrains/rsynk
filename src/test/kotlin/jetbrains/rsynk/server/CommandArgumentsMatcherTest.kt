@@ -16,9 +16,8 @@
 package jetbrains.rsynk.server
 
 import jetbrains.rsynk.rsync.files.FileInfoReader
-import jetbrains.rsynk.rsync.files.RsynkFile
-import jetbrains.rsynk.rsync.files.TrackedFilesProvider
 import jetbrains.rsynk.rsync.files.UnixDefaultFileSystemInfo
+import jetbrains.rsynk.server.application.TrackedFilesManager
 import jetbrains.rsynk.server.command.CommandNotFoundException
 import jetbrains.rsynk.server.command.CommandResolver
 import org.junit.Test
@@ -27,9 +26,7 @@ class CommandArgumentsMatcherTest {
 
     private val rsyncCommandsHolder = CommandResolver(
             FileInfoReader(UnixDefaultFileSystemInfo()),
-            object : TrackedFilesProvider {
-                override fun getTrackedFiles(): List<RsynkFile> = emptyList()
-            }
+            TrackedFilesManager()
     )
 
     @Test(expected = CommandNotFoundException::class)
