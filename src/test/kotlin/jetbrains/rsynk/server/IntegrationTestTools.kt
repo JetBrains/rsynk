@@ -73,7 +73,7 @@ object IntegrationTestTools {
 }
 
 object RsyncClientWrapper {
-    fun sync(from: String, to: String, port: Int, timeoutSec: Long, _params: String): String {
+    fun call(from: String, to: String, port: Int, timeoutSec: Long, _params: String, ignoreErrors: Boolean = false): String {
         val params = if (_params.isEmpty()) "" else "-$_params"
         val args = listOf(rsyncPath, params, "--protocol", "31", "-e", "ssh -p $port -o StrictHostKeyChecking=no", from, to)
         val pb = ProcessBuilder(args)
@@ -89,14 +89,23 @@ object RsyncClientWrapper {
         } catch (e: InterruptedException) {
             throw Error("Rsync process is running longer than $timeoutSec sec, aborting...", e)
         }
-        Assert.assertEquals("Rsync exit code not equals to 0\n" +
-                "args=$args\n" +
-                "stdout=${String(process.inputStream.readBytes())}\n" +
-                "stderr=${String(process.errorStream.readBytes())}",
-                0, process.exitValue())
-        val buffer = ByteArray(process.inputStream.available())
-        process.inputStream.read(buffer)
-        return String(buffer)
+        if (!ignoreErrors) {
+            Assert.assertEquals("Rsync exit code not equals to 0\n" +
+                    "args=$args\n" +
+                    "stdout=${String(process.inputStream.readBytes())}\n" +
+                    "stderr=${String(process.errorStream.readBytes())}",
+                    0, process.exitValue())
+        }
+        val builder = StringBuilder()
+        val stdout = String(process.inputStream.readBytes())
+        val stderr = String(process.errorStream.readBytes())
+
+        builder.append("Process stdout:\n")
+        builder.append(stdout)
+        builder.append("\n\n")
+        builder.append("Process stderr:\n")
+        builder.append(stderr)
+        return builder.toString()
     }
 
     private val rsyncPath: String

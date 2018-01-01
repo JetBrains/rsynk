@@ -15,9 +15,9 @@
  */
 package jetbrains.rsynk.server
 
-import jetbrains.rsynk.server.application.Rsynk
 import jetbrains.rsynk.rsync.files.RsynkFile
 import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
+import jetbrains.rsynk.server.application.Rsynk
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
@@ -36,11 +36,11 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.trackFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
-        RsyncClientWrapper.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10), destinationFile.readText())
     }
 
@@ -54,11 +54,11 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.trackFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(0, 20)
         })
 
-        RsyncClientWrapper.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 20), destinationFile.readText())
     }
 
@@ -72,11 +72,11 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.trackFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(10, 30)
         })
 
-        RsyncClientWrapper.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 40), destinationFile.readText())
     }
 
@@ -90,20 +90,20 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.trackFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(0, 10)
         })
 
-        RsyncClientWrapper.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 10), destinationFile.readText())
 
         rsynk.stopTrackingAllFiles()
 
-        rsynk.trackFile(RsynkFile(sourceFile) {
+        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(10, 20)
         })
 
-        RsyncClientWrapper.sync("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 20), destinationFile.readText())
     }
 

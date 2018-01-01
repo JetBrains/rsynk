@@ -37,7 +37,7 @@ class FileResolver(private val fileInfoReader: FileInfoReader,
         return paths.map {
             val path = File(it).absolutePath
             val trackedFile = trackedFiles[path] ?: throw InvalidFileException("File $path is missing among files tracked by rsynk")
-            val fileInfo = fileInfoReader.getFileInfo(trackedFile.file.toPath())
+            val fileInfo = fileInfoReader.getFileInfo(File(trackedFile.path).toPath())
             RsynkFileWithInfo(trackedFile, fileInfo)
         }
     }

@@ -17,7 +17,7 @@ internal class TrackedFilesManager : FilesRegistry, TrackedFilesProvider {
 
     override fun add(files: List<RsynkFile>) = lock.withLock {
         files.forEach { f ->
-            pathToFile[f.file.absolutePath] = f
+            pathToFile[f.path] = f
         }
     }
 

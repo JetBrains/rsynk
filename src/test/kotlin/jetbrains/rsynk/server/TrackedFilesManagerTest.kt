@@ -6,12 +6,11 @@ import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
 import jetbrains.rsynk.server.application.TrackedFilesManager
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 
 class TrackedFilesManagerTest {
 
-    private val testFile1 = RsynkFile(File("hoho"), { RsynkFileBoundaries(0, 1) })
-    private val testFile2 = RsynkFile(File("hehe"), { RsynkFileBoundaries(100, 500) })
+    private val testFile1 = RsynkFile("hoho", { RsynkFileBoundaries(0, 1) })
+    private val testFile2 = RsynkFile("hehe", { RsynkFileBoundaries(100, 500) })
 
     @Test
     fun add_a_file_test() {
@@ -59,11 +58,6 @@ class TrackedFilesManagerTest {
     @Test(expected = InvalidFileException::class)
     fun try_to_resolve_untracked_file_test() {
         val t = TrackedFilesManager()
-        try {
-            val result = t.resolve("haha")
-            Assert.fail("Untracked file should no be resolved: $result")
-        } catch (t: Throwable) {
-            // That's what we expect
-        }
+        val result = t.resolve("haha")
     }
 }
