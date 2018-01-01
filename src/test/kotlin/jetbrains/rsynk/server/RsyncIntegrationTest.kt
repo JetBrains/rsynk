@@ -239,10 +239,10 @@ class RsyncIntegrationTest {
 
     @Test
     fun track_non_existing_file_test() {
-        val sourceRoot = Files.createTempDirectory("source").toFile()
         val destinationRoot = Files.createTempDirectory("dest").toFile()
-        val output = RsyncClientWrapper.call("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v", true)
-        Assert.assertTrue(output, output.contains("file is not tracked"))
+        rsynk.trackFile(RsynkFile("/haha/hoho", { RsynkFileBoundaries(0, 1) }))
+        val output = RsyncClientWrapper.call("localhost:/haha/hoho", destinationRoot.absolutePath, rsynkPort, 10, "v", true)
+        Assert.assertTrue(output, output.contains("Cannot read file attributes "))
     }
 
     private fun assertDirectoriesContentSame(a: File, b: File) {

@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.rsync.files
 
+import jetbrains.rsynk.rsync.exitvalues.InvalidFileException
 import mu.KLogging
 import java.io.File
 import java.nio.file.Files
@@ -43,31 +44,35 @@ class FileInfoReader(private val fs: FileSystemInfo) {
 
     fun getFileInfo(rsynkFile: RsynkFile): FileInfo {
         val path = File(rsynkFile.path).toPath()
-        val attributes = Files.readAttributes(path, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
-        val mode = getFileMode(attributes)
-        val user = try {
-            fs.getOwner(path)
-        } catch(t: Throwable) {
-            logger.error(t, { "Cannot read file owner uid and name for $path: ${t.message}" })
-            fs.defaultUser
-        }
+        try {
+            val attributes = Files.readAttributes(path, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+            val mode = getFileMode(attributes)
+            val user = try {
+                fs.getOwner(path)
+            } catch (t: Throwable) {
+                logger.error(t, { "Cannot read file owner uid and name for $path: ${t.message}" })
+                fs.defaultUser
+            }
 
-        val group = try {
-            fs.getGroup(path)
-        } catch(t: Throwable) {
-            logger.error(t, { "Cannot read file gid and group name for $path: ${t.message}" })
-            fs.defaultGroup
-        }
+            val group = try {
+                fs.getGroup(path)
+            } catch (t: Throwable) {
+                logger.error(t, { "Cannot read file gid and group name for $path: ${t.message}" })
+                fs.defaultGroup
+            }
 
-        val boundaries = rsynkFile.getBoundaries()
-        return FileInfo(
-                path,
-                mode,
-                boundaries.offset,
-                boundaries.length,
-                attributes.lastModifiedTime().to(TimeUnit.SECONDS),
-                user,
-                group)
+            val boundaries = rsynkFile.getBoundaries()
+            return FileInfo(
+                    path,
+                    mode,
+                    boundaries.offset,
+                    boundaries.length,
+                    attributes.lastModifiedTime().to(TimeUnit.SECONDS),
+                    user,
+                    group)
+        } catch (t: Throwable) {
+            throw InvalidFileException("Cannot read file attributes (path='${rsynkFile.path}, error=$t')", t)
+        }
     }
 
     private fun getFileMode(attributes: BasicFileAttributes): Int {
