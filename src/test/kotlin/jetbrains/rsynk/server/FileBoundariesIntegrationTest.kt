@@ -89,29 +89,25 @@ class FileBoundariesIntegrationTest {
 
     @Test
     fun can_change_bounds_dynamically_test() {
-        val dataDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val sourceFile = File(dataDirectory, "from.txt")
         sourceFile.writeText(IntegrationTestTools.loremIpsum)
 
-        val destinationDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val destinationDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
+        var offset = 0L
         rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
-            RsynkFileBoundaries(0, 10)
+            RsynkFileBoundaries(offset, 10)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 10), destinationFile.readText())
 
-        rsynk.stopTrackingAllFiles()
-
-        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
-            RsynkFileBoundaries(10, 20)
-        })
-
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
-        Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 20), destinationFile.readText())
+        offset = 10L
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(offset.toInt(), offset.toInt() + 10), destinationFile.readText())
     }
 
     companion object {
