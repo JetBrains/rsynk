@@ -20,19 +20,26 @@ import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
 import jetbrains.rsynk.server.application.Rsynk
 import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.atomic.AtomicInteger
 
 class FileBoundariesIntegrationTest {
 
+    @Before
+    fun clearTrackingFiles() {
+        rsynk.stopTrackingAllFiles()
+    }
+
     @Test
     fun set_left_file_bound_test() {
-        val dataDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val sourceFile = File(dataDirectory, "from.txt")
         sourceFile.writeText(IntegrationTestTools.loremIpsum)
 
-        val destinationDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val destinationDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
@@ -40,17 +47,17 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10), destinationFile.readText())
     }
 
     @Test
     fun set_right_file_bound_test() {
-        val dataDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val sourceFile = File(dataDirectory, "from.txt")
         sourceFile.writeText(IntegrationTestTools.loremIpsum)
 
-        val destinationDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val destinationDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
@@ -58,17 +65,17 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(0, 20)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 20), destinationFile.readText())
     }
 
     @Test
     fun set_left_and_right_bounds_test() {
-        val dataDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val sourceFile = File(dataDirectory, "from.txt")
         sourceFile.writeText(IntegrationTestTools.loremIpsum)
 
-        val destinationDirectory = Files.createTempDirectory("data-${RsyncIntegrationTest.id.incrementAndGet()}").toFile()
+        val destinationDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
@@ -76,7 +83,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, 30)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, RsyncIntegrationTest.rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 40), destinationFile.readText())
     }
 
@@ -126,5 +133,7 @@ class FileBoundariesIntegrationTest {
         @AfterClass
         @JvmStatic
         fun stopServer() = rsynk.close()
+
+        val id = AtomicInteger(0)
     }
 }
