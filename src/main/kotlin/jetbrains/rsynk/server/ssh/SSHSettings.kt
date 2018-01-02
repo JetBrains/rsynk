@@ -19,10 +19,9 @@ import org.apache.sshd.common.keyprovider.KeyPairProvider
 
 internal interface SSHSettings {
     val port: Int
-    val nioWorkers: Int
+    val nioWorkers: Int?
     val commandWorkers: Int
-    val idleConnectionTimeout: Int
-    val maxAuthAttempts: Int
+    val idleConnectionTimeout: Long
     val applicationNameNoSpaces: String
     val serverKeys: KeyPairProvider
 }

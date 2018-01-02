@@ -24,11 +24,16 @@ import jetbrains.rsynk.server.ssh.SSHSessionFactory
 import jetbrains.rsynk.server.ssh.SSHSettings
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
-class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoCloseable {
+class Rsynk internal constructor(port: Int,
+                                 nioWorkers: Int?,
+                                 commandWorkers: Int,
+                                 idleTimeoutConnection: Long?,
+                                 serverKeysProvider: KeyPairProvider) : AutoCloseable {
 
-    companion object Builder {
-        val builder
-            get() = RsynkBuilder.default
+    companion object {
+        @JvmStatic
+        val builder: RsynkBuilder_SetPort
+            get() = Builder.default
     }
 
     private val server: RsynkSshServer
@@ -36,16 +41,16 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
 
     init {
         val sshSettings = object : SSHSettings {
-            override val port: Int = builder.port
-            override val nioWorkers: Int = builder.nioWorkers
-            override val commandWorkers: Int = builder.commandWorkers
-            override val idleConnectionTimeout: Int = builder.idleConnectionTimeoutMills
-            override val maxAuthAttempts: Int = builder.maxAuthAttempts
-            override val serverKeys: KeyPairProvider = builder.serverKeysProvider
+            override val port: Int = port
+            override val nioWorkers: Int? = nioWorkers
+            override val commandWorkers: Int = commandWorkers
+            override val idleConnectionTimeout: Long = idleTimeoutConnection ?: 30 * 1000
+            override val serverKeys: KeyPairProvider = serverKeysProvider
             override val applicationNameNoSpaces: String = "rsynk"
         }
 
         fileManager = TrackedFilesManager()
+
         server = RsynkSshServer(
                 sshSettings,
                 ExplicitCommandFactory(sshSettings, fileInfoReader, fileManager),

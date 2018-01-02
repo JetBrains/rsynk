@@ -15,17 +15,12 @@
  */
 package jetbrains.rsynk.server
 
-import org.apache.sshd.common.keyprovider.KeyPairProvider
 import org.junit.Assert
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.net.ServerSocket
 import java.net.URL
 import java.nio.file.Files
-import java.security.KeyFactory
-import java.security.KeyPair
-import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.X509EncodedKeySpec
 import java.util.concurrent.TimeUnit
 
 
@@ -39,12 +34,12 @@ object IntegrationTestTools {
         return javaClass.classLoader.getResource(relativePath).readText()
     }
 
-    fun getServerKey(): KeyPairProvider {
-        val privateBytes = getTestResourceUrl("private_key.der").readBytes()
-        val privateKey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(privateBytes))
-        val publicBytes = getTestResourceUrl("public_key.der").readBytes()
-        val publicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(publicBytes))
-        return KeyPairProvider { listOf(KeyPair(publicKey, privateKey)) }
+    fun getPrivateServerKey(): ByteArray {
+        return getTestResourceUrl("private_key.der").readBytes()
+    }
+
+    fun getPublicServerKey(): ByteArray {
+        return getTestResourceUrl("public_key.der").readBytes()
     }
 
     val loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
@@ -67,7 +62,14 @@ object IntegrationTestTools {
         throw RuntimeException("Cannot find free port in range [16384, 65536]")
     }
 
-    fun isDebugProtocolEnabled(): Boolean {
+    fun getIdleConnectionTimeout(): Long {
+        if (isDebugProtocolEnabled()) {
+            return Long.MAX_VALUE
+        }
+        return 50000
+    }
+
+    private fun isDebugProtocolEnabled(): Boolean {
         return ManagementFactory.getRuntimeMXBean().inputArguments.any { it.contains("jdwp=") }
     }
 }

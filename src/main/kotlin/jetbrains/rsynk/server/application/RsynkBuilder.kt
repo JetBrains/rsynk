@@ -16,22 +16,135 @@
 package jetbrains.rsynk.server.application
 
 import org.apache.sshd.common.keyprovider.KeyPairProvider
+import java.security.KeyFactory
+import java.security.KeyPair
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
 
-class RsynkBuilder internal constructor(var port: Int,
-                                        var nioWorkers: Int,
-                                        var commandWorkers: Int,
-                                        var idleConnectionTimeoutMills: Int,
-                                        var serverKeysProvider: KeyPairProvider,
-                                        var maxAuthAttempts: Int) {
+/**
+ * This file contains several interfaces with prefix
+ * RsynkBuilder_, All of them are used to set required parameters.
+ * The chain leads to an interface [RsynkBuilder] with optional
+ * parameters which has method [RsynkBuilder.build] returning [Rsynk]
+ * */
+interface RsynkBuilder_SetPort {
+    fun setPort(port: Int): RsynkBuilder_SetWorkerThreads
+}
+
+/**
+ * Either number of workers or thread executor must be set
+ */
+interface RsynkBuilder_SetWorkerThreads {
+    /**
+     * Set number worker threads if you don't want to bother with
+     * creating thread executor. This work will be done internally.
+     */
+    fun setNumberOfWorkerThreads(workersNumber: Int): RsynkBuilder_SetServerKeys
+
+    /**
+     * Set your own thread executor if you want to take control
+     * over threads used by application
+     */
+    fun setThreadExecutor(executor: ExecutorService): RsynkBuilder_SetServerKeys = throw UnsupportedOperationException("Not yet implemented")
+}
+
+interface RsynkBuilder_SetServerKeys {
+    fun setRSAKey(privateKey: ByteArray,
+                  publicKey: ByteArray): RsynkBuilder
+}
+
+
+/**
+ * Last in a chain interface for setting optional
+ * parameters and building an [Rsynk] instance
+ */
+interface RsynkBuilder {
+    /**
+     * Nio worker threads are used in apache sshd server.
+     * Look at [org.apache.sshd.common.FactoryManager].
+     * If you don't set the value explicitly - the default
+     * value from apache sshd will be used.
+     * */
+    fun setNumberOfNioWorkers(nioWorkers: Int): RsynkBuilder
+
+    fun setIdleConnectionTimeout(timeout: Long, unit: TimeUnit): RsynkBuilder
+
+    fun build(): Rsynk
+}
+
+internal class Builder internal constructor(private var port: Int?,
+                                            private var nioWorkers: Int?,
+                                            private var workersNumber: Int?,
+                                            private var executor: ExecutorService?,
+                                            private var idleConnectionTimeoutMills: Long?,
+                                            private var rsaKey: ByteArray?,
+                                            private var rsaKeyPub: ByteArray?,
+                                            private var maxAuthAttempts: Int?
+) : RsynkBuilder_SetPort, RsynkBuilder_SetWorkerThreads, RsynkBuilder_SetServerKeys, RsynkBuilder {
+
     companion object {
-        internal val default
-            get() = RsynkBuilder(port = 22,
-                    nioWorkers = 1,
-                    commandWorkers = 1,
-                    idleConnectionTimeoutMills = 30 * 1000,
-                    serverKeysProvider = KeyPairProvider { emptyList() },
-                    maxAuthAttempts = 2)
+        internal val default: RsynkBuilder_SetPort
+            get() = Builder(port = null,
+                    nioWorkers = null,
+                    workersNumber = null,
+                    idleConnectionTimeoutMills = null,
+                    executor = null,
+                    rsaKey = null,
+                    rsaKeyPub = null,
+                    maxAuthAttempts = null)
     }
 
-    fun build() = Rsynk(this)
+    override fun setNumberOfWorkerThreads(workersNumber: Int): RsynkBuilder_SetServerKeys {
+        this.workersNumber = workersNumber
+        return this
+    }
+
+    override fun setThreadExecutor(executor: ExecutorService): RsynkBuilder_SetServerKeys {
+        this.executor = executor
+        return this
+    }
+
+    override fun setRSAKey(privateKey: ByteArray,
+                           publicKey: ByteArray): RsynkBuilder {
+        this.rsaKey = privateKey
+        this.rsaKeyPub = publicKey
+        return this
+    }
+
+    override fun setNumberOfNioWorkers(nioWorkers: Int): RsynkBuilder {
+        this.nioWorkers = nioWorkers
+        return this
+    }
+
+    override fun setIdleConnectionTimeout(timeout: Long, unit: TimeUnit): RsynkBuilder {
+        this.idleConnectionTimeoutMills = unit.convert(timeout, TimeUnit.MILLISECONDS)
+        return this
+    }
+
+    override fun setPort(port: Int): RsynkBuilder_SetWorkerThreads {
+        this.port = port
+        return this
+    }
+
+    override fun build(): Rsynk {
+        // it's safe to call !! operator here
+        // properties are guaranteed to be
+        // initialized by interfaces design
+        val port = this.port!!
+        val nioWorkers = this.nioWorkers
+        val workersNumber = this.workersNumber!! // safe as long as executor service api is disabled
+        val idleConnectionTimeout = this.idleConnectionTimeoutMills
+        val serverKeysProvider = readServerKeys(this.rsaKey!!, this.rsaKeyPub!!)
+
+        return Rsynk(port, nioWorkers, workersNumber, idleConnectionTimeout, serverKeysProvider)
+    }
+
+    private fun readServerKeys(private: ByteArray,
+                               public: ByteArray): KeyPairProvider {
+        val privateKey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(private))
+        val publicKey = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(public))
+        return KeyPairProvider { listOf(KeyPair(publicKey, privateKey)) }
+    }
 }
