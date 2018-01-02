@@ -27,7 +27,8 @@ import org.apache.sshd.common.keyprovider.KeyPairProvider
 class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoCloseable {
 
     companion object Builder {
-        fun newBuilder() = RsynkBuilder.default
+        val builder
+            get() = RsynkBuilder.default
     }
 
     private val server: RsynkSshServer
@@ -74,6 +75,7 @@ class Rsynk internal constructor(private val builder: RsynkBuilder) : AutoClosea
 
     private val fileInfoReader: FileInfoReader
         get() {
+            //TODO: issue#2
             return FileInfoReader(UnixDefaultFileSystemInfo())
         }
 }

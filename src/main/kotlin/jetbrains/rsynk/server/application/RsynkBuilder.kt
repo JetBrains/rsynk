@@ -24,13 +24,13 @@ class RsynkBuilder internal constructor(var port: Int,
                                         var serverKeysProvider: KeyPairProvider,
                                         var maxAuthAttempts: Int) {
     companion object {
-        internal val default = RsynkBuilder(
-                port = 22,
-                nioWorkers = 1,
-                commandWorkers = 1,
-                idleConnectionTimeoutMills = 30 * 1000,
-                serverKeysProvider = KeyPairProvider { emptyList() },
-                maxAuthAttempts = 2)
+        internal val default
+            get() = RsynkBuilder(port = 22,
+                    nioWorkers = 1,
+                    commandWorkers = 1,
+                    idleConnectionTimeoutMills = 30 * 1000,
+                    serverKeysProvider = KeyPairProvider { emptyList() },
+                    maxAuthAttempts = 2)
     }
 
     fun build() = Rsynk(this)

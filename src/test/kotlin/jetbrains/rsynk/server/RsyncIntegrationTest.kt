@@ -288,15 +288,15 @@ class RsyncIntegrationTest {
         val rsynkPort = IntegrationTestTools.findFreePort()
 
         @JvmStatic
-        val rsynk = Rsynk.newBuilder().apply {
-            port = rsynkPort
-            nioWorkers = 1
-            commandWorkers = 1
-            idleConnectionTimeoutMills = 5 * 1000
-            serverKeysProvider = IntegrationTestTools.getServerKey()
+        val rsynk = Rsynk.builder.also {
+            it.port = rsynkPort
+            it.nioWorkers = 1
+            it.commandWorkers = 1
+            it.idleConnectionTimeoutMills = 5 * 1000
+            it.serverKeysProvider = IntegrationTestTools.getServerKey()
 
             if (IntegrationTestTools.isDebugProtocolEnabled()) {
-                idleConnectionTimeoutMills = Int.MAX_VALUE
+                it.idleConnectionTimeoutMills = Int.MAX_VALUE
             }
         }.build()
 
