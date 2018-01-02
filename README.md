@@ -6,13 +6,13 @@
 An embeddable ssh server for [rsync client](https://rsync.samba.org) with additional features.
 
 ### What it is not ###
-This is not an rsync re-implementation. Unlike server, client functionality is not an aim of project.
+Not an rsync re-implementation. Unlike server, client functionality is not an aim of the project.
 
 ### Goals ###
-The goal is to make a server for rsync client and allows rich files content manipulations which is not implemented in original rsync. Rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
+The goal is to make a server for rsync client and allows rich files content manipulations which is not implemented in vanilla rsync. Rsynk supplied with API to dynamically select which files are downloadable and set the bounds on those files - offset and length, dynamically as well.
 
 ### Compatible rsync clients ###
-Minimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/), newer versions of rsync can be used. If you're using another rsync protocol implementation - the version of protocol must be 31 or newer. 
+Minimal client version is 3.1.0 (released September 28th, 2013, see [versions](https://rsync.samba.org/)), newer versions of rsync can be used. If you're using another rsync protocol implementation - the version of protocol must be 31 or newer. 
 
 ### Building project
 [Gradle](http://www.gradle.org) is used to build and test. JDK 1.8 and [Kotlin](http://kotlinlang.org)
