@@ -123,10 +123,10 @@ class ErrorCodesIntegrationTest {
         @JvmStatic
         val rsynk = Rsynk.builder
                 .setPort(freePort)
-                .setNumberOfWorkerThreads(5)
+                .setNumberOfWorkerThreads(1)
                 .setRSAKey(IntegrationTestTools.getPrivateServerKey(), IntegrationTestTools.getPublicServerKey())
                 .setIdleConnectionTimeout(IntegrationTestTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
-                .setNumberOfNioWorkers(3)
+                .setNumberOfNioWorkers(1)
                 .build()
 
         val jsch = JSch()

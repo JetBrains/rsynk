@@ -291,9 +291,10 @@ class RsyncIntegrationTest {
         @JvmStatic
         val rsynk = Rsynk.builder
                 .setPort(ErrorCodesIntegrationTest.freePort)
-                .setNumberOfWorkerThreads(5)
+                .setNumberOfWorkerThreads(1)
                 .setRSAKey(IntegrationTestTools.getPrivateServerKey(), IntegrationTestTools.getPublicServerKey())
                 .setIdleConnectionTimeout(IntegrationTestTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
+                .setNumberOfNioWorkers(1)
                 .build()
 
         @AfterClass
