@@ -88,7 +88,7 @@ class FileBoundariesIntegrationTest {
     }
 
     @Test
-    fun can_change_bounds_dynamically_test() {
+    fun can_change_an_offset_dynamically_test() {
         val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val sourceFile = File(dataDirectory, "from.txt")
         sourceFile.writeText(IntegrationTestTools.loremIpsum)
@@ -108,6 +108,29 @@ class FileBoundariesIntegrationTest {
         offset = 10L
         RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(offset.toInt(), offset.toInt() + 10), destinationFile.readText())
+    }
+
+    @Test
+    fun can_change_a_length_dynamically_test() {
+        val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+        val sourceFile = File(dataDirectory, "from.txt")
+        sourceFile.writeText(IntegrationTestTools.loremIpsum)
+
+        val destinationDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+        val destinationFile = File(destinationDirectory, "to.txt")
+        Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
+
+        var length = 10L
+        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
+            RsynkFileBoundaries(10, length)
+        })
+
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 10 + 10), destinationFile.readText())
+
+        length = 20L
+        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 10 + length.toInt()), destinationFile.readText())
     }
 
     companion object {

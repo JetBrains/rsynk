@@ -108,8 +108,23 @@ data class FileInfo(
 data class RsynkFileBoundaries(val offset: Long,
                                val length: Long)
 
+data class RsynkFileBoundaries2(val offset: Long,
+                                val length: Long,
+                                val cached: RsynkFileBoundaries?)
+
 data class RsynkFile(val path: String,
-                     val getBoundaries: () -> RsynkFileBoundaries)
+                     private val callback: () -> RsynkFileBoundaries) {
+
+    private var cache: RsynkFileBoundaries? = null
+
+    @Synchronized
+    internal fun getBoundaries(): RsynkFileBoundaries2 {
+        val boundaries = callback()
+        val cached = cache
+        cache = boundaries
+        return RsynkFileBoundaries2(boundaries.offset, boundaries.length, cached)
+    }
+}
 
 data class RsynkFileWithInfo(val rsynkFile: RsynkFile,
                              val info: FileInfo) : Comparable<RsynkFileWithInfo> {

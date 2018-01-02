@@ -61,13 +61,22 @@ class FileInfoReader(private val fs: FileSystemInfo) {
                 fs.defaultGroup
             }
 
-            val boundaries = rsynkFile.getBoundaries()
+            val b = rsynkFile.getBoundaries()
+
+            val lastModifiedTime = if (b.cached?.offset != b.offset && b.cached?.length == b.length) {
+                // we have to change file last modified time artificially
+                // to make rsync client react on a changed offset
+                // see issue#3
+                attributes.lastModifiedTime().to(TimeUnit.SECONDS) + 1
+            } else {
+                attributes.lastModifiedTime().to(TimeUnit.SECONDS)
+            }
             return FileInfo(
                     path,
                     mode,
-                    boundaries.offset,
-                    boundaries.length,
-                    attributes.lastModifiedTime().to(TimeUnit.SECONDS),
+                    b.offset,
+                    b.length,
+                    lastModifiedTime,
                     user,
                     group)
         } catch (t: Throwable) {
