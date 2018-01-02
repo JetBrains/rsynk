@@ -406,8 +406,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         val state = TransferStateMachine()
 
         stateLoop@ while (state.value != TransferStateMachine.State.Stop) {
-
-
             val index = decodeAndReadFilesListIndex(reader, writer)
             val iflags = if (index == FilesListsIndex.done.code) {
                 0

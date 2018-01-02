@@ -21,6 +21,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
 
 
@@ -67,7 +68,13 @@ class FileInfoReader(private val fs: FileSystemInfo) {
                 // we have to change file last modified time artificially
                 // to make rsync client react on a changed offset
                 // see issue#3
-                attributes.lastModifiedTime().to(TimeUnit.SECONDS) + 1
+                val newLastModifiedTime = attributes.lastModifiedTime().to(TimeUnit.SECONDS) + 1
+                try {
+                    Files.setLastModifiedTime(path, FileTime.fromMillis(newLastModifiedTime))
+                } catch (t: Throwable) {
+                    logger.error(t, { "Cannot update file last modified time: ${t.message}" })
+                }
+                newLastModifiedTime
             } else {
                 attributes.lastModifiedTime().to(TimeUnit.SECONDS)
             }
