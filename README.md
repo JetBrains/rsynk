@@ -11,7 +11,7 @@ This is not an rsync re-implementation. Unlike server, client functionality is n
 ### Goals ###
 The goal is to make a server for rsync client and allows rich files content manipulations which is not implemented in original rsync. Rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
 
-### Compatible rsync clients###
+### Compatible rsync clients ###
 Minimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/), newer versions of rsync can be used. If you're using another rsync protocol implementation - the version of protocol must be 31 or newer. 
 
 ### Building project
