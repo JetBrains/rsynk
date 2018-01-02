@@ -11,38 +11,8 @@ This is not an rsync re-implementation. Unlike server, client functionality is n
 ### Goals ###
 The goal is to make a server for rsync client and allows rich files content manipulations which is not implemented in original rsync. Rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
 
-### Supported client rsync versions ###
-Required minimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/) or newer. 
-  
-### Example ###
-**Rsynk** is able to dynamically choose which files to track:
-
-```kotlin
-val rsynk = Rsynk.newBuilder().apply {
-                      port = 22
-                      idleConnectionTimeout = 30000
-                      nioWorkersNumber = 1
-                      commandWorkersNumber = 1
-                  }.build()
-                  
-rsynk.trackFiles(...) 
-// or
-rsync.setTrackedFiles(...)
-```                
-
-It's also possible to track only a certain part of file (i.e. a consistent part which is correct in terms of your application current state)
-
-```kotlin
-val usersLog = File("app/data/logs/users.log")
-val rsynkFile = RsynkFile(logData, RsynkFileBoundaries {
-  // this lambda will be invoked for each request 
-  // boundaries are as dynamic as it possible
-  val lowerBound = 0                                   
-  val upperBound = getLastSerializedChunkPosition(usersLog)
-  RsynkFilesBoundaries(lowerBound, upperBound)
-})
-rsynk.trackFile(rsynkFile)
-```
+### Compatible rsync clients###
+Minimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/), newer versions of rsync can be used. If you're using another rsync protocol implementation - the version of protocol must be 31 or newer. 
 
 ### Building project
 [Gradle](http://www.gradle.org) is used to build and test. JDK 1.8 and [Kotlin](http://kotlinlang.org)
