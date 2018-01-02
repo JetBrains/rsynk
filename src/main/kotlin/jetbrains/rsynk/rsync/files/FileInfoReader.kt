@@ -62,7 +62,7 @@ class FileInfoReader(private val fs: FileSystemInfo) {
                 fs.defaultGroup
             }
 
-            val b = rsynkFile.getBoundaries()
+            val b = rsynkFile.getBoundaries() ?: RsynkFileBoundaries2(0, attributes.size(), null)
 
             val lastModifiedTime = if (b.cached?.offset != b.offset && b.cached?.length == b.length) {
                 // we have to change file last modified time artificially
