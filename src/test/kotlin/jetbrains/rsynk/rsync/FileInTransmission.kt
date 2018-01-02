@@ -135,7 +135,7 @@ class FileInTransmission {
             "Rosebud, rosebud, rosebud red,\n" +
             "Heathrose fair and tender!\n").toByteArray()
 
-    private val fileInfoReader = FileInfoReader(UnixDefaultFileSystemInfo()) //TODO: windows?
+    private val fileInfoReader = FileInfoReader(UnixDefaultFileSystemInfo()) //TODO: issue#2
 
     private fun withFile(fileContent: ByteArray, action: (FileInfo) -> Unit) {
         val dir = Files.createTempDirectory("file-repr-test")
