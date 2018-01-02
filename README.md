@@ -1,8 +1,6 @@
 # Rsynk #
 
-[![JetBrains team project](http://jb.gg/badges/team.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
-[![GitHub license](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
-![Repository Size](https://reposs.herokuapp.com/?path=JetBrains/rsynk)
+[![JetBrains team project](http://jb.gg/badges/team-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
 ### What it is ###
 An embeddable ssh server for [rsync client](https://rsync.samba.org) with additional features.
@@ -13,20 +11,8 @@ This is not an rsync re-implementation. Unlike server, client functionality is n
 ### Goals ###
 The goal is to make a server for rsync client and allows rich files content manipulations which is not implemented in original rsync. Rsynk supplied with an API to dynamically select which files are served and set the bounds on those files - offset and length, dynamically as well.
 
-### Roadmap ###
-
-~Implement single file transmission~
-
-**Implement multiple files transmission**
-
-Support a rich set of rsync flags and options
-
-Implement dynamical tracked files boundaries
-
-// Completed steps are ~crossed out~. Currently developing step is **bold**
-
 ### Supported client rsync versions ###
-Required minimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/)
+Required minimal client version is 3.1.0 (released September 28th, 2013) [versions](https://rsync.samba.org/) or newer. 
   
 ### Example ###
 **Rsynk** is able to dynamically choose which files to track:
