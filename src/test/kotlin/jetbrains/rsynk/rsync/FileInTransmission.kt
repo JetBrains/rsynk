@@ -29,13 +29,6 @@ class FileInTransmission {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun set_windows_size_less_than_buffer_test() = withFile(byteArrayOf()) { file ->
-        FilesTransmission.runWithOpenedFile(file, 100, 10) { t ->
-
-        }
-    }
-
     @Test
     fun get_unchanged_bytes_test() = withFile(content) { file ->
         FilesTransmission.runWithOpenedFile(file, 100, 200) { tr ->
@@ -86,7 +79,7 @@ class FileInTransmission {
 
             Assert.assertEquals(-1, tr.getMarkOffset())
             Assert.assertEquals(21, tr.getEndOffset())
-            Assert.assertEquals(0, tr.getMarkOffset())
+            Assert.assertEquals(-1, tr.getMarkOffset())
             Assert.assertEquals(0, tr.getStartOffset())
             Assert.assertEquals(0, tr.getFirstOffset())
         }
