@@ -202,12 +202,13 @@ class RsyncIntegrationTest {
         val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
         val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
         val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
-        val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
 
-        rsynk.trackFile(RsynkFile(sourceSubDir.absolutePath))
+        rsynk.trackFiles(listOf(RsynkFile(sourceSubDir.absolutePath),
+                RsynkFile(fileA1.absolutePath),
+                RsynkFile(fileA2.absolutePath)))
 
         val destinationRoot = Files.createTempDirectory("data").toFile()
-        RsyncClientWrapper.call("localhost:${sourceSubDir.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceSubDir.absolutePath}/", destinationRoot.absolutePath, rsynkPort, 10, "v")
 
         assertDirectoriesContentSame(sourceRoot, destinationRoot)
     }
@@ -217,7 +218,7 @@ class RsyncIntegrationTest {
         val sourceRoot = Files.createTempDirectory("data-root").toFile()
         val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
         val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
-        val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
+        val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho[;[;[;[;[;[;[;[;[" + name) }
         val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
         rsynk.trackFiles(listOf(
                 RsynkFile(fileA1.absolutePath),

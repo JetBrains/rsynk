@@ -170,7 +170,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         val filesList = FilesListBlocks(false)
-        val initialBlock = filesList.addFileBlock(null, files.map { it.info }) //TODO: implement file boundaries restriction!
+        val initialBlock = filesList.addFileBlock(null, files.map { it.info })
 
         var prevFileCache = emptyPreviousFileCache
         initialBlock.files.forEach { _, file ->

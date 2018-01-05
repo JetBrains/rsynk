@@ -18,6 +18,7 @@ package jetbrains.rsynk.rsync.files
 import jetbrains.rsynk.rsync.exitvalues.InvalidFileException
 import jetbrains.rsynk.rsync.exitvalues.NotSupportedException
 import java.io.File
+import java.util.*
 
 class FileResolver(private val fileInfoReader: FileInfoReader,
                    private val trackedFilesProvider: TrackedFilesProvider) {
@@ -32,17 +33,26 @@ class FileResolver(private val fileInfoReader: FileInfoReader,
                     "has at least one file with wildcard (paths expanding is not supported)")
         }
 
-        val trackedFiles = trackedFilesProvider.resolve(paths)
-        return paths.map {
-            val path = File(it).absolutePath
-            val trackedFile = trackedFiles[path] ?: throw InvalidFileException("File $path is missing among files tracked by rsynk")
+        // TODO: there all subfiles of directory should be included in result
+        val trackedFiles = trackedFilesProvider.resolve(paths.map { it.dropLastWhile { it =='/' } })
+        val result = ArrayList<RsynkFileWithInfo>()
+        for (p in paths) {
+            val f = File(p.dropLastWhile { it == '/' })
+
+            val trackedFile = trackedFiles[f.absolutePath] ?: throw InvalidFileException("File ${f.absolutePath} is missing among files tracked by rsynk")
             val fileInfo = fileInfoReader.getFileInfo(trackedFile)
 
             if (fileInfo.isDirectory) {
-                throw NotSupportedException("File $path is a directory, directories transferring is not yet supported")
+                for (fChild in f.listFiles()) {
+                    // TODO: all files with subdirectories should be resolved only once!
+                    val trackedChild = trackedFilesProvider.resolve(fChild.absolutePath) ?: throw InvalidFileException("File ${fChild.absolutePath} is missing among files tracked by rsynk")
+                    val childFileInfo = fileInfoReader.getFileInfo(trackedChild)
+                    result += RsynkFileWithInfo(trackedChild, childFileInfo)
+                }
             }
+            result += RsynkFileWithInfo(trackedFile, fileInfo)
 
-            RsynkFileWithInfo(trackedFile, fileInfo)
         }
+        return result
     }
 }
