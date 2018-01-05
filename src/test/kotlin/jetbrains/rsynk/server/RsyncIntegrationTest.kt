@@ -203,14 +203,11 @@ class RsyncIntegrationTest {
         val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
         val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
         val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
-        rsynk.trackFiles(listOf(
-                RsynkFile(fileA1.absolutePath),
-                RsynkFile(fileA2.absolutePath),
-                RsynkFile(fileB1.absolutePath))
-        )
+
+        rsynk.trackFile(RsynkFile(sourceSubDir.absolutePath))
 
         val destinationRoot = Files.createTempDirectory("data").toFile()
-        RsyncClientWrapper.call("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceSubDir.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
 
         assertDirectoriesContentSame(sourceRoot, destinationRoot)
     }
@@ -299,7 +296,7 @@ class RsyncIntegrationTest {
 
         @JvmStatic
         val rsynk = Rsynk.builder
-                .setPort(ErrorCodesIntegrationTest.freePort)
+                .setPort(rsynkPort)
                 .setNumberOfWorkerThreads(1)
                 .setRSAKey(IntegrationTestTools.getPrivateServerKey(), IntegrationTestTools.getPublicServerKey())
                 .setIdleConnectionTimeout(IntegrationTestTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
