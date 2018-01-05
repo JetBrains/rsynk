@@ -202,14 +202,17 @@ class RsyncIntegrationTest {
         val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
         val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
         val fileA2 = File(sourceSubDir, "a2.txt").apply { writeText("hoho" + name) }
-        val fileB1 = File(sourceRoot, "b1.txt").apply { writeText("ho" + name) }
 
-        rsynk.trackFile(RsynkFile(sourceSubDir.absolutePath))
+        rsynk.trackFiles(listOf(RsynkFile(sourceSubDir.absolutePath),
+                RsynkFile(fileA1.absolutePath),
+                RsynkFile(fileA2.absolutePath)))
 
         val destinationRoot = Files.createTempDirectory("data").toFile()
-        RsyncClientWrapper.call("localhost:${sourceSubDir.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+        val output = RsyncClientWrapper.call("localhost:${sourceSubDir.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v", ignoreErrors = true)
+        Assert.assertTrue(output, output.contains("directories transferring is not yet supported"))
 
-        assertDirectoriesContentSame(sourceRoot, destinationRoot)
+        // assertDirectoriesContentSame(sourceRoot, destinationRoot)
+        // test for recursive mode https://www.digitalocean.com/community/tutorials/how-to-use-rsync-to-sync-local-and-remote-directories-on-a-vps
     }
 
     @Test
@@ -260,15 +263,6 @@ class RsyncIntegrationTest {
         source.appendText("hehe")
         RsyncClientWrapper.call("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkPort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum + "hehe", destinationFile.readText())
-    }
-
-    @Test
-    fun track_directory_test() {
-        val dir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-        val dest = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
-        rsynk.trackFile(RsynkFile(dir.absolutePath))
-        val output = RsyncClientWrapper.call("localhost:${dir.absolutePath}", dest.absolutePath, rsynkPort, 10, "v", true)
-        Assert.assertTrue(output, output.contains("directories transferring is not yet supported"))
     }
 
     private fun assertDirectoriesContentSame(a: File, b: File) {
