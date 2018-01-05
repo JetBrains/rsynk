@@ -85,8 +85,7 @@ internal class Builder internal constructor(private var port: Int?,
                                             private var executor: ExecutorService?,
                                             private var idleConnectionTimeoutMills: Long?,
                                             private var rsaKey: ByteArray?,
-                                            private var rsaKeyPub: ByteArray?,
-                                            private var maxAuthAttempts: Int?
+                                            private var rsaKeyPub: ByteArray?
 ) : RsynkBuilder_SetPort, RsynkBuilder_SetWorkerThreads, RsynkBuilder_SetServerKeys, RsynkBuilder {
 
     companion object {
@@ -97,8 +96,7 @@ internal class Builder internal constructor(private var port: Int?,
                     idleConnectionTimeoutMills = null,
                     executor = null,
                     rsaKey = null,
-                    rsaKeyPub = null,
-                    maxAuthAttempts = null)
+                    rsaKeyPub = null)
     }
 
     override fun setNumberOfWorkerThreads(workersNumber: Int): RsynkBuilder_SetServerKeys {
