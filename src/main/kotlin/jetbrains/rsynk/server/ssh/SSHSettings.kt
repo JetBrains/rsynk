@@ -15,12 +15,13 @@
  */
 package jetbrains.rsynk.server.ssh
 
+import jetbrains.rsynk.server.application.WorkersThreadPool
 import org.apache.sshd.common.keyprovider.KeyPairProvider
 
 internal interface SSHSettings {
     val port: Int
     val nioWorkers: Int?
-    val commandWorkers: Int
+    val workersThreadPool: WorkersThreadPool
     val idleConnectionTimeout: Long
     val applicationNameNoSpaces: String
     val serverKeys: KeyPairProvider

@@ -47,7 +47,7 @@ interface RsynkBuilder_SetWorkerThreads {
      * Set your own thread executor if you want to take control
      * over threads used by application
      */
-    fun setThreadExecutor(executor: ExecutorService): RsynkBuilder_SetServerKeys = throw UnsupportedOperationException("Not yet implemented")
+    fun setThreadExecutor(executor: ExecutorService): RsynkBuilder_SetServerKeys
 }
 
 interface RsynkBuilder_SetServerKeys {
@@ -72,6 +72,11 @@ interface RsynkBuilder {
     fun setIdleConnectionTimeout(timeout: Long, unit: TimeUnit): RsynkBuilder
 
     fun build(): Rsynk
+}
+
+internal sealed class WorkersThreadPool {
+    internal data class DefaultThreadPool(val workersNumber: Int): WorkersThreadPool()
+    internal data class CustomThreadPool(val executor: ExecutorService): WorkersThreadPool()
 }
 
 internal class Builder internal constructor(private var port: Int?,
@@ -134,11 +139,17 @@ internal class Builder internal constructor(private var port: Int?,
         // initialized by interfaces design
         val port = this.port!!
         val nioWorkers = this.nioWorkers
-        val workersNumber = this.workersNumber!! // safe as long as executor service api is disabled
+        val workersNumber = this.workersNumber
+        val executor = this.executor
+        val workerThreadPool = if (workersNumber != null) {
+            WorkersThreadPool.DefaultThreadPool(workersNumber)
+        } else {
+            WorkersThreadPool.CustomThreadPool(executor!!)
+        }
         val idleConnectionTimeout = this.idleConnectionTimeoutMills
         val serverKeysProvider = readServerKeys(this.rsaKey!!, this.rsaKeyPub!!)
 
-        return Rsynk(port, nioWorkers, workersNumber, idleConnectionTimeout, serverKeysProvider)
+        return Rsynk(port, nioWorkers, workerThreadPool, idleConnectionTimeout, serverKeysProvider)
     }
 
     private fun readServerKeys(private: ByteArray,

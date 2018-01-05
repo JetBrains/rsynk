@@ -26,7 +26,7 @@ import org.apache.sshd.common.keyprovider.KeyPairProvider
 
 class Rsynk internal constructor(port: Int,
                                  nioWorkers: Int?,
-                                 commandWorkers: Int,
+                                 workersThreadPool: WorkersThreadPool,
                                  idleTimeoutConnection: Long?,
                                  serverKeysProvider: KeyPairProvider) : AutoCloseable {
 
@@ -43,7 +43,7 @@ class Rsynk internal constructor(port: Int,
         val sshSettings = object : SSHSettings {
             override val port: Int = port
             override val nioWorkers: Int? = nioWorkers
-            override val commandWorkers: Int = commandWorkers
+            override val workersThreadPool: WorkersThreadPool = workersThreadPool
             override val idleConnectionTimeout: Long = idleTimeoutConnection ?: 30 * 1000
             override val serverKeys: KeyPairProvider = serverKeysProvider
             override val applicationNameNoSpaces: String = "rsynk"

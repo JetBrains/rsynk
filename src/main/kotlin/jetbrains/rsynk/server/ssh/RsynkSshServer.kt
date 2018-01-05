@@ -81,7 +81,7 @@ internal class RsynkSshServer(private val sshSettings: SSHSettings,
         logger.info("Starting sshd server:\n" +
                 " port=${sshSettings.port},\n" +
                 " nio-workers=${sshSettings.nioWorkers},\n" +
-                " command-workers=${sshSettings.commandWorkers},\n" +
+                " command-workers=${sshSettings.workersThreadPool},\n" +
                 " idle-connection-timeout=${sshSettings.idleConnectionTimeout}\n")
         sshd.start()
     }

@@ -19,6 +19,7 @@ import jetbrains.rsynk.rsync.exitvalues.RsyncExitCodes
 import jetbrains.rsynk.rsync.exitvalues.RsynkException
 import jetbrains.rsynk.rsync.files.FileInfoReader
 import jetbrains.rsynk.rsync.files.TrackedFilesProvider
+import jetbrains.rsynk.server.application.WorkersThreadPool
 import jetbrains.rsynk.server.command.CommandNotFoundException
 import jetbrains.rsynk.server.command.CommandResolver
 import mu.KLogging
@@ -28,6 +29,7 @@ import org.apache.sshd.server.Environment
 import org.apache.sshd.server.ExitCallback
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
@@ -40,11 +42,23 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
 
     private val commandsResolver = CommandResolver(fileInfoReader, trackedFiles)
 
-    private val threadPool = Executors.newFixedThreadPool(settings.commandWorkers, threadFactory@ { runnable ->
-        val newThread = Thread(runnable, "ssh-command")
-        newThread.isDaemon = true
-        return@threadFactory newThread
-    })
+    private val threadPool: ExecutorService
+
+    init {
+        val workersThreadPool = settings.workersThreadPool
+        when (workersThreadPool) {
+            is WorkersThreadPool.DefaultThreadPool -> {
+                threadPool = Executors.newFixedThreadPool(workersThreadPool.workersNumber, threadFactory@ { runnable ->
+                    val newThread = Thread(runnable, "ssh-command")
+                    newThread.isDaemon = true
+                    return@threadFactory newThread
+                })
+            }
+            is WorkersThreadPool.CustomThreadPool -> {
+                threadPool = workersThreadPool.executor
+            }
+        }
+    }
 
     override fun createCommand(cmd: String): Command {
 
