@@ -265,6 +265,15 @@ class RsyncIntegrationTest {
         Assert.assertEquals(IntegrationTestTools.loremIpsum + "hehe", destinationFile.readText())
     }
 
+    @Test
+    fun track_directory_test() {
+        val dir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+        val dest = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
+        rsynk.trackFile(RsynkFile(dir.absolutePath))
+        val output = RsyncClientWrapper.call("localhost:${dir.absolutePath}", dest.absolutePath, rsynkPort, 10, "v", true)
+        Assert.assertTrue(output, output.contains("directories transferring is not yet supported"))
+    }
+
     private fun assertDirectoriesContentSame(a: File, b: File) {
         if (!a.isDirectory) {
             Assert.fail("${a.absolutePath} is not a directory")
