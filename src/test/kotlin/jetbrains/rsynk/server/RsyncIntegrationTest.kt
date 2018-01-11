@@ -17,10 +17,7 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.rsync.files.RsynkFile
 import jetbrains.rsynk.server.application.Rsynk
-import org.junit.AfterClass
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.*
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
@@ -67,6 +64,7 @@ class RsyncIntegrationTest {
     }
 
     @Test
+    @Ignore("test for issue#5, which is not implemented")
     fun files_from_same_directory_with_common_prefix_test() {
         val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val sourceFile1 = File(dataDirectory, "source-file-1.txt")
@@ -197,7 +195,7 @@ class RsyncIntegrationTest {
     }
 
     @Test
-    fun transfer_directory_test() {
+    fun transfer_directory_error_message_test() {
         val sourceRoot = Files.createTempDirectory("data-root").toFile()
         val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
         val fileA1 = File(sourceSubDir, "a1.txt").apply { writeText("hohoho" + name) }
@@ -211,11 +209,15 @@ class RsyncIntegrationTest {
         val output = RsyncClientWrapper.call("localhost:${sourceSubDir.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v", ignoreErrors = true)
         Assert.assertTrue(output, output.contains("directories transferring is not yet supported"))
 
-        // assertDirectoriesContentSame(sourceRoot, destinationRoot)
-        // test for recursive mode https://www.digitalocean.com/community/tutorials/how-to-use-rsync-to-sync-local-and-remote-directories-on-a-vps
+        // once issue#5 is resolved following lines should be uncommented
+        /*
+        assertDirectoriesContentSame(sourceRoot, destinationRoot)
+        test for recursive mode https://www.digitalocean.com/community/tutorials/how-to-use-rsync-to-sync-local-and-remote-directories-on-a-vps
+         */
     }
 
     @Test
+    @Ignore("test for issue#5, which is not implemented")
     fun transfer_directory_incrementally_test() {
         val sourceRoot = Files.createTempDirectory("data-root").toFile()
         val sourceSubDir = File(sourceRoot, "a").apply { mkdir() }
@@ -232,7 +234,7 @@ class RsyncIntegrationTest {
         File(destinationRoot, "a1.txt").apply { writeText("ho") }
         File(sourceSubDir, "a2.txt").apply { writeText("ho") }
         File(sourceRoot, "b1.txt").apply { writeText(fileB1.readText()) }
-        RsyncClientWrapper.call("localhost:${sourceRoot.absolutePath}", destinationRoot.absolutePath, rsynkPort, 10, "v")
+        RsyncClientWrapper.call("localhost:${sourceRoot.absolutePath}/", "${destinationRoot.absolutePath}/", rsynkPort, 10, "v")
 
         assertDirectoriesContentSame(sourceRoot, destinationRoot)
     }
