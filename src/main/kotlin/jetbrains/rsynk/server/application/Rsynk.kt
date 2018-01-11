@@ -60,17 +60,17 @@ class Rsynk internal constructor(port: Int,
         server.start()
     }
 
-    fun trackFile(file: RsynkFile): Rsynk {
+    fun track(file: RsynkFile): Rsynk {
         fileManager.add(listOf(file))
         return this
     }
 
-    fun trackFiles(files: List<RsynkFile>): Rsynk {
+    fun track(files: List<RsynkFile>): Rsynk {
         fileManager.add(files)
         return this
     }
 
-    fun stopTrackingAllFiles() {
+    fun untrackAll() {
         fileManager.removeAll()
     }
 

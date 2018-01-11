@@ -31,7 +31,7 @@ class FileBoundariesIntegrationTest {
 
     @Before
     fun clearTrackingFiles() {
-        rsynk.stopTrackingAllFiles()
+        rsynk.untrackAll()
     }
 
     @Test
@@ -44,7 +44,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
+        rsynk.track(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
@@ -62,7 +62,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
+        rsynk.track(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(0, 20)
         })
 
@@ -80,7 +80,7 @@ class FileBoundariesIntegrationTest {
         val destinationFile = File(destinationDirectory, "to.txt")
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
-        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
+        rsynk.track(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(10, 30)
         })
 
@@ -99,7 +99,7 @@ class FileBoundariesIntegrationTest {
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
         var offset = 0L
-        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
+        rsynk.track(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(offset, 10)
         })
 
@@ -122,7 +122,7 @@ class FileBoundariesIntegrationTest {
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
         var length = 10L
-        rsynk.trackFile(RsynkFile(sourceFile.absolutePath) {
+        rsynk.track(RsynkFile(sourceFile.absolutePath) {
             RsynkFileBoundaries(10, length)
         })
 
