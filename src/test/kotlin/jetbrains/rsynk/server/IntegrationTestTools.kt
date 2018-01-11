@@ -17,6 +17,8 @@ package jetbrains.rsynk.server
 
 import org.junit.Assert
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.lang.management.ManagementFactory
 import java.net.ServerSocket
 import java.net.URL
@@ -120,3 +122,14 @@ object RsyncClientWrapper {
         }
 }
 
+internal fun readFully(source: InputStream, dest: OutputStream) {
+    val buf = ByteArray(1024 * 128)
+
+    while (true) {
+        val read = source.read(buf)
+        if (read <= 0) {
+            return
+        }
+        dest.write(buf, 0, read)
+    }
+}

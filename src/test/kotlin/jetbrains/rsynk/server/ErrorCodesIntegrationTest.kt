@@ -18,7 +18,6 @@ package jetbrains.rsynk.server
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
 import jetbrains.rsynk.server.application.Rsynk
-import org.apache.sshd.common.util.io.IoUtils
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
@@ -39,12 +38,13 @@ class ErrorCodesIntegrationTest {
         channel.setCommand("rsync --server --sender . hoho")
         channel.connect()
 
-        val output = channel.outputStream
-        output.write(byteArrayOf(10 /* 100% ancient protocol */, 0, 0, 0))
-        output.flush()
+        val outputStream = channel.outputStream
+        val errorStream = channel.errStream
+        outputStream.write(byteArrayOf(10 /* 100% ancient protocol */, 0, 0, 0))
+        outputStream.flush()
 
         val bos = ByteArrayOutputStream()
-        IoUtils.copy(channel.errStream, bos)
+        readFully(errorStream, bos)
         val reportedError = String(bos.toByteArray())
 
         channel.disconnect()
@@ -68,11 +68,13 @@ class ErrorCodesIntegrationTest {
         channel.connect()
 
         val output = channel.outputStream
+        val errorStream = channel.errStream
+
         output.write(byteArrayOf(47 /* 100% too modern protocol */, 0, 0, 0))
         output.flush()
 
         val bos = ByteArrayOutputStream()
-        IoUtils.copy(channel.errStream, bos)
+        readFully(errorStream, bos)
         val reportedError = String(bos.toByteArray())
 
         channel.disconnect()
@@ -95,17 +97,18 @@ class ErrorCodesIntegrationTest {
         channel.setCommand("rsync --server --sender . /not/existing/path")
         channel.connect()
 
-        val output = channel.outputStream
+        val outputStream = channel.outputStream
+        val errorStream = channel.errStream
 
-        output.write(byteArrayOf(31, 0, 0, 0))
-        output.flush()
+        outputStream.write(byteArrayOf(31, 0, 0, 0))
+        outputStream.flush()
 
-        output.write(byteArrayOf(4, 0, 0, 7))
-        output.write(byteArrayOf(0, 0, 0, 0))
-        output.flush()
+        outputStream.write(byteArrayOf(4, 0, 0, 7))
+        outputStream.write(byteArrayOf(0, 0, 0, 0))
+        outputStream.flush()
 
         val bos = ByteArrayOutputStream()
-        IoUtils.copy(channel.errStream, bos)
+        readFully(errorStream, bos)
         val reportedError = String(bos.toByteArray())
 
         channel.disconnect()
@@ -129,7 +132,8 @@ class ErrorCodesIntegrationTest {
                 .setNumberOfNioWorkers(1)
                 .build()
 
-        val jsch = JSch()
+        val jsch: JSch
+            get() = JSch()
 
         @AfterClass
         @JvmStatic
