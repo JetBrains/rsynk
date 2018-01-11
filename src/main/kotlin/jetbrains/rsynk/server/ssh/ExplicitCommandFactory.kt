@@ -82,17 +82,17 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                 }
                 val stdin = inputStream
                 if (stdin == null) {
-                    exit(RsyncExitCodes.SocketIOError, "Input stream not set\n")
+                    exit(RsyncExitCodes.SocketIOError, "Input stream not set by server (internal error)\n")
                     return
                 }
                 val stdout = outputStream
                 if (stdout == null) {
-                    exit(RsyncExitCodes.SocketIOError, "Output stream not set\n")
+                    exit(RsyncExitCodes.SocketIOError, "Output stream not set by server (internal error)\n")
                     return
                 }
                 val stderr = errorStream
                 if (stderr == null) {
-                    exit(RsyncExitCodes.SocketIOError, "Error stream not set\n")
+                    exit(RsyncExitCodes.SocketIOError, "Error stream not set by server (internal error)\n")
                     return
                 }
                 runningCommand = threadPool.submit {
@@ -105,7 +105,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
 
                         exit(RsyncExitCodes.Success)
                     } catch (e: RsynkException) {
-                        logger.info { "Command $args failed: with $e (${e.message})" }
+                        logger.info { "Command $args failed: with ${e::class.simpleName} (${e.message})" }
                         writeError(e)
                         exit(e.exitCode)
                     } catch (t: Throwable) {
@@ -122,7 +122,7 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
                 if (message != null) {
                     errorStream?.apply {
                         write(message.toByteArray())
-                        write("\n".toByteArray())
+                        write("\n\n".toByteArray())
                         flush()
                     }
                 }
