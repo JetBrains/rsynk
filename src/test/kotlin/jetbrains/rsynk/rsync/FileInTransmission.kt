@@ -20,7 +20,7 @@ import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Files
 
-class FileInTransmission {
+internal class FileInTransmission {
 
     @Test
     fun do_not_transmit_empty_file_test() = withFile(byteArrayOf()) { file ->

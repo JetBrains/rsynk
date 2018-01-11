@@ -20,22 +20,22 @@ import jetbrains.rsynk.rsync.exitvalues.RsyncExitCodes.RequestActionNotSupported
 import jetbrains.rsynk.rsync.exitvalues.RsyncExitCodes.RsyncProtocolDataStreamError
 import jetbrains.rsynk.rsync.exitvalues.RsyncExitCodes.SelectInputFilesError
 
-open class RsynkException(message: String, val exitCode: Int, cause: Throwable?) : RuntimeException(message, cause)
+internal open class RsynkException(message: String, val exitCode: Int, cause: Throwable?) : RuntimeException(message, cause)
 
-class ProtocolException(message: String, exitCode: Int = RsyncProtocolDataStreamError, cause: Throwable? = null) :
+internal class ProtocolException(message: String, exitCode: Int = RsyncProtocolDataStreamError, cause: Throwable? = null) :
         RsynkException(message, exitCode, cause)
 
-class ArgsParingException(message: String, exitCode: Int = RsyncProtocolDataStreamError, cause: Throwable? = null) :
+internal class ArgsParingException(message: String, exitCode: Int = RsyncProtocolDataStreamError, cause: Throwable? = null) :
         RsynkException(message, exitCode, cause)
 
-class UnsupportedProtocolException(message: String, cause: Throwable? = null) :
+internal class UnsupportedProtocolException(message: String, cause: Throwable? = null) :
         RsynkException(message, ProtocolIncompatibility, cause)
 
-class ModuleNotFoundException(message: String, cause: Throwable? = null) :
+internal class ModuleNotFoundException(message: String, cause: Throwable? = null) :
         RsynkException(message, SelectInputFilesError, cause)
 
-class InvalidFileException(message: String, cause: Throwable? = null) :
+internal class InvalidFileException(message: String, cause: Throwable? = null) :
         RsynkException(message, SelectInputFilesError, cause)
 
-class NotSupportedException(message: String, cause: Throwable? = null) :
+internal class NotSupportedException(message: String, cause: Throwable? = null) :
         RsynkException(message, RequestActionNotSupported, cause)

@@ -17,21 +17,21 @@ package jetbrains.rsynk.rsync.files
 
 import java.nio.file.Path
 
-data class User(
+internal data class User(
         val name: String,
         val uid: Int
 ) {
     val isRoot: Boolean = uid == 0
 }
 
-data class Group(
+internal data class Group(
         val name: String,
         val gid: Int
 ) {
     val isRoot: Boolean = gid == 0
 }
 
-data class FileInfo(
+internal data class FileInfo(
         val path: Path,
         val mode: Int,
         val offset: Long,
@@ -108,7 +108,7 @@ data class FileInfo(
 data class RsynkFileBoundaries(val offset: Long,
                                val length: Long)
 
-data class RsynkFileBoundaries2(val offset: Long,
+internal data class RsynkFileBoundaries2(val offset: Long,
                                 val length: Long,
                                 val cached: RsynkFileBoundaries?)
 
@@ -134,7 +134,7 @@ data class RsynkFile(val path: String,
     }
 }
 
-data class RsynkFileWithInfo(val rsynkFile: RsynkFile,
+internal data class RsynkFileWithInfo(val rsynkFile: RsynkFile,
                              val info: FileInfo) : Comparable<RsynkFileWithInfo> {
     override fun compareTo(other: RsynkFileWithInfo): Int {
         return info.compareTo(other.info)

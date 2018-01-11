@@ -17,7 +17,7 @@ package jetbrains.rsynk.server.io
 
 import java.nio.ByteBuffer
 
-interface RsyncDataOutput {
+internal interface RsyncDataOutput {
     fun writeChar(c: Char)
 
     fun writeInt(i: Int)

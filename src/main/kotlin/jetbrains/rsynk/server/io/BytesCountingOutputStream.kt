@@ -18,7 +18,7 @@ package jetbrains.rsynk.server.io
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicLong
 
-class BytesCountingOutputStream(
+internal class BytesCountingOutputStream(
         private val host: OutputStream
 ) : OutputStream() {
 

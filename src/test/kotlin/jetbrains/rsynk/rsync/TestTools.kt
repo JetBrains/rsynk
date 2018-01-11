@@ -16,7 +16,7 @@
 package jetbrains.rsynk.rsync
 
 
-object OS {
+internal object OS {
     val isLinux: Boolean
         get() {
             val os = os()

@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.rsync.extensions
 
-inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
+internal inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
     var closed = false
     try {
         return block(this)

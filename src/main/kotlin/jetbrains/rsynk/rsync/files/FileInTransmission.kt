@@ -21,7 +21,7 @@ import mu.KLogging
 import java.io.InputStream
 import java.nio.file.Files
 
-class FileInTransmission(
+internal class FileInTransmission(
         private val fileInfo: FileInfo,
         windowSize: Int,
         bufferSize: Int = 8 * 1024
@@ -155,7 +155,7 @@ class FileInTransmission(
     }
 }
 
-object FilesTransmission {
+internal object FilesTransmission {
     val defaultBlockSize = 8 * 1024
 
     fun <T> runWithOpenedFile(file: FileInfo,

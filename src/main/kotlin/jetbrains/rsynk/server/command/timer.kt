@@ -16,7 +16,7 @@
 package jetbrains.rsynk.server.command
 
 
-interface TimerInstance {
+internal interface TimerInstance {
     fun getTimeFromStart(): Long
 }
 
@@ -29,7 +29,7 @@ private class TimerInstanceImpl(
     }
 }
 
-object CommandExecutionTimer {
+internal object CommandExecutionTimer {
     fun start(): TimerInstance {
         val now = System.currentTimeMillis()
         return TimerInstanceImpl(now)

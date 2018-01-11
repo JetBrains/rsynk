@@ -23,7 +23,7 @@ import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Paths
 
-class FilesListBlocksTest {
+internal class FilesListBlocksTest {
 
     companion object Files {
 

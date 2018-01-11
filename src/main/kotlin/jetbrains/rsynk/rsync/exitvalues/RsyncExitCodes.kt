@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.rsync.exitvalues
 
-object RsyncExitCodes {
+internal object RsyncExitCodes {
     val Success = 0
     val SyntaxOrUsageError = 1
     val ProtocolIncompatibility = 2

@@ -21,7 +21,7 @@ import org.junit.Test
 import java.nio.ByteBuffer
 
 
-class VarintEncoderTest {
+internal class VarintEncoderTest {
 
     @Test
     fun encode_long_min_value_test() {

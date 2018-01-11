@@ -20,7 +20,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 
-object VarintEncoder {
+internal object VarintEncoder {
 
     private fun Long.toLittleEndianBytes(): ByteArray = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(this).array()
 

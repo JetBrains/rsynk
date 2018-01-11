@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.rsync.options
 
-sealed class Option {
+internal sealed class Option {
     object Server : Option()
     object Sender : Option()
     object Daemon : Option()
@@ -41,7 +41,7 @@ sealed class Option {
     object ProtectArgs : Option()
     object PruneEmptyDirectories : Option()
 
-    sealed class FileSelection : Option() {
+    internal sealed class FileSelection : Option() {
         /**
          * Transfer client's file list exactly but exclude directories
          * */
@@ -59,7 +59,7 @@ sealed class Option {
         object TransferDirectoriesWithoutContent : FileSelection()
     }
 
-    object VerboseMode : Option()
+    internal object VerboseMode : Option()
 }
 
 

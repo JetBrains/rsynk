@@ -19,7 +19,7 @@ import jetbrains.rsynk.rsync.data.RollingChecksum
 import org.junit.Assert
 import org.junit.Test
 
-class RollingChecksumTest {
+internal class RollingChecksumTest {
 
     @Test
     fun rolling_checksum_test_1() {

@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.rsync.flags
 
-enum class CompatFlags(val mask: Byte) {
+internal enum class CompatFlags(val mask: Byte) {
     INC_RECURSE                     (0b000001),
     SYMLINK_TIMES                   (0b000010),
     SYMLINK_ICONV                   (0b000100),

@@ -20,7 +20,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicLong
 
-class RsyncBufferedOutput(
+internal class RsyncBufferedOutput(
         private val output: OutputStream
 ) : RsyncDataOutput {
 
@@ -144,7 +144,6 @@ class RsyncTaggingOutput(
     }
 
     override fun flush() {
-
         val bufferedBytes = getNumberOfBufferedBytes()
         val untaggedBytes = getNumberOfUntaggedBytes()
 

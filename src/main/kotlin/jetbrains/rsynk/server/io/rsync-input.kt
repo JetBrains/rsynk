@@ -128,7 +128,7 @@ private fun readInt(buffer: ByteArray, off: Int): Int {
     return ByteBuffer.wrap(buffer, off, intSize).order(ByteOrder.LITTLE_ENDIAN).int
 }
 
-class RsyncInput(
+internal class RsyncInput(
         input: InputStream
 ) : RsyncDataInput {
 
@@ -160,7 +160,7 @@ class RsyncInput(
 }
 
 
-class RsyncTaggingInput(
+internal class RsyncTaggingInput(
         input: InputStream
 ) : RsyncDataInput {
 

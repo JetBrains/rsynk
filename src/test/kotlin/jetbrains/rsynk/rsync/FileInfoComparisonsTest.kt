@@ -22,7 +22,7 @@ import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Paths
 
-class FileInfoComparisonsTest {
+internal class FileInfoComparisonsTest {
     @Test
     fun dot_dir_is_less_than_file_test() {
         val dot = FileInfo(Paths.get("."), 0, 0, 0L, 0L, user, group)

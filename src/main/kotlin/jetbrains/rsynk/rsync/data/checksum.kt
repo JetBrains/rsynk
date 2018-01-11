@@ -18,7 +18,7 @@ package jetbrains.rsynk.rsync.data
 import java.security.MessageDigest
 import java.util.*
 
-object RollingChecksum {
+internal object RollingChecksum {
 
     fun calculate(bytes: ByteArray, offset: Int, length: Int): Int {
         var s1 = 0
@@ -71,11 +71,11 @@ object RollingChecksum {
 
 }
 
-object LongChecksum {
+internal object LongChecksum {
     fun newMessageDigestInstance() = MessageDigest.getInstance("md5")!!
 }
 
-object ChecksumSeedGenerator {
+internal object ChecksumSeedGenerator {
 
     private val seed = System.currentTimeMillis()
 
@@ -85,7 +85,7 @@ object ChecksumSeedGenerator {
     }
 }
 
-data class ChecksumHeader(val chunkCount: Int,
+internal data class ChecksumHeader(val chunkCount: Int,
                           val blockLength: Int,
                           val digestLength: Int,
                           val remainder: Int
@@ -102,11 +102,11 @@ data class ChecksumHeader(val chunkCount: Int,
     }
 }
 
-data class RollingChecksumChunk(
+internal data class RollingChecksumChunk(
         val checksum: Int
 )
 
-data class LongChecksumChunk(
+internal data class LongChecksumChunk(
         val checksum: ByteArray
 ) {
     override fun equals(other: Any?): Boolean {
@@ -124,13 +124,13 @@ data class LongChecksumChunk(
     }
 }
 
-data class ChecksumChunk(
+internal data class ChecksumChunk(
         val chunkIndex: Int,
         val rollingChecksumChunk: RollingChecksumChunk,
         val longChecksumChunk: LongChecksumChunk
 )
 
-data class Checksum(val header: ChecksumHeader) {
+internal data class Checksum(val header: ChecksumHeader) {
 
     private val rollingChecksumToChunk = HashMap<Int, ArrayList<ChecksumChunk>>()
 
@@ -149,7 +149,7 @@ data class Checksum(val header: ChecksumHeader) {
     }
 }
 
-class ChecksumMatcher(private val checksum: Checksum) {
+internal class ChecksumMatcher(private val checksum: Checksum) {
 
     fun getMatches(chunkRollingChecksum: Int,
                    length: Int,

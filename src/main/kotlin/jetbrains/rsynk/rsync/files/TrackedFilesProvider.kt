@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.rsync.files
 
-interface TrackedFilesProvider {
+internal interface TrackedFilesProvider {
     fun resolve(path: String): RsynkFile? = resolve(listOf(path)).values.firstOrNull()
 
     /**

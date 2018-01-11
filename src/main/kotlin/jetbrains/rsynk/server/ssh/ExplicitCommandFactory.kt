@@ -121,7 +121,8 @@ internal class ExplicitCommandFactory(settings: SSHSettings,
 
                 if (message != null) {
                     errorStream?.apply {
-                        write("$message\n".toByteArray())
+                        write(message.toByteArray())
+                        write("\n".toByteArray())
                         flush()
                     }
                 }

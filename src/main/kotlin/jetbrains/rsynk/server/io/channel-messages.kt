@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.server.io
 
-enum class ChannelMessageTag(val code: Int) {
+internal enum class ChannelMessageTag(val code: Int) {
     Data(0),
     ErrorXfer(1),
     Info(2),
@@ -39,11 +39,11 @@ enum class ChannelMessageTag(val code: Int) {
 private val msgTagOffset = 7
 private val msgLengthMask = 0xFFFFFF
 
-data class ChannelMessageHeader(val tag: ChannelMessageTag,
+internal data class ChannelMessageHeader(val tag: ChannelMessageTag,
                                 val length: Int)
 
 
-object ChannelMessageHeaderDecoder {
+internal object ChannelMessageHeaderDecoder {
 
     fun decodeHeader(tag: Int): ChannelMessageHeader? {
         val length = tag and msgLengthMask

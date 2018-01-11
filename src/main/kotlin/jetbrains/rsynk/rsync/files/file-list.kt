@@ -17,14 +17,14 @@ package jetbrains.rsynk.rsync.files
 
 import java.util.*
 
-sealed class FilesListsIndex(val code: Int) {
+internal sealed class FilesListsIndex(val code: Int) {
     object done : FilesListsIndex(-1)
     object eof : FilesListsIndex(-2)
     object delStats : FilesListsIndex(-3)
     object offset : FilesListsIndex(-101)
 }
 
-data class FilesListBlock(val rootDirectory: FileInfo?,
+internal data class FilesListBlock(val rootDirectory: FileInfo?,
                           val files: Map<Int, FileInfo>,
                           val begin: Int,
                           val end: Int,
@@ -35,7 +35,7 @@ data class FilesListBlock(val rootDirectory: FileInfo?,
     }
 }
 
-class FilesListBlocks(private val isRecursive: Boolean) {
+internal class FilesListBlocks(private val isRecursive: Boolean) {
 
     private val blocks = ArrayList<FilesListBlock>()
     private val stubDirectories = TreeMap<Int, FileInfo>()

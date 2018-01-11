@@ -20,7 +20,7 @@ import java.nio.ByteOrder
 import java.util.function.Consumer
 import java.util.function.Supplier
 
-class FilesListIndexDecoder {
+internal class FilesListIndexDecoder {
 
     private var lastPositive = -1
     private var lastNegative = 1
@@ -75,7 +75,7 @@ class FilesListIndexDecoder {
     }
 }
 
-class FilesListIndexEncoder {
+internal class FilesListIndexEncoder {
 
     private var lastPositive = -1
     private var lastNegative = 1

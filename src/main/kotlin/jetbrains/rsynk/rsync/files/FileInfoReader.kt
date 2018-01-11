@@ -39,7 +39,7 @@ internal object FileBitmasks {
     val Other = 53248
 }
 
-class FileInfoReader(private val fs: FileSystemInfo) {
+internal class FileInfoReader(private val fs: FileSystemInfo) {
 
     companion object : KLogging()
 

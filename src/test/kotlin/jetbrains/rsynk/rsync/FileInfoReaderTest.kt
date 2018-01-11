@@ -24,7 +24,7 @@ import org.junit.Assume
 import org.junit.Test
 import java.nio.file.Files
 
-class FileInfoReaderTest {
+internal class FileInfoReaderTest {
 
     private val unixFS = UnixDefaultFileSystemInfo()
 

@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.rsync.flags
 
-enum class ItemFlag(val mask: Int) {
+internal enum class ItemFlag(val mask: Int) {
     UP_TO_DATE          (0b00000000),
     REPORT_ATIME        (0b00000001),
     REPORT_CHANGE       (0b00000010),
@@ -35,6 +35,6 @@ enum class ItemFlag(val mask: Int) {
     TRANSFER            (0b1000000000000000)
 }
 
-object ItemFlagsValidator {
+internal object ItemFlagsValidator {
     fun isFlagSupported(flags: Int): Boolean = true
 }

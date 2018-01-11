@@ -15,7 +15,7 @@
  */
 package jetbrains.rsynk.rsync.flags
 
-enum class TransmitFlag(val mask: Int) {
+internal enum class TransmitFlag(val mask: Int) {
     TOP_DIRECTORY       (0b00000000000001),
     SAME_MODE           (0b00000000000010),
     EXTENDED_FLAGS      (0b00000000000100),

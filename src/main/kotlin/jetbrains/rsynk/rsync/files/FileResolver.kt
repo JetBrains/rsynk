@@ -19,7 +19,7 @@ import jetbrains.rsynk.rsync.exitvalues.InvalidFileException
 import jetbrains.rsynk.rsync.exitvalues.NotSupportedException
 import java.io.File
 
-class FileResolver(private val fileInfoReader: FileInfoReader,
+internal class FileResolver(private val fileInfoReader: FileInfoReader,
                    private val trackedFilesProvider: TrackedFilesProvider) {
 
     companion object {

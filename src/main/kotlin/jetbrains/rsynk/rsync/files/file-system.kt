@@ -20,7 +20,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFileAttributes
 
-interface FileSystemInfo {
+internal interface FileSystemInfo {
     val defaultUser: User
     val defaultGroup: Group
     val defaultFilePermission: Int
@@ -30,7 +30,7 @@ interface FileSystemInfo {
     fun getGroup(file: Path): Group
 }
 
-class UnixDefaultFileSystemInfo : FileSystemInfo {
+internal class UnixDefaultFileSystemInfo : FileSystemInfo {
 
     private val nobodyId = Math.pow(2.0, 16.0).toInt() - 1 - 1
     private val umask: Int
