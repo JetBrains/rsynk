@@ -48,7 +48,6 @@ internal class RsynkSshServer(private val sshSettings: SSHSettings,
         }
     }
 
-
     private fun configure() {
         sshd.port = sshSettings.port
 
@@ -65,8 +64,8 @@ internal class RsynkSshServer(private val sshSettings: SSHSettings,
         sshd.addSessionListener(sessionFactory.createSessionListener())
 
         sshd.keyPairProvider = sshSettings.serverKeys
-        sshd.publickeyAuthenticator = PublickeyAuthenticator { username, publicKey, server -> true }
-        sshd.passwordAuthenticator = PasswordAuthenticator { username, password, server -> true }
+        sshd.publickeyAuthenticator = PublickeyAuthenticator { _, _, _ -> true }
+        sshd.passwordAuthenticator = PasswordAuthenticator { _, _, _ -> true }
 
         nioChannelExecutor?.let {
             sshd.ioServiceFactoryFactory = Nio2ServiceFactoryFactory(nioChannelExecutor, false)

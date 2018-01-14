@@ -36,5 +36,5 @@ internal enum class ItemFlag(val mask: Int) {
 }
 
 internal object ItemFlagsValidator {
-    fun isFlagSupported(flags: Int): Boolean = true
+    fun isFlagSupported(@Suppress("UNUSED_PARAMETER") flags: Int): Boolean = true
 }
