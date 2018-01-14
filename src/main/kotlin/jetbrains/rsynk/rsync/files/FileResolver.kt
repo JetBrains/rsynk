@@ -20,16 +20,15 @@ import jetbrains.rsynk.rsync.exitvalues.NotSupportedException
 import java.io.File
 
 internal class FileResolver(private val fileInfoReader: FileInfoReader,
-                   private val trackedFilesProvider: TrackedFilesProvider) {
+                            private val trackedFilesProvider: TrackedFilesProvider) {
 
     companion object {
         private val wildcardsInPathPattern = Regex(".*[\\[*?].*")
     }
 
     fun resolve(paths: List<String>): List<RsynkFileWithInfo> {
-        if (paths.any { wildcardsInPathPattern.matches(it) }) {
-            throw NotSupportedException("Received files list ${paths.joinToString(separator = ", ")} " +
-                    "has at least one file with wildcard (paths expanding is not supported)")
+        paths.firstOrNull { wildcardsInPathPattern.matches(it) }?.let {
+            throw NotSupportedException("Received files list has a path  with wildcard: '$it'(wildcard expanding is not supported)")
         }
 
         val trackedFiles = trackedFilesProvider.resolve(paths)

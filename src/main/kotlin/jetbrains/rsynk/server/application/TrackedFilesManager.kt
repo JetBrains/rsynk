@@ -19,6 +19,7 @@ import jetbrains.rsynk.rsync.exitvalues.InvalidFileException
 import jetbrains.rsynk.rsync.files.RsynkFile
 import jetbrains.rsynk.rsync.files.TrackedFilesProvider
 import mu.KLogging
+import java.io.File
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -32,13 +33,13 @@ internal class TrackedFilesManager : FilesRegistry, TrackedFilesProvider {
 
     override fun add(files: List<RsynkFile>) = lock.withLock {
         files.forEach { f ->
-            pathToFile[f.path] = f
+            pathToFile[getPath(f.path)] = f
         }
     }
 
-    override fun remove(files: List<String>) = lock.withLock {
-        files.forEach { f ->
-            pathToFile.remove(f) ?: logger.debug { "Unable to stop deregister '$f': files isn't tracked" }
+    override fun remove(paths: List<String>) = lock.withLock {
+        paths.forEach { p ->
+            pathToFile.remove(getPath(p)) ?: logger.debug { "Unable to stop deregister '$p': file isn't tracked" }
         }
     }
 
@@ -49,9 +50,12 @@ internal class TrackedFilesManager : FilesRegistry, TrackedFilesProvider {
     override fun resolve(paths: List<String>): Map<String, RsynkFile> = lock.withLock {
         val result = TreeMap<String, RsynkFile>()
         paths.forEach { p ->
-            val resolvedFile = pathToFile[p] ?: throw InvalidFileException("Cannot resolve file '$p': file is not tracked")
-            result[p] = resolvedFile
+            val resolvedPath = getPath(p)
+            val resolvedFile = pathToFile[resolvedPath] ?: throw InvalidFileException("Cannot resolve file '${resolvedPath}': file is not tracked")
+            result[resolvedPath] = resolvedFile
         }
         return result
     }
+
+    private fun getPath(userPath: String): String = File(userPath).absolutePath
 }

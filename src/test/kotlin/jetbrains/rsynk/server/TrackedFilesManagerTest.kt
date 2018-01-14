@@ -73,6 +73,6 @@ class TrackedFilesManagerTest {
     @Test(expected = InvalidFileException::class)
     fun try_to_resolve_untracked_file_test() {
         val t = TrackedFilesManager()
-        val result = t.resolve("haha")
+        t.resolve("haha")
     }
 }
