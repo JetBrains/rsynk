@@ -38,7 +38,6 @@ import mu.KLogging
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
-import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -492,93 +491,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                 }
             }
         }
-
         encodeAndSendFilesListIndex(FilesListsIndex.done.code, writer)
-    }
-
-    /* TODO: implement recursive sending
-    private fun expandAndSendStubDirectories(filesListBlocks: FilesListBlocks,
-                                             blockInTransmission: Int,
-                                             sentFilesLimit: Int,
-                                             requestData: ServerSendRequestData,
-                                             writer: RsyncDataOutput): StubDirectoriesExpandingResult {
-
-        var filesSent = 0
-        var currentBlock = blockInTransmission
-
-        while (filesListBlocks.hasStubDirs && filesSent < sentFilesLimit) {
-            val stubDir = filesListBlocks.popStubDir(currentBlock) ?: throw ProtocolException("Invalid stub directory block index: $currentBlock")
-            encodeAndSendFilesListIndex(FilesListsIndex.offset.code - currentBlock, writer)
-
-            val expanded = expandStubDirectory(stubDir, requestData)
-            val block = filesListBlocks.addFileBlock(stubDir, expanded)
-
-            block.files.forEach { _index, file ->
-                sendFileInfo(file, emptyPreviousFileCache, requestData.arguments, writer)
-                filesSent++
-            }
-            sendBlockEnd(writer)
-            currentBlock++
-        }
-
-        return StubDirectoriesExpandingResult(filesSent, currentBlock - blockInTransmission)
-    }
-    */
-
-    /*
-    private fun expandStubDirectory(directory: FileInfo,
-                                    requestData: ServerSendRequestData): List<FileInfo> {
-        val root = locateRootDirectoryPath(directory)
-
-        val list = ArrayList<FileInfo>()
-        Files.newDirectoryStream(directory.path).use {
-            it.forEach { directoryEntry ->
-
-                val relativePath = root.relativize(directoryEntry).normalize()
-                val fileInfo = fileInfoReader.getFileInfo(directoryEntry)
-
-                val element = when {
-                    requestData.arguments.preserveLinks && fileInfo.isSymlink -> {
-                        TODO()
-                    }
-
-                    requestData.arguments.preserveDevices && (fileInfo.isBlockDevice || fileInfo.isCharacterDevice) -> {
-                        TODO()
-                    }
-
-                    requestData.arguments.preserveSpecials && (fileInfo.isFIFO || fileInfo.isSocket) -> {
-                        TODO()
-                    }
-
-                    else -> {
-                        FileInfo(relativePath, fileInfo.mode, fileInfo.size, fileInfo.lastModified, fileInfo.user, fileInfo.group)
-                    }
-                }
-                list.add(element)
-            }
-        }
-
-        return list
-    }
-    */
-
-
-    //TODO: move to FileInfo
-    //TODO: or to separate util
-    private fun locateRootDirectoryPath(fileInfo: FileInfo): Path {
-        val fs = fileInfo.path.fileSystem
-
-        val fullPath = fileInfo.path
-        val relativePath = fs.getPath(fileInfo.path.fileName.toString())
-        if (!fullPath.endsWith(relativePath)) {
-            throw IllegalArgumentException("$relativePath is not a subpath of $fullPath")
-        }
-
-        val result = fullPath.subpath(0, fullPath.nameCount - relativePath.nameCount)
-        if (fullPath.isAbsolute) {
-            return fullPath.root.resolve(result)
-        }
-        return result
     }
 
     private fun decodeAndReadFilesListIndex(reader: RsyncDataInput, writer: RsyncDataOutput): Int {
@@ -770,11 +683,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
             currentOffset += chunkLength
         }
     }
-
-    private fun sendBlockEnd(writer: RsyncDataOutput) {
-        writer.writeByte(0)
-    }
-
 }
 
 
@@ -811,9 +719,6 @@ private data class PreviousFileSentFileInfoCache(val mode: Int?,
                                                  val fileNameBytes: String,
                                                  val sentUserNames: Set<User>,
                                                  val sendGroupNames: Set<Group>)
-
-private data class StubDirectoriesExpandingResult(val filesSent: Int,
-                                                  val blocksSent: Int)
 
 private val emptyPreviousFileCache = PreviousFileSentFileInfoCache(null,
         null,
