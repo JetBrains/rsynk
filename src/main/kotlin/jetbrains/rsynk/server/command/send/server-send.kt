@@ -229,9 +229,9 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
     private fun readIndexAndAttributes(reader: RsyncDataInput,
                                        writer: RsyncDataOutput): Int {
-        var index = 0
+        //var index = 0
         while (true) {
-            index = decodeAndReadFilesListIndex(reader, writer)
+            val index = decodeAndReadFilesListIndex(reader, writer)
             if (index >= 0) {
                 break
             }
@@ -242,8 +242,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
 
             TODO("Implement stats processing 'rsync.c, 326'")
         }
-
-        val iflag = reader.readChar()
+        /*val iflag = */reader.readChar()
         TODO("To implement rsync.c 372")
     }
 
