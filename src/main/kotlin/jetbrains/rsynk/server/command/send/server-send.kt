@@ -50,9 +50,6 @@ internal class RsyncServerSendCommandResolver : CommandArgumentsMatcher {
         if (args.size < 4) {
             return false
         }
-        if (args.any { it == "--daemon" || it == "daemon" }) {
-            return false
-        }
         return args[1] == "--server" && args[2] == "--sender"
     }
 }
@@ -170,7 +167,7 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
         }
 
         val filesList = FilesListBlocks(false)
-        val initialBlock = filesList.addFileBlock(null, files.map { it.info }) //TODO: implement file boundaries restriction!
+        val initialBlock = filesList.addFileBlock(null, files.map { it.info })
 
         var prevFileCache = emptyPreviousFileCache
         initialBlock.files.forEach { _, file ->
@@ -426,7 +423,6 @@ internal class RsyncServerSendCommand(private val fileInfoReader: FileInfoReader
                 }
 
                 index >= 0 -> {
-
                     if (CompatFlags.INC_RECURSE.mask and RsyncProtocolStaticConfig.serverCompatFlags != 0.toByte()) {
                         throw NotSupportedException("It's time to implement extra file list sending (sender.c line 234)")
                     }

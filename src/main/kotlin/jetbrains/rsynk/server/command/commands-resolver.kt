@@ -15,10 +15,11 @@
  */
 package jetbrains.rsynk.server.command
 
-import jetbrains.rsynk.server.command.send.RsyncServerSendCommand
-import jetbrains.rsynk.server.command.send.RsyncServerSendCommandResolver
+import jetbrains.rsynk.rsync.exitvalues.ArgsParingException
 import jetbrains.rsynk.rsync.files.FileInfoReader
 import jetbrains.rsynk.rsync.files.TrackedFilesProvider
+import jetbrains.rsynk.server.command.send.RsyncServerSendCommand
+import jetbrains.rsynk.server.command.send.RsyncServerSendCommandResolver
 
 
 internal interface CommandArgumentsMatcher {
@@ -65,6 +66,10 @@ private class RsyncCommandResolver(fileInfoReader: FileInfoReader,
     )
 
     fun resolveCommand(args: List<String>): Command {
+
+        if (args.any { it == "--daemon" || it == "daemon" }) {
+            throw ArgsParingException("Blacklisted argument: 'daemon'. Try new request without that argument.")
+        }
 
         val matchedCommands = matchers.filter { it.first.matches(args) }
 

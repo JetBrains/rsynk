@@ -15,6 +15,7 @@
  */
 package jetbrains.rsynk.server
 
+import jetbrains.rsynk.rsync.exitvalues.ArgsParingException
 import jetbrains.rsynk.rsync.files.FileInfoReader
 import jetbrains.rsynk.rsync.files.UnixDefaultFileSystemInfo
 import jetbrains.rsynk.server.application.TrackedFilesManager
@@ -40,7 +41,7 @@ class CommandArgumentsMatcherTest {
         rsyncCommandsHolder.resolve(args)
     }
 
-    @Test(expected = CommandNotFoundException::class)
+    @Test(expected = ArgsParingException::class)
     fun do_not_resolve_server_send_command_for_client_in_daemon_mode_test() {
         val args = listOf("rsync", "--server", "--sender", "--daemon", ".")
         rsyncCommandsHolder.resolve(args)
