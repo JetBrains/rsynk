@@ -17,14 +17,17 @@ package jetbrains.rsynk.server
 
 import jetbrains.rsynk.rsync.files.RsynkFile
 import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
-import jetbrains.rsynk.server.application.Rsynk
-import org.junit.*
+import org.junit.Assert
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Test
 import java.io.File
 import java.nio.file.Files
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class FileBoundariesIntegrationTest {
+
+    val rsynk = rsynkResource.rsynk
 
     @Before
     fun clearTrackingFiles() {
@@ -45,7 +48,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
-        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10), destinationFile.readText())
     }
 
@@ -63,7 +66,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(0, 20)
         })
 
-        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 20), destinationFile.readText())
     }
 
@@ -81,7 +84,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, 30)
         })
 
-        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 40), destinationFile.readText())
     }
 
@@ -100,11 +103,11 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(offset, 10)
         })
 
-        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 10), destinationFile.readText())
 
         offset = 10L
-        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(offset.toInt(), offset.toInt() + 10), destinationFile.readText())
     }
 
@@ -123,34 +126,24 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, length)
         })
 
-        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 10 + 10), destinationFile.readText())
 
         length = 20L
-        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 10 + length.toInt()), destinationFile.readText())
     }
 
     companion object {
-        val freePort = IntegrationTestTools.findFreePort()
+        val id = AtomicInteger(0)
 
         @ClassRule
         @JvmField
         val rsyncRule = RsyncIntegrationRule()
 
-        @JvmStatic
-        val rsynk = Rsynk.builder
-                .setPort(freePort)
-                .setNumberOfWorkerThreads(1)
-                .setRSAKey(IntegrationTestTools.getPrivateServerKey(), IntegrationTestTools.getPublicServerKey())
-                .setIdleConnectionTimeout(IntegrationTestTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
-                .setNumberOfNioWorkers(1)
-                .build()
 
-        @AfterClass
-        @JvmStatic
-        fun stopServer() = rsynk.close()
-
-        val id = AtomicInteger(0)
+        @ClassRule
+        @JvmField
+        val rsynkResource = RsynkResource()
     }
 }

@@ -17,19 +17,16 @@ package jetbrains.rsynk.server
 
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
-import jetbrains.rsynk.server.application.Rsynk
-import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test
 import java.io.ByteArrayOutputStream
-import java.util.concurrent.TimeUnit
 
 class ErrorCodesIntegrationTest {
 
     @Test
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_old_test() {
-        val session = jsch.getSession("voytovichs", "localhost", freePort)
+        val session = jsch.getSession("voytovichs", "localhost", rsynkResource.port)
         session.setConfig("StrictHostKeyChecking", "no")
         session.timeout = 60000
         session.setPassword("whatever".toByteArray())
@@ -58,7 +55,7 @@ class ErrorCodesIntegrationTest {
 
     @Test
     fun receive_proper_code_and_message_if_sent_protocol_version_is_too_new_test() {
-        val session = jsch.getSession("voytovichs", "localhost", freePort)
+        val session = jsch.getSession("voytovichs", "localhost", rsynkResource.port)
         session.setConfig("StrictHostKeyChecking", "no")
         session.timeout = 60000
         session.setPassword("whatever".toByteArray())
@@ -88,7 +85,7 @@ class ErrorCodesIntegrationTest {
 
     @Test
     fun request_not_tracked_file_test() {
-        val session = jsch.getSession("voytovichs", "localhost", freePort)
+        val session = jsch.getSession("voytovichs", "localhost", rsynkResource.port)
         session.setConfig("StrictHostKeyChecking", "no")
         session.timeout = 60000
         session.setPassword("whatever".toByteArray())
@@ -122,26 +119,15 @@ class ErrorCodesIntegrationTest {
 
 
     companion object {
-        val freePort = IntegrationTestTools.findFreePort()
-
         @ClassRule
         @JvmField
         val rsyncRule = RsyncIntegrationRule()
 
-        @JvmStatic
-        val rsynk = Rsynk.builder
-                .setPort(freePort)
-                .setNumberOfWorkerThreads(1)
-                .setRSAKey(IntegrationTestTools.getPrivateServerKey(), IntegrationTestTools.getPublicServerKey())
-                .setIdleConnectionTimeout(IntegrationTestTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
-                .setNumberOfNioWorkers(1)
-                .build()
+        @ClassRule
+        @JvmField
+        val rsynkResource = RsynkResource()
 
         val jsch: JSch
             get() = JSch()
-
-        @AfterClass
-        @JvmStatic
-        fun stopServer() = rsynk.close()
     }
 }
