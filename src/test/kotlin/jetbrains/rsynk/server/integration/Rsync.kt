@@ -23,21 +23,9 @@ import java.util.concurrent.TimeUnit
 
 private interface RsyncProcessPath {
     val path: String
-    fun isInstalled(): Boolean
-}
 
-internal class RsyncInPATH : RsyncProcessPath {
-    override val path: String
-        get () {
-            val isMac = System.getProperty("os.name")?.toLowerCase()?.contains("mac") ?: false
-            if (isMac) {
-                return "/usr/local/bin/rsync"
-            }
-            return "rsync"
-        }
-
-    override fun isInstalled(): Boolean {
-        println("Trying to find rsync under '$path'")
+    fun isInstalled(): Boolean {
+        println("Trying to execute rsync:'$path'")
         val pb = ProcessBuilder(path, "--version")
                 .directory(Files.createTempDirectory("rsync_dir").toFile())
                 .redirectError(ProcessBuilder.Redirect.PIPE)
@@ -61,8 +49,29 @@ internal class RsyncInPATH : RsyncProcessPath {
     }
 }
 
+
+/**
+ * Runs rsync client from PATH environment
+ */
+internal class RsyncInPATH : RsyncProcessPath {
+    override val path: String
+        get () = "rsync"
+}
+
+/**
+ * Runs macOS default rsync client
+ */
+internal class RsyncInPATH_macOS : RsyncProcessPath {
+    override val path: String
+        get () = "/usr/local/bin/rsync"
+}
+
 object Rsync {
-    private val rsync: RsyncProcessPath = RsyncInPATH()
+    private val rsync: RsyncProcessPath = if (System.getProperty("os.name")?.toLowerCase()?.contains("mac") == true) {
+        RsyncInPATH()
+    } else {
+        RsyncInPATH_macOS()
+    }
 
     fun execute(from: String, to: String, port: Int, timeoutSec: Long, _params: String, ignoreErrors: Boolean = false): String {
         val params = if (_params.isEmpty()) "" else "-$_params"
