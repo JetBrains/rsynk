@@ -1,4 +1,4 @@
-package jetbrains.rsynk.server
+package jetbrains.rsynk.server.integration
 
 import org.junit.Assert
 import org.junit.rules.TestRule

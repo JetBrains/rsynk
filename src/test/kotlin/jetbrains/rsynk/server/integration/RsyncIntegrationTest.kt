@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server
+package jetbrains.rsynk.server.integration
 
 import jetbrains.rsynk.rsync.files.RsynkFile
+import jetbrains.rsynk.server.IntegrationTestTools
 import org.junit.*
 import java.io.File
 import java.nio.file.Files

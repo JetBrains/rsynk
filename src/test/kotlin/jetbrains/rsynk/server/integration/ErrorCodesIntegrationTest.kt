@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server
+package jetbrains.rsynk.server.integration
 
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
+import jetbrains.rsynk.server.readFully
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test

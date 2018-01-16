@@ -1,5 +1,6 @@
-package jetbrains.rsynk.server
+package jetbrains.rsynk.server.integration
 
+import jetbrains.rsynk.server.IntegrationTestTools
 import jetbrains.rsynk.server.application.Rsynk
 import org.junit.rules.ExternalResource
 import java.util.concurrent.TimeUnit

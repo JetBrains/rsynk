@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server
+package jetbrains.rsynk.server.integration
 
 import jetbrains.rsynk.rsync.files.RsynkFile
 import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
+import jetbrains.rsynk.server.IntegrationTestTools
 import org.junit.Assert
 import org.junit.Before
 import org.junit.ClassRule
