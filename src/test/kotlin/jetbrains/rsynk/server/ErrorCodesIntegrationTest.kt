@@ -20,6 +20,7 @@ import com.jcraft.jsch.JSch
 import jetbrains.rsynk.server.application.Rsynk
 import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.ClassRule
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
@@ -122,6 +123,10 @@ class ErrorCodesIntegrationTest {
 
     companion object {
         val freePort = IntegrationTestTools.findFreePort()
+
+        @ClassRule
+        @JvmField
+        val rsyncRule = RsyncIntegrationRule()
 
         @JvmStatic
         val rsynk = Rsynk.builder

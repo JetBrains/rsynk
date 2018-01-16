@@ -18,10 +18,7 @@ package jetbrains.rsynk.server
 import jetbrains.rsynk.rsync.files.RsynkFile
 import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
 import jetbrains.rsynk.server.application.Rsynk
-import org.junit.AfterClass
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.*
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
@@ -48,7 +45,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, IntegrationTestTools.loremIpsum.length.toLong() - 10)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10), destinationFile.readText())
     }
 
@@ -66,7 +63,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(0, 20)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 20), destinationFile.readText())
     }
 
@@ -84,7 +81,7 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, 30)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 40), destinationFile.readText())
     }
 
@@ -103,11 +100,11 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(offset, 10)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(0, 10), destinationFile.readText())
 
         offset = 10L
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(offset.toInt(), offset.toInt() + 10), destinationFile.readText())
     }
 
@@ -126,20 +123,24 @@ class FileBoundariesIntegrationTest {
             RsynkFileBoundaries(10, length)
         })
 
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 10 + 10), destinationFile.readText())
 
         length = 20L
-        RsyncClientWrapper.call("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
+        Rsync.execute("localhost:${sourceFile.absolutePath}", destinationFile.absolutePath, freePort, 10, "v")
         Assert.assertEquals(IntegrationTestTools.loremIpsum.substring(10, 10 + length.toInt()), destinationFile.readText())
     }
 
     companion object {
         val freePort = IntegrationTestTools.findFreePort()
 
+        @ClassRule
+        @JvmField
+        val rsyncRule = RsyncIntegrationRule()
+
         @JvmStatic
         val rsynk = Rsynk.builder
-                .setPort(ErrorCodesIntegrationTest.freePort)
+                .setPort(freePort)
                 .setNumberOfWorkerThreads(1)
                 .setRSAKey(IntegrationTestTools.getPrivateServerKey(), IntegrationTestTools.getPublicServerKey())
                 .setIdleConnectionTimeout(IntegrationTestTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
