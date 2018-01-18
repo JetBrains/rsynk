@@ -53,3 +53,10 @@ dependencies {
     testCompile "com.jcraft:jsch:0.1.54"
 }
 
+test {
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+    }
+}
+
