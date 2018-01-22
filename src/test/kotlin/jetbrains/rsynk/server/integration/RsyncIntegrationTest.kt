@@ -16,7 +16,7 @@
 package jetbrains.rsynk.server.integration
 
 import jetbrains.rsynk.rsync.files.RsynkFile
-import jetbrains.rsynk.server.IntegrationTestTools
+import jetbrains.rsynk.server.IntegrationTools
 import org.junit.*
 import java.io.File
 import java.nio.file.Files
@@ -35,7 +35,7 @@ class RsyncIntegrationTest {
     fun file_transfer_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val source = File(data, "from.txt")
-        source.writeText(IntegrationTestTools.loremIpsum)
+        source.writeText(IntegrationTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source.absolutePath)
         rsynk.track(rsynkFile)
@@ -44,14 +44,14 @@ class RsyncIntegrationTest {
         val destinationFile = File(destinationDir, "to.txt")
 
         Rsync.execute("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
-        Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
+        Assert.assertEquals(IntegrationTools.loremIpsum, destinationFile.readText())
     }
 
     @Test
     fun file_transfer_to_existing_source_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val source = File(data, "from.txt")
-        source.writeText(IntegrationTestTools.loremIpsum)
+        source.writeText(IntegrationTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source.absolutePath)
         rsynk.track(rsynkFile)
@@ -61,7 +61,7 @@ class RsyncIntegrationTest {
         Assert.assertTrue("Cannot create new file", destinationFile.createNewFile())
 
         Rsync.execute("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10000, "v")
-        Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
+        Assert.assertEquals(IntegrationTools.loremIpsum, destinationFile.readText())
     }
 
     @Test
@@ -69,9 +69,9 @@ class RsyncIntegrationTest {
     fun files_from_same_directory_with_common_prefix_test() {
         val dataDirectory = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val sourceFile1 = File(dataDirectory, "source-file-1.txt")
-        sourceFile1.writeText(IntegrationTestTools.loremIpsum)
+        sourceFile1.writeText(IntegrationTools.loremIpsum)
         val sourceFile2 = File(dataDirectory, "source-file-2.txt")
-        sourceFile2.writeText(IntegrationTestTools.loremIpsum)
+        sourceFile2.writeText(IntegrationTools.loremIpsum)
 
         rsynk.track(
                 listOf(RsynkFile(sourceFile1.absolutePath),
@@ -88,7 +88,7 @@ class RsyncIntegrationTest {
         ).forEach { downloadedFile ->
             Assert.assertTrue("${downloadedFile.name} was not downloaded", downloadedFile.isFile)
             Assert.assertEquals("${downloadedFile.name} content is not identical to source",
-                    IntegrationTestTools.loremIpsum,
+                    IntegrationTools.loremIpsum,
                     downloadedFile.readText())
         }
 
@@ -99,7 +99,7 @@ class RsyncIntegrationTest {
     fun file_transfer_to_non_existing_file_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val source = File(data, "from.txt")
-        source.writeText(IntegrationTestTools.loremIpsum)
+        source.writeText(IntegrationTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source.absolutePath)
         rsynk.track(rsynkFile)
@@ -108,24 +108,24 @@ class RsyncIntegrationTest {
         val destinationFile = File(destinationDir, "to.txt")
 
         Rsync.execute("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
-        Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
+        Assert.assertEquals(IntegrationTools.loremIpsum, destinationFile.readText())
     }
 
     @Test
     fun incremental_file_transfer_test() {
         val moduleRoot = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val source = File(moduleRoot, "from.txt")
-        source.writeText(IntegrationTestTools.loremIpsum)
+        source.writeText(IntegrationTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source.absolutePath)
         rsynk.track(rsynkFile)
 
         val destinationDir = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val destinationFile = File(destinationDir, "to.txt")
-        destinationFile.writeText(IntegrationTestTools.loremIpsum.substring(0, IntegrationTestTools.loremIpsum.length / 2))
+        destinationFile.writeText(IntegrationTools.loremIpsum.substring(0, IntegrationTools.loremIpsum.length / 2))
 
         Rsync.execute("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
-        Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
+        Assert.assertEquals(IntegrationTools.loremIpsum, destinationFile.readText())
     }
 
     @Test
@@ -133,7 +133,7 @@ class RsyncIntegrationTest {
         val sourceRoot = Files.createTempDirectory("data-root").toFile()
         val srcFile = File(sourceRoot, "file.txt")
 
-        val content = IntegrationTestTools.readTestResouceText("8kb.txt").toByteArray()
+        val content = IntegrationTools.readTestResouceText("8kb.txt").toByteArray()
         srcFile.writeBytes(content)
         rsynk.track(RsynkFile(srcFile.absolutePath))
         val destRoot = Files.createTempDirectory("data-root").toFile()
@@ -237,7 +237,7 @@ class RsyncIntegrationTest {
         File(sourceRoot, "b1.txt").apply { writeText(fileB1.readText()) }
         Rsync.execute("localhost:${sourceRoot.absolutePath}/", "${destinationRoot.absolutePath}/", rsynkResource.port, 10, "v")
 
-        assertDirectoriesContentSame(sourceRoot, destinationRoot)
+        IntegrationTools.assertDirectoriesContentSame(sourceRoot, destinationRoot)
     }
 
     @Test
@@ -252,7 +252,7 @@ class RsyncIntegrationTest {
     fun transfer_a_change_in_file_test() {
         val data = Files.createTempDirectory("data-${id.incrementAndGet()}").toFile()
         val source = File(data, "from.txt")
-        source.writeText(IntegrationTestTools.loremIpsum)
+        source.writeText(IntegrationTools.loremIpsum)
 
         val rsynkFile = RsynkFile(source.absolutePath)
         rsynk.track(rsynkFile)
@@ -261,31 +261,11 @@ class RsyncIntegrationTest {
         val destinationFile = File(destinationDir, "to.txt")
 
         Rsync.execute("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
-        Assert.assertEquals(IntegrationTestTools.loremIpsum, destinationFile.readText())
+        Assert.assertEquals(IntegrationTools.loremIpsum, destinationFile.readText())
 
         source.appendText("hehe")
         Rsync.execute("localhost:${source.absolutePath}", destinationFile.absolutePath, rsynkResource.port, 10, "v")
-        Assert.assertEquals(IntegrationTestTools.loremIpsum + "hehe", destinationFile.readText())
-    }
-
-    private fun assertDirectoriesContentSame(a: File, b: File) {
-        if (!a.isDirectory) {
-            Assert.fail("${a.absolutePath} is not a directory")
-        }
-        if (!b.isDirectory) {
-            Assert.fail("${b.absolutePath} is not a directory")
-        }
-
-        val aDirectoryFiles = a.listFiles().sorted()
-        val bDirectoryFiles = b.listFiles().sorted()
-        Assert.assertEquals("Directories contain different set of files", aDirectoryFiles, bDirectoryFiles)
-        for (i in 0..aDirectoryFiles.size) {
-            if (aDirectoryFiles[i].isDirectory) {
-                assertDirectoriesContentSame(aDirectoryFiles[i], bDirectoryFiles[i])
-                continue
-            }
-            Assert.assertEquals(aDirectoryFiles[i].readText(), bDirectoryFiles[i].readText())
-        }
+        Assert.assertEquals(IntegrationTools.loremIpsum + "hehe", destinationFile.readText())
     }
 
     companion object {

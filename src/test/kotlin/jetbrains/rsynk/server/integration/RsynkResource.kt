@@ -15,19 +15,19 @@
  */
 package jetbrains.rsynk.server.integration
 
-import jetbrains.rsynk.server.IntegrationTestTools
+import jetbrains.rsynk.server.IntegrationTools
 import jetbrains.rsynk.server.application.Rsynk
 import org.junit.rules.ExternalResource
 import java.util.concurrent.TimeUnit
 
 class RsynkResource : ExternalResource() {
-    val port: Int = IntegrationTestTools.findFreePort()
+    val port: Int = IntegrationTools.findFreePort()
 
     val rsynk = Rsynk.builder
             .setPort(port)
             .setNumberOfWorkerThreads(1)
-            .setRSAKey(IntegrationTestTools.getPrivateServerKey(), IntegrationTestTools.getPublicServerKey())
-            .setIdleConnectionTimeout(IntegrationTestTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
+            .setRSAKey(IntegrationTools.getPrivateServerKey(), IntegrationTools.getPublicServerKey())
+            .setIdleConnectionTimeout(IntegrationTools.getIdleConnectionTimeout(), TimeUnit.MILLISECONDS)
             .setNumberOfNioWorkers(1)
             .build()
 
