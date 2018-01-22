@@ -1,6 +1,4 @@
-# Rsynk #
-
-[![JetBrains team project](http://jb.gg/badges/team-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+# Rsynk  [![JetBrains team project](http://jb.gg/badges/team-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
 ### What it is ###
 An embeddable ssh server for [rsync client](https://rsync.samba.org) with additional features.
