@@ -51,27 +51,31 @@ private interface RsyncProcessPath {
 
 
 /**
- * Runs rsync client from PATH environment
+ * Default path for common linux distribution
  */
-internal class RsyncInPATH : RsyncProcessPath {
+internal class Rsync_linux : RsyncProcessPath {
     override val path: String
-        get () = "rsync"
+        get () = "/usr/bin/rsync"
 }
 
 /**
- * Runs macOS default rsync client
+ * Default path for macOS
  */
-internal class RsyncInPATH_macOS : RsyncProcessPath {
+internal class Rsync_macOS : RsyncProcessPath {
     override val path: String
         get () = "/usr/local/bin/rsync"
 }
 
 object Rsync {
-    private val rsync: RsyncProcessPath = if (System.getProperty("os.name")?.toLowerCase()?.contains("mac") == true) {
-        RsyncInPATH()
-    } else {
-        RsyncInPATH_macOS()
-    }
+    private val rsync: RsyncProcessPath = System.getProperty("os.name")?.toLowerCase()?.let {
+        if (it.contains("mac") || it.contains("darwin")) {
+            Rsync_macOS()
+        } else if (it.contains("linux")) {
+            Rsync_linux()
+        } else {
+            throw Error("${RsyncProcessPath::class.simpleName} implementation is not defined for '$it' operation system")
+        }
+    } ?: throw Error("Cannot read 'os.name' system property")
 
     fun execute(from: String, to: String, port: Int, timeoutSec: Long, _params: String, ignoreErrors: Boolean = false): String {
         val params = if (_params.isEmpty()) "" else "-$_params"
