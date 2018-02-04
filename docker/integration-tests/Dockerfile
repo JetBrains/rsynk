@@ -29,4 +29,4 @@ RUN chmod +x /scripts/install_java.sh && /scripts/install_java.sh
 RUN chmod +x /scripts/install_rsync.sh && /scripts/install_rsync.sh
 RUN chmod +x /scripts/checkout_repository.sh && /scripts/checkout_repository.sh
 
-CMD ["rsynk/gradlew", "test"]
+CMD cd ${JB_CHECKOUT_DIR} && ./gradlew test
