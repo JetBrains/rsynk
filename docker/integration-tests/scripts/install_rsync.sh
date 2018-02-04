@@ -11,7 +11,7 @@ tar -xf rsync-3.1.3.tar.gz
 cd rsync-3.1.3
 ./configure
 make
-ln -s rsync ${JB_DEPENDENCIES_DIR}/rsync
+ln -s $(pwd)/rsync ${JB_DEPENDENCIES_DIR}/rsync
 
 rsync --version
 
