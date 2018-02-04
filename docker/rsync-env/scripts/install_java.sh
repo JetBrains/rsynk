@@ -2,6 +2,4 @@
 
 set -e -x
 
-add-apt-repository -y ppa:webupd8team/java
-apt-get -qq  update
-apt-get install -y oracle-java8-installer
+apt-get install -y openjdk-8-jdk
