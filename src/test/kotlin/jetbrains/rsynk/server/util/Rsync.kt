@@ -48,33 +48,26 @@ private interface RsyncProcessPath {
     }
 }
 
-
-/**
- * Default path for common linux distribution
- */
-internal class Rsync_linux : RsyncProcessPath {
-    override val path: String
-        get () = "/usr/bin/rsync"
-}
-
-/**
- * Default path for macOS
- */
-internal class Rsync_macOS : RsyncProcessPath {
-    override val path: String
-        get () = "/usr/local/bin/rsync"
-}
-
 object Rsync {
-    private val rsync: RsyncProcessPath = System.getProperty("os.name")?.toLowerCase()?.let {
-        if (it.contains("mac") || it.contains("darwin")) {
-            Rsync_macOS()
-        } else if (it.contains("linux")) {
-            Rsync_linux()
-        } else {
-            throw Error("${RsyncProcessPath::class.simpleName} implementation is not defined for '$it' operation system")
+    private val rsync = object : RsyncProcessPath {
+        override val path: String by lazy {
+
+            System.getenv("JB_RSYNC_PATH")?.let {
+                return@lazy it
+            }
+
+            val os = System.getProperty("os.name")?.toLowerCase()
+                    ?: throw Error("Cannot read 'os.name' system property")
+
+            if (os.contains("mac") || os.contains("darwin")) {
+                "/usr/local/bin/rsync"
+            } else if (os.contains("linux")) {
+                "/usr/bin/rsync"
+            } else {
+                throw Error("${RsyncProcessPath::class.simpleName} implementation is not defined for '$os' operation system")
+            }
         }
-    } ?: throw Error("Cannot read 'os.name' system property")
+    }
 
     fun execute(from: String, to: String, port: Int, timeoutSec: Long, _params: String, ignoreErrors: Boolean = false): String {
         val params = if (_params.isEmpty()) "" else "-$_params"

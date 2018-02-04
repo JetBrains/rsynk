@@ -17,6 +17,7 @@ ENV JB_REPO_URL "https://github.com/jetbrains/rsynk.git"
 ENV JB_CHECKOUT_DIR "/rsynk"
 ENV JB_DEPENDENCIES_DIR "/dependencies"
 ENV PATH="${JB_DEPENDENCIES_DIR}:${PATH}"
+ENV JB_RSYNC_PATH rsync
 
 COPY scripts /scripts
 

@@ -14,5 +14,3 @@ make
 ln -s $(pwd)/rsync ${JB_DEPENDENCIES_DIR}/rsync
 
 rsync --version
-
-
