@@ -17,7 +17,9 @@ package jetbrains.rsynk.server.integration
 
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
-import jetbrains.rsynk.server.readFully
+import jetbrains.rsynk.server.util.RsyncIntegrationRule
+import jetbrains.rsynk.server.util.RsynkResource
+import jetbrains.rsynk.server.util.readFully
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test

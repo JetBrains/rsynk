@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jetbrains.rsynk.server.integration
+package jetbrains.rsynk.server.util
 
-import jetbrains.rsynk.server.IntegrationTools
 import jetbrains.rsynk.server.application.Rsynk
 import org.junit.rules.ExternalResource
 import java.util.concurrent.TimeUnit

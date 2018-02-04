@@ -17,7 +17,10 @@ package jetbrains.rsynk.server.integration
 
 import jetbrains.rsynk.rsync.files.RsynkFile
 import jetbrains.rsynk.rsync.files.RsynkFileBoundaries
-import jetbrains.rsynk.server.IntegrationTools
+import jetbrains.rsynk.server.util.IntegrationTools
+import jetbrains.rsynk.server.util.Rsync
+import jetbrains.rsynk.server.util.RsyncIntegrationRule
+import jetbrains.rsynk.server.util.RsynkResource
 import org.junit.Assert
 import org.junit.Before
 import org.junit.ClassRule
