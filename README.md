@@ -17,3 +17,11 @@ Minimal client version is 3.1.0 (released September 28th, 2013, see [versions](h
 1.1.1 are required. To build the project, run:
 
     ./gradlew
+    
+To execute the tests, run:
+    
+    ./gradlew test
+    
+Some test suits run vanilla rsync client commands against rsynk server. Those integration tests require an rsync client installed. To run tests in docker container with all necessary dependencies provided, run:
+
+    cd docker/integration-tests && ./build-and-run.sh 
